@@ -24,7 +24,6 @@ import com.zayyan.dormfood.ui.theme.DormRed
 import com.zayyan.dormfood.R
 import com.zayyan.dormfood.ui.navigation.Screen
 
-
 @Composable
 fun LandingPage(
     navController: NavHostController = rememberNavController(),
@@ -87,7 +86,7 @@ fun LandingPage(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = {navController.navigate(Screen.LandingPage.route)},
+                onClick = {navController.navigate(Screen.LoginScreen.route)},
                 shape = CircleShape,
                 modifier = Modifier
                     .size(60.dp),
