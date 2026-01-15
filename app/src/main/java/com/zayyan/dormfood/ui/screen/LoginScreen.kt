@@ -141,7 +141,7 @@ fun LoginScreen(
 
         Button(
             onClick = {
-                navController.navigate(Screen.LandingPage.route)
+                navController.navigate(Screen.RegisterScreen.route)
             },
             modifier = Modifier
                 .fillMaxWidth()
