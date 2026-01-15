@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zayyan.dormfood.ui.screen.LandingPage
 import com.zayyan.dormfood.ui.screen.LoginScreen
+import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
 
 @Composable
@@ -23,6 +24,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.RegisterScreen.route) {
             RegisterScreen(navController)
+        }
+        composable(route = Screen.BerandaMahasiswaScreen.route) {
+            BerandaMahasiswa()
         }
     }
 }
