@@ -7,10 +7,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zayyan.dormfood.ui.screen.LandingPage
 import com.zayyan.dormfood.ui.screen.LoginScreen
+import com.zayyan.dormfood.ui.screen.UserRoleScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.PesananMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.ProfilMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
+import com.zayyan.dormfood.ui.screen.warung.BerandaWarung
+import com.zayyan.dormfood.ui.screen.warung.MenuWarung
+import com.zayyan.dormfood.ui.screen.warung.PesananWarung
+import com.zayyan.dormfood.ui.screen.warung.ProfilWarung
 
 @Composable
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
@@ -35,6 +40,21 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.ProfilMahasiswaScreen.route) {
             ProfilMahasiswa(navController)
+        }
+        composable(route = Screen.BerandaWarungScreen.route) {
+            BerandaWarung(navController)
+        }
+        composable(route = Screen.MenuWarungScreen.route) {
+            MenuWarung(navController)
+        }
+        composable(route = Screen.PesananWarungScreen.route) {
+            PesananWarung(navController)
+        }
+        composable(route = Screen.ProfilWarungScreen.route) {
+            ProfilWarung(navController)
+        }
+        composable(route = Screen.UserRoleScreen.route) {
+            UserRoleScreen(navController)
         }
     }
 }
