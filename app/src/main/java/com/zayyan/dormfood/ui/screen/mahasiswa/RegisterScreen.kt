@@ -3,12 +3,20 @@ package com.zayyan.dormfood.ui.screen.mahasiswa
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,38 +38,31 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
     val authState by viewModel.authState.collectAsState()
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {
-                navController.navigate(Screen.LandingPage.route) {
+                navController.navigate(Screen.LoginScreen.route) {
                     popUpTo(Screen.RegisterScreen.route) { inclusive = true }
                 }
             }
+
             else -> {}
         }
-    }
-
-    if (authState is AuthState.Loading) {
-        CircularProgressIndicator()
-    }
-
-    if (authState is AuthState.Error) {
-        Text(
-            text = (authState as AuthState.Error).message,
-            color = MaterialTheme.colorScheme.error
-        )
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Background)
+            .verticalScroll(rememberScrollState())
+            .imePadding()
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Spacer(modifier = Modifier.height(40.dp))
 
         Text(
@@ -72,12 +73,94 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        RegisterField(label = "Nama", value = name) { name = it }
-        RegisterField(label = "Gedung", value = building) { building = it }
-        RegisterField(label = "Nomor kamar", value = roomNumber) { roomNumber = it }
-        RegisterField(label = "Email", value = email) { email = it }
-        RegisterPasswordField(label = "Kata Sandi", value = password) { password = it }
-        RegisterPasswordField(label = "Konfirmasi Kata Sandi", value = confirmPassword) { confirmPassword = it }
+        if (authState is AuthState.Loading) {
+            CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (authState is AuthState.Error) {
+            Text(
+                text = (authState as AuthState.Error).message,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        RegisterField(
+            label = "Nama",
+            value = name,
+            onValueChange = { name = it },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+        )
+
+        RegisterField(
+            label = "Gedung",
+            value = building,
+            onValueChange = { building = it },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+        )
+
+        RegisterField(
+            label = "Nomor kamar",
+            value = roomNumber,
+            onValueChange = { roomNumber = it },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+        )
+
+        RegisterField(
+            label = "Email",
+            value = email,
+            onValueChange = { email = it },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+        )
+
+        RegisterPasswordField(
+            label = "Kata Sandi",
+            value = password,
+            onValueChange = { password = it },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+        )
+
+        RegisterPasswordField(
+            label = "Konfirmasi Kata Sandi",
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                }
+            )
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -98,7 +181,8 @@ fun RegisterScreen(
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = DormRed
-            )
+            ),
+            enabled = authState !is AuthState.Loading
         ) {
             Text("Daftar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
@@ -118,6 +202,8 @@ fun RegisterScreen(
                 }
             )
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
 
@@ -125,24 +211,25 @@ fun RegisterScreen(
 private fun RegisterField(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
     Text(
         text = label,
         modifier = Modifier.fillMaxWidth(),
         fontWeight = FontWeight.Medium
     )
-
     Spacer(modifier = Modifier.height(8.dp))
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        singleLine = true
+        singleLine = true,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions
     )
-
     Spacer(modifier = Modifier.height(16.dp))
 }
 
@@ -150,25 +237,25 @@ private fun RegisterField(
 private fun RegisterPasswordField(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
     Text(
         text = label,
         modifier = Modifier.fillMaxWidth(),
         fontWeight = FontWeight.Medium
     )
-
     Spacer(modifier = Modifier.height(8.dp))
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
-        visualTransformation = PasswordVisualTransformation()
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions
     )
-
     Spacer(modifier = Modifier.height(16.dp))
 }
-
