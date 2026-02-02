@@ -53,18 +53,63 @@ class AuthViewModel : ViewModel() {
                     .document(uid)
                     .set(userData)
                     .addOnSuccessListener {
-                        _authState.value =
-                            AuthState.Success("Registrasi berhasil")
+                        _authState.value = AuthState.Success("Registrasi berhasil")
                     }
                     .addOnFailureListener {
-                        _authState.value =
-                            AuthState.Error(it.message ?: "Gagal menyimpan data")
+                        _authState.value = AuthState.Error(it.message ?: "Gagal menyimpan data")
                     }
             }
             .addOnFailureListener {
-                _authState.value =
-                    AuthState.Error(it.message ?: "Registrasi gagal")
+                _authState.value = AuthState.Error(it.message ?: "Registrasi gagal")
             }
     }
-}
 
+    fun login(email: String, password: String) {
+        if (email.isBlank() || password.isBlank()) {
+            _authState.value = AuthState.Error("Email dan password harus diisi")
+            return
+        }
+
+        _authState.value = AuthState.Loading
+
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener { result ->
+                val uid = result.user?.uid ?: return@addOnSuccessListener
+
+                // Ambil data user dari Firestore untuk cek role
+                firestore.collection("users")
+                    .document(uid)
+                    .get()
+                    .addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            val role = document.getString("role") ?: "mahasiswa"
+                            val name = document.getString("name") ?: ""
+
+                            // Kirim role ke state untuk navigasi
+                            _authState.value = AuthState.LoginSuccess(
+                                message = "Login berhasil",
+                                role = role,
+                                userName = name
+                            )
+                        } else {
+                            _authState.value = AuthState.Error("Data user tidak ditemukan")
+                        }
+                    }
+                    .addOnFailureListener {
+                        _authState.value = AuthState.Error(it.message ?: "Gagal mengambil data user")
+                    }
+            }
+            .addOnFailureListener {
+                _authState.value = AuthState.Error(it.message ?: "Login gagal")
+            }
+    }
+
+    fun resetAuthState() {
+        _authState.value = AuthState.Idle
+    }
+
+    fun logout() {
+        auth.signOut()
+        _authState.value = AuthState.Idle
+    }
+}
