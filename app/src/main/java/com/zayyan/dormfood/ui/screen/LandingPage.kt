@@ -86,7 +86,7 @@ fun LandingPage(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = {navController.navigate(Screen.UserRoleScreen.route)},
+                onClick = {navController.navigate(Screen.LoginScreen.route)},
                 shape = CircleShape,
                 modifier = Modifier
                     .size(60.dp),

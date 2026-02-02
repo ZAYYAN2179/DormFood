@@ -13,13 +13,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.zayyan.dormfood.ui.model.AuthState
+import com.zayyan.dormfood.ui.model.AuthViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 
 @Composable
 fun RegisterScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var building by remember { mutableStateOf("") }
@@ -27,6 +30,29 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    val authState by viewModel.authState.collectAsState()
+
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Success -> {
+                navController.navigate(Screen.LandingPage.route) {
+                    popUpTo(Screen.RegisterScreen.route) { inclusive = true }
+                }
+            }
+            else -> {}
+        }
+    }
+
+    if (authState is AuthState.Loading) {
+        CircularProgressIndicator()
+    }
+
+    if (authState is AuthState.Error) {
+        Text(
+            text = (authState as AuthState.Error).message,
+            color = MaterialTheme.colorScheme.error
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -57,7 +83,14 @@ fun RegisterScreen(
 
         Button(
             onClick = {
-                navController.navigate(Screen.LandingPage.route)
+                viewModel.register(
+                    name = name,
+                    building = building,
+                    roomNumber = roomNumber,
+                    email = email,
+                    password = password,
+                    confirmPassword = confirmPassword
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -67,11 +100,7 @@ fun RegisterScreen(
                 containerColor = DormRed
             )
         ) {
-            Text(
-                text = "Daftar",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Text("Daftar", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
