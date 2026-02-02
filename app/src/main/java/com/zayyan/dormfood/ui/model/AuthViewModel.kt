@@ -76,7 +76,6 @@ class AuthViewModel : ViewModel() {
             .addOnSuccessListener { result ->
                 val uid = result.user?.uid ?: return@addOnSuccessListener
 
-                // Ambil data user dari Firestore untuk cek role
                 firestore.collection("users")
                     .document(uid)
                     .get()
@@ -85,22 +84,30 @@ class AuthViewModel : ViewModel() {
                             val role = document.getString("role") ?: "mahasiswa"
                             val name = document.getString("name") ?: ""
 
-                            // Kirim role ke state untuk navigasi
                             _authState.value = AuthState.LoginSuccess(
                                 message = "Login berhasil",
                                 role = role,
                                 userName = name
                             )
                         } else {
-                            _authState.value = AuthState.Error("Data user tidak ditemukan")
+                            _authState.value = AuthState.Error("Data user tidak ditemukan di database")
                         }
                     }
                     .addOnFailureListener {
                         _authState.value = AuthState.Error(it.message ?: "Gagal mengambil data user")
                     }
             }
-            .addOnFailureListener {
-                _authState.value = AuthState.Error(it.message ?: "Login gagal")
+            .addOnFailureListener { exception ->
+                val errorMessage = when {
+                    exception.message?.contains("no user record") == true ->
+                        "Email belum terdaftar. Silakan daftar terlebih dahulu."
+                    exception.message?.contains("password is invalid") == true ->
+                        "Password salah. Silakan coba lagi."
+                    exception.message?.contains("badly formatted") == true ->
+                        "Format email tidak valid."
+                    else -> exception.message ?: "Login gagal. Periksa email dan password Anda."
+                }
+                _authState.value = AuthState.Error(errorMessage)
             }
     }
 
