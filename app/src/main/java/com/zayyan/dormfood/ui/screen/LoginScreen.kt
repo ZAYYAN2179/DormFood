@@ -61,15 +61,14 @@ fun LoginScreen(
     val authState by viewModel.authState.collectAsState()
     val focusManager = LocalFocusManager.current
 
-    // Handle navigation berdasarkan role
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.LoginSuccess -> {
                 val loginState = authState as AuthState.LoginSuccess
                 val destination = when (loginState.role) {
                     "mahasiswa" -> Screen.BerandaMahasiswaScreen.route
-                    "warung" -> Screen.BerandaWarungScreen.route
-                    else -> Screen.BerandaMahasiswaScreen.route // default
+                    "warung" -> Screen.ProfilWarungScreen.route
+                    else -> Screen.BerandaMahasiswaScreen.route
                 }
 
                 navController.navigate(destination) {
