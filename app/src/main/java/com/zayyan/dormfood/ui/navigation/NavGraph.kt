@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.zayyan.dormfood.ui.screen.LandingPage
 import com.zayyan.dormfood.ui.screen.LoginScreen
+import com.zayyan.dormfood.ui.screen.SplashScreen
 import com.zayyan.dormfood.ui.screen.UserRoleScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.PesananMahasiswa
@@ -21,7 +22,7 @@ import com.zayyan.dormfood.ui.screen.warung.ProfilWarung
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
     NavHost(
         navController = navController,
-        startDestination = Screen.LandingPage.route
+        startDestination = Screen.SplashScreen.route
     ) {
         composable(route = Screen.LandingPage.route) {
             LandingPage(navController)
@@ -55,6 +56,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.UserRoleScreen.route) {
             UserRoleScreen(navController)
+        }
+        composable(route = Screen.SplashScreen.route) {
+            SplashScreen(navController)
         }
     }
 }

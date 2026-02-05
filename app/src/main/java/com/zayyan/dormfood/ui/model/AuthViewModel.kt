@@ -111,6 +111,25 @@ class AuthViewModel : ViewModel() {
             }
     }
 
+    fun checkUserRole(onResult: (String?) -> Unit) {
+        val uid = auth.currentUser?.uid ?: return onResult(null)
+
+        firestore.collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    val role = doc.getString("role")
+                    onResult(role)
+                } else {
+                    onResult(null)
+                }
+            }
+            .addOnFailureListener {
+                onResult(null)
+            }
+    }
+
     fun resetAuthState() {
         _authState.value = AuthState.Idle
     }
@@ -118,5 +137,9 @@ class AuthViewModel : ViewModel() {
     fun logout() {
         auth.signOut()
         _authState.value = AuthState.Idle
+    }
+
+    fun isLoggedIn(): Boolean {
+        return auth.currentUser != null
     }
 }

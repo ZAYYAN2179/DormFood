@@ -11,6 +11,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.White
@@ -18,16 +19,39 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.zayyan.dormfood.ui.theme.DormRed
 import com.zayyan.dormfood.R
+import com.zayyan.dormfood.ui.model.AuthViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 
 @Composable
 fun LandingPage(
     navController: NavHostController = rememberNavController(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
+
+    LaunchedEffect(Unit) {
+
+        if (authViewModel.isLoggedIn()) {
+
+            authViewModel.checkUserRole { role ->
+                when (role) {
+
+                    "mahasiswa" -> {
+                        navController.navigate(Screen.BerandaMahasiswaScreen.route)
+                    }
+
+                    "warung" -> {
+                        navController.navigate(Screen.BerandaWarungScreen.route)
+                    }
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -67,18 +91,14 @@ fun LandingPage(
                 .padding(horizontal = 32.dp, vertical = 32.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 repeat(3) { index ->
                     Box(
                         modifier = Modifier
                             .height(8.dp)
                             .width(if (index == 1) 32.dp else 16.dp)
-                            .background(
-                                color = White,
-                                shape = CircleShape
-                            )
+                            .background(White, CircleShape)
                     )
                 }
             }
@@ -86,10 +106,9 @@ fun LandingPage(
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = {navController.navigate(Screen.LoginScreen.route)},
+                onClick = { navController.navigate(Screen.LoginScreen.route) },
                 shape = CircleShape,
-                modifier = Modifier
-                    .size(60.dp),
+                modifier = Modifier.size(60.dp),
                 contentPadding = PaddingValues(0.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = White)
             ) {
