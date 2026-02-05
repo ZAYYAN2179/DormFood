@@ -257,7 +257,9 @@ fun ProfilWarungContent(
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = DormRed
                 ),
-                border = ButtonDefaults.outlinedButtonBorder.copy(
+                border = ButtonDefaults.outlinedButtonBorder(
+                    enabled = true
+                ).copy(
                     width = 1.5.dp,
                     brush = androidx.compose.ui.graphics.SolidColor(DormRed)
                 )
@@ -496,10 +498,18 @@ fun ImprovedUploadCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showImagePreview by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier
             .height(180.dp)
-            .clickable { onClick() },
+            .clickable {
+                if (!imageUrl.isNullOrEmpty()) {
+                    showImagePreview = true
+                } else {
+                    onClick()
+                }
+            },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -527,7 +537,15 @@ fun ImprovedUploadCard(
                     Surface(
                         shape = CircleShape,
                         color = DormRed,
-                        modifier = Modifier.size(36.dp)
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clickable(
+                                onClick = {
+                                    onClick()
+                                },
+                                indication = null,
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                            )
                     ) {
                         Box(
                             contentAlignment = Alignment.Center
@@ -594,6 +612,76 @@ fun ImprovedUploadCard(
             }
         }
     }
+
+    if (showImagePreview && !imageUrl.isNullOrEmpty()) {
+        ImagePreviewDialog(
+            imageUrl = imageUrl,
+            title = title,
+            onDismiss = { showImagePreview = false }
+        )
+    }
+}
+
+@Composable
+fun ImagePreviewDialog(
+    imageUrl: String,
+    title: String,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .clickable { onDismiss() }
+        ) {
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = Color.Black.copy(alpha = 0.7f)
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(16.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -649,7 +737,6 @@ fun ImprovedInfoCard(
                 )
             }
 
-            // ✅ HANYA ICON YANG CLICKABLE
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Edit",
