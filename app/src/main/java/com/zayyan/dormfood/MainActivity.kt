@@ -7,10 +7,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
 import com.zayyan.dormfood.ui.navigation.SetupNavGraph
 import com.zayyan.dormfood.ui.theme.DormFoodTheme
+import com.zayyan.dormfood.ui.utils.CloudinaryConfig
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        CloudinaryConfig.init(this)
 
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = true

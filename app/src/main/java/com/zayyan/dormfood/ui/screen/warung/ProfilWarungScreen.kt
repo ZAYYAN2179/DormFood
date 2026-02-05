@@ -31,6 +31,8 @@ import com.zayyan.dormfood.ui.model.WarungViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 @Composable
 fun ProfilWarung(
@@ -40,10 +42,27 @@ fun ProfilWarung(
 ) {
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val warungData by warungViewModel.warungData.collectAsState()
+    val warungProfile by warungViewModel.warungProfile.collectAsState()
     val isLoading by warungViewModel.isLoading.collectAsState()
 
     var showEditNameDialog by remember { mutableStateOf(false) }
     var showEditPhoneDialog by remember { mutableStateOf(false) }
+
+    val menuLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            warungViewModel.uploadMenuImage(it)
+        }
+    }
+
+    val qrLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            warungViewModel.uploadQrImage(it)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -76,7 +95,6 @@ fun ProfilWarung(
                     .padding(16.dp)
             ) {
 
-                // ===== HEADER WARUNG =====
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp)
@@ -114,7 +132,6 @@ fun ProfilWarung(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // ===== MENU & QR =====
                 Text(
                     text = "Daftar Menu dan QR Pembayaran",
                     fontWeight = FontWeight.Bold
@@ -122,11 +139,17 @@ fun ProfilWarung(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                UploadCard(title = "Upload Daftar Menu")
+                UploadCard(
+                    title = "Upload Daftar Menu",
+                    onClick = { menuLauncher.launch("image/*") }
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                UploadCard(title = "Upload QR Pembayaran")
+                UploadCard(
+                    title = "Upload QR Pembayaran",
+                    onClick = { qrLauncher.launch("image/*") }
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -157,6 +180,17 @@ fun ProfilWarung(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                var showEditAlamatDialog by remember { mutableStateOf(false) }
+
+                InfoCard(
+                    icon = Icons.Default.LocationOn,
+                    text = warungProfile?.alamatWarung ?: "Alamat Warung",
+                    trailingIcon = Icons.Default.Edit,
+                    onClick = {
+                        showEditAlamatDialog = true
+                    }
+                )
+
                 var showLogoutDialog by remember { mutableStateOf(false) }
 
                 InfoCard(
@@ -168,7 +202,6 @@ fun ProfilWarung(
                     }
                 )
 
-                // Dialog Logout
                 if (showLogoutDialog) {
                     AlertDialog(
                         onDismissRequest = { showLogoutDialog = false },
@@ -208,6 +241,23 @@ fun ProfilWarung(
                                 onError = { error ->
                                     // Show error toast or message
                                 }
+                            )
+                        }
+                    )
+                }
+
+                if (showEditAlamatDialog) {
+                    EditTextDialog(
+                        title = "Edit Alamat Warung",
+                        initialValue = warungProfile?.alamatWarung ?: "",
+                        onDismiss = { showEditAlamatDialog = false },
+                        onConfirm = { newAlamat ->
+                            warungViewModel.updateAlamatWarung(
+                                newAlamat = newAlamat,
+                                onSuccess = {
+                                    showEditAlamatDialog = false
+                                },
+                                onError = {}
                             )
                         }
                     )
@@ -278,13 +328,14 @@ fun EditTextDialog(
 
 @Composable
 fun UploadCard(
-    title: String
+    title: String,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
-            .clickable { },
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(
@@ -292,12 +343,7 @@ fun UploadCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                tint = DormRed,
-                modifier = Modifier.size(40.dp)
-            )
+            Icon(Icons.Default.Add, null, tint = DormRed, modifier = Modifier.size(40.dp))
             Spacer(modifier = Modifier.height(8.dp))
             Text(title)
         }
