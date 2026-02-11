@@ -210,13 +210,13 @@ fun ProfilWarungContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ImprovedUploadCard(
+                UploadCard(
                     title = "Daftar Menu",
                     imageUrl = warungProfile?.fotoMenu,
                     onClick = { menuLauncher.launch("image/*") },
                     modifier = Modifier.weight(1f)
                 )
-                ImprovedUploadCard(
+                UploadCard(
                     title = "QR Pembayaran",
                     imageUrl = warungProfile?.fotoQr,
                     onClick = { qrLauncher.launch("image/*") },
@@ -232,14 +232,14 @@ fun ProfilWarungContent(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            ImprovedInfoCard(
+            InfoCard(
                 icon = Icons.Outlined.Phone,
                 title = "Nomor Telepon",
                 value = warungData?.phone?.takeIf { it.isNotEmpty() } ?: "Belum diisi",
                 onEditClick = { showEditPhoneDialog = true }
             )
             Spacer(modifier = Modifier.height(12.dp))
-            ImprovedInfoCard(
+            InfoCard(
                 icon = Icons.Outlined.LocationOn,
                 title = "Alamat Warung",
                 value = warungProfile?.alamatWarung?.takeIf { it.isNotEmpty() } ?: "Belum diisi",
@@ -282,7 +282,7 @@ fun ProfilWarungContent(
     }
 
     if (showLogoutDialog) {
-        ImprovedAlertDialog(
+        AlertDialog(
             icon = Icons.AutoMirrored.Outlined.ExitToApp,
             title = "Keluar dari Akun?",
             message = "Anda akan keluar dari akun warung ini. Pastikan semua perubahan telah tersimpan.",
@@ -492,7 +492,7 @@ fun EditTextDialog(
 }
 
 @Composable
-fun ImprovedUploadCard(
+fun UploadCard(
     title: String,
     imageUrl: String?,
     onClick: () -> Unit,
@@ -685,7 +685,7 @@ fun ImagePreviewDialog(
 }
 
 @Composable
-fun ImprovedInfoCard(
+fun InfoCard(
     icon: ImageVector,
     title: String,
     value: String,
@@ -750,7 +750,7 @@ fun ImprovedInfoCard(
 }
 
 @Composable
-fun ImprovedAlertDialog(
+fun AlertDialog(
     icon: ImageVector,
     title: String,
     message: String,
