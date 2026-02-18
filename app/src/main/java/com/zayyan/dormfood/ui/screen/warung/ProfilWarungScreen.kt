@@ -624,16 +624,17 @@ fun ImagePreviewDialog(
     onDismiss: () -> Unit
 ) {
     androidx.compose.ui.window.Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {},
         properties = androidx.compose.ui.window.DialogProperties(
-            usePlatformDefaultWidth = false
+            usePlatformDefaultWidth = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
         )
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .clickable { onDismiss() }
         ) {
             IconButton(
                 onClick = onDismiss,
