@@ -26,6 +26,7 @@ import com.zayyan.dormfood.ui.component.BottomBarMahasiswa
 import com.zayyan.dormfood.ui.component.TopAppBar
 import com.zayyan.dormfood.ui.model.WarungItem
 import com.zayyan.dormfood.ui.model.WarungViewModel
+import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
@@ -119,7 +120,9 @@ fun BerandaMahasiswaContent(
                 WarungCard(
                     warung = warung,
                     onClick = {
-                        // Nanti arahkan ke menu warung
+                        navController.navigate(
+                            Screen.MenuMahasiswaScreen.createRoute(warung.userId)
+                        )
                     }
                 )
             }
@@ -188,9 +191,7 @@ fun WarungCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-
                 Spacer(modifier = Modifier.height(8.dp))
-
                 if (warung.alamatWarung.isNotEmpty()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -210,7 +211,6 @@ fun WarungCard(
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                 }
-
                 if (warung.phone.isNotEmpty()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(

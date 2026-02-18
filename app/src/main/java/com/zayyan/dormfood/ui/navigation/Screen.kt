@@ -13,4 +13,7 @@ sealed class Screen (val route: String) {
     data object ProfilWarungScreen: Screen("profilwarungscreen")
     data object UserRoleScreen: Screen("userrolescreen")
     data object SplashScreen: Screen("splashscreen")
+    data object MenuMahasiswaScreen : Screen("menumahasiswascreen/{userId}") {
+        fun createRoute(userId: String) = "menumahasiswascreen/$userId"
+    }
 }

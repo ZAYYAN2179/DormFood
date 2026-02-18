@@ -2,14 +2,17 @@ package com.zayyan.dormfood.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.zayyan.dormfood.ui.screen.LandingPage
 import com.zayyan.dormfood.ui.screen.LoginScreen
 import com.zayyan.dormfood.ui.screen.SplashScreen
 import com.zayyan.dormfood.ui.screen.UserRoleScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswa
+import com.zayyan.dormfood.ui.screen.mahasiswa.MenuMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.PesananMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.ProfilMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
@@ -59,6 +62,13 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         }
         composable(route = Screen.SplashScreen.route) {
             SplashScreen(navController)
+        }
+        composable(
+            route = Screen.MenuMahasiswaScreen.route,
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            MenuMahasiswa(navController = navController, userId = userId)
         }
     }
 }

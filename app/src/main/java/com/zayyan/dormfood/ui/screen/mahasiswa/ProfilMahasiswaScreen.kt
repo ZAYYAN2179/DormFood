@@ -45,7 +45,7 @@ fun ProfilMahasiswa(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = "Profil Mahasiswa")
+            TopAppBar(title = "Dorm Food")
         },
         bottomBar = {
             BottomBarMahasiswa(
