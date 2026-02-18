@@ -30,6 +30,7 @@ import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
+import androidx.core.net.toUri
 
 @Composable
 fun BerandaMahasiswa(
@@ -135,15 +136,18 @@ fun WarungCard(
     warung: WarungItem,
     onClick: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showImagePreview by remember { mutableStateOf(false) }
+
+    val isOpen = warung.layananAntar
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable(enabled = isOpen) { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isOpen) 2.dp else 1.dp)
     ) {
         Column {
             Box(
@@ -158,7 +162,8 @@ fun WarungCard(
                         modifier = Modifier
                             .fillMaxSize()
                             .clickable { showImagePreview = true },
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        alpha = if (isOpen) 1f else 0.4f
                     )
                 } else {
                     Box(
@@ -167,7 +172,7 @@ fun WarungCard(
                     ) {
                         Surface(
                             shape = CircleShape,
-                            color = DormRed.copy(alpha = 0.1f),
+                            color = DormRed.copy(alpha = if (isOpen) 0.1f else 0.05f),
                             modifier = Modifier.size(64.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -175,10 +180,30 @@ fun WarungCard(
                                     text = warung.namaWarung.take(1).uppercase(),
                                     fontSize = 28.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = DormRed
+                                    color = if (isOpen) DormRed else Color.Gray
                                 )
                             }
                         }
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isOpen) Color(0xFF4CAF50) else Color(0xFFE53935)
+                    ) {
+                        Text(
+                            text = if (isOpen) "Buka" else "Tutup",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
                     }
                 }
             }
@@ -189,7 +214,8 @@ fun WarungCard(
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (isOpen) MaterialTheme.colorScheme.onSurface else Color.Gray
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 if (warung.alamatWarung.isNotEmpty()) {
@@ -197,7 +223,7 @@ fun WarungCard(
                         Icon(
                             imageVector = Icons.Outlined.LocationOn,
                             contentDescription = null,
-                            tint = DormRed,
+                            tint = if (isOpen) DormRed else Color.Gray,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -212,18 +238,31 @@ fun WarungCard(
                     Spacer(modifier = Modifier.height(4.dp))
                 }
                 if (warung.phone.isNotEmpty()) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            val formatted = warung.phone.trim().let {
+                                if (it.startsWith("0")) "+62" + it.drop(1) else it
+                            }
+                            val uri = "https://wa.me/$formatted".toUri()
+                            val intent = android.content.Intent(
+                                android.content.Intent.ACTION_VIEW, uri
+                            )
+                            context.startActivity(intent)
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.Outlined.Phone,
                             contentDescription = null,
-                            tint = DormRed,
+                            tint = Color(0xFF25D366),
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = warung.phone,
                             fontSize = 13.sp,
-                            color = Color.Gray
+                            color = Color(0xFF25D366),
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }

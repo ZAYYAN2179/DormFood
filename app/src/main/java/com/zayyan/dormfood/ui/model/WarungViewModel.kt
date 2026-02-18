@@ -112,13 +112,15 @@ class WarungViewModel : ViewModel() {
                             val alamat = warungDoc.getString("alamatWarung") ?: ""
                             val fotoMenu = warungDoc.getString("fotoMenu") ?: ""
 
+                            val layananAntar = warungDoc.getBoolean("layananAntar") ?: false
                             result.add(
                                 WarungItem(
                                     userId = userId,
                                     namaWarung = nama,
                                     alamatWarung = alamat,
                                     phone = phone,
-                                    fotoMenu = fotoMenu
+                                    fotoMenu = fotoMenu,
+                                    layananAntar = layananAntar
                                 )
                             )
                             loaded++
@@ -283,5 +285,6 @@ data class WarungItem(
     val namaWarung: String = "",
     val alamatWarung: String = "",
     val phone: String = "",
-    val fotoMenu: String = ""
+    val fotoMenu: String = "",
+    val layananAntar: Boolean = false
 )
