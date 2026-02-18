@@ -361,11 +361,6 @@ fun ProfilWarungContent(
             onConfirm = { newPhone ->
                 warungViewModel.updatePhone(
                     newPhone = newPhone,
-                    onSuccess = {
-                        showEditPhoneDialog = false
-                        successMessage = "Nomor telepon berhasil diperbarui"
-                        showSuccessSnackbar = true
-                    },
                     onError = { error ->
                         successMessage = "Gagal memperbarui: $error"
                         showSuccessSnackbar = true
