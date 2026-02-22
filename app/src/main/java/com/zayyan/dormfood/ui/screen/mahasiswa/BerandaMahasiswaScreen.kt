@@ -7,8 +7,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +34,8 @@ import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import androidx.core.net.toUri
+
+enum class FilterStatus { SEMUA, BUKA, TUTUP }
 
 @Composable
 fun BerandaMahasiswa(
@@ -73,6 +77,23 @@ fun BerandaMahasiswaContent(
     val warungs by warungViewModel.warungList.collectAsState()
     val isLoading by warungViewModel.isLoadingList.collectAsState()
 
+    var searchQuery by remember { mutableStateOf("") }
+    var activeFilter by remember { mutableStateOf(FilterStatus.SEMUA) }
+
+    val filteredWarungs = remember(warungs, searchQuery, activeFilter) {
+        warungs
+            .filter { warung ->
+                warung.namaWarung.contains(searchQuery.trim(), ignoreCase = true)
+            }
+            .filter { warung ->
+                when (activeFilter) {
+                    FilterStatus.SEMUA -> true
+                    FilterStatus.BUKA -> warung.layananAntar
+                    FilterStatus.TUTUP -> !warung.layananAntar
+                }
+            }
+    }
+
     if (isLoading) {
         Box(
             modifier = Modifier
@@ -89,19 +110,6 @@ fun BerandaMahasiswaContent(
                 Text(text = "Memuat warung...", color = Color.Gray, fontSize = 14.sp)
             }
         }
-    } else if (warungs.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Belum ada warung tersedia",
-                color = Color.Gray,
-                fontSize = 15.sp
-            )
-        }
     } else {
         LazyColumn(
             modifier = Modifier
@@ -110,25 +118,143 @@ fun BerandaMahasiswaContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Search Bar
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = {
+                        Text(text = "Cari Warung", color = Color.Gray, fontSize = 14.sp)
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Search,
+                            contentDescription = "Cari",
+                            tint = Color.Gray
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Close,
+                                    contentDescription = "Hapus",
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = DormRed,
+                        unfocusedBorderColor = Color(0xFFE0E0E0),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    )
+                )
+            }
+
+            // Filter Chips: Semua / Buka / Tutup
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    FilterChipItem(
+                        label = "Semua",
+                        isSelected = activeFilter == FilterStatus.SEMUA,
+                        onClick = { activeFilter = FilterStatus.SEMUA }
+                    )
+                    FilterChipItem(
+                        label = "Buka",
+                        isSelected = activeFilter == FilterStatus.BUKA,
+                        selectedColor = Color(0xFF16A34A),
+                        onClick = { activeFilter = FilterStatus.BUKA }
+                    )
+                    FilterChipItem(
+                        label = "Tutup",
+                        isSelected = activeFilter == FilterStatus.TUTUP,
+                        selectedColor = Color(0xFFE53935),
+                        onClick = { activeFilter = FilterStatus.TUTUP }
+                    )
+                }
+            }
+
+            // Header jumlah hasil
             item {
                 Text(
-                    text = "Daftar Warung",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    text = if (searchQuery.isEmpty() && activeFilter == FilterStatus.SEMUA)
+                        "Daftar Warung"
+                    else
+                        "${filteredWarungs.size} warung ditemukan",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(bottom = 2.dp)
                 )
             }
-            items(warungs) { warung ->
-                WarungCard(
-                    warung = warung,
-                    onClick = {
-                        navController.navigate(
-                            Screen.MenuMahasiswaScreen.createRoute(warung.userId)
+
+            // Hasil daftar warung
+            if (filteredWarungs.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (searchQuery.isNotEmpty())
+                                "Warung \"$searchQuery\" tidak ditemukan"
+                            else
+                                "Tidak ada warung dengan status ini",
+                            color = Color.Gray,
+                            fontSize = 14.sp
                         )
                     }
-                )
+                }
+            } else {
+                items(filteredWarungs) { warung ->
+                    WarungCard(
+                        warung = warung,
+                        onClick = {
+                            navController.navigate(
+                                Screen.MenuMahasiswaScreen.createRoute(warung.userId)
+                            )
+                        }
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+fun FilterChipItem(
+    label: String,
+    isSelected: Boolean,
+    selectedColor: Color = DormRed,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                if (isSelected) selectedColor
+                else Color(0xFFE8E8E8)
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = label,
+            color = if (isSelected) Color.White else Color.Black,
+            fontSize = 14.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+        )
     }
 }
 
@@ -156,10 +282,7 @@ fun WarungCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(width = 100.dp, height = 100.dp)
-            ) {
+            Box(modifier = Modifier.size(width = 100.dp, height = 100.dp)) {
                 if (warung.fotoMenu.isNotEmpty()) {
                     AsyncImage(
                         model = warung.fotoMenu,
@@ -227,38 +350,43 @@ fun WarungCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = if (isOpen) Color(0xFF16A34A) else Color(0xFFE53935).copy(alpha = 0.12f)
+                    // Badge BUKA / TUTUP
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(
+                                if (isOpen) Color(0xFF16A34A)
+                                else Color(0xFFE53935).copy(alpha = 0.12f)
+                            )
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
                             text = if (isOpen) "BUKA" else "TUTUP",
                             color = if (isOpen) Color.White else Color(0xFFE53935),
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
+                    // Tombol WhatsApp
                     if (warung.phone.isNotEmpty()) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFF25D366),
-                            modifier = Modifier.clickable {
-                                val formatted = warung.phone.trim().let {
-                                    if (it.startsWith("0")) "+62" + it.drop(1) else it
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF25D366))
+                                .clickable {
+                                    val formatted = warung.phone.trim().let {
+                                        if (it.startsWith("0")) "+62" + it.drop(1) else it
+                                    }
+                                    val uri = "https://wa.me/$formatted".toUri()
+                                    val intent = android.content.Intent(
+                                        android.content.Intent.ACTION_VIEW, uri
+                                    )
+                                    context.startActivity(intent)
                                 }
-                                val uri = "https://wa.me/$formatted".toUri()
-                                val intent = android.content.Intent(
-                                    android.content.Intent.ACTION_VIEW, uri
-                                )
-                                context.startActivity(intent)
-                            }
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Outlined.Phone,
                                     contentDescription = null,
