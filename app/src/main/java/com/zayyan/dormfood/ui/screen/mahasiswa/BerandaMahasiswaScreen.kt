@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -144,69 +145,64 @@ fun WarungCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
             .clickable(enabled = isOpen) { onClick() },
-        shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column {
-
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(170.dp)
+                    .size(width = 100.dp, height = 100.dp)
             ) {
-
                 if (warung.fotoMenu.isNotEmpty()) {
                     AsyncImage(
                         model = warung.fotoMenu,
                         contentDescription = warung.namaWarung,
                         modifier = Modifier
                             .fillMaxSize()
+                            .clip(RoundedCornerShape(12.dp))
                             .clickable { showImagePreview = true },
                         contentScale = ContentScale.Crop,
-                        alpha = if (isOpen) 1f else 0.35f
+                        alpha = if (isOpen) 1f else 0.4f
                     )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.15f))
-                )
-
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = if (isOpen) Color(0xFF16A34A) else Color(0xFFE53935),
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = if (isOpen) "BUKA" else "TUTUP",
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
-                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFF0F0F0)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.LocationOn,
+                            contentDescription = null,
+                            tint = Color.LightGray,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
 
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
+            Spacer(modifier = Modifier.width(12.dp))
 
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = warung.namaWarung,
-                    fontSize = 18.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (isOpen) Color.Black else Color.Gray,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
 
                 if (warung.alamatWarung.isNotEmpty()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -214,12 +210,12 @@ fun WarungCard(
                             imageVector = Icons.Outlined.LocationOn,
                             contentDescription = null,
                             tint = DormRed,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(13.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(3.dp))
                         Text(
                             text = warung.alamatWarung,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             color = Color.Gray,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -227,14 +223,28 @@ fun WarungCard(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                if (warung.phone.isNotEmpty()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color(0xFF25D366).copy(alpha = 0.1f),
-                        modifier = Modifier
-                            .clickable {
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isOpen) Color(0xFF16A34A) else Color(0xFFE53935).copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = if (isOpen) "BUKA" else "TUTUP",
+                            color = if (isOpen) Color.White else Color(0xFFE53935),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    if (warung.phone.isNotEmpty()) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFF25D366),
+                            modifier = Modifier.clickable {
                                 val formatted = warung.phone.trim().let {
                                     if (it.startsWith("0")) "+62" + it.drop(1) else it
                                 }
@@ -244,24 +254,25 @@ fun WarungCard(
                                 )
                                 context.startActivity(intent)
                             }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Phone,
-                                contentDescription = null,
-                                tint = Color(0xFF25D366),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Chat WhatsApp",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF25D366)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Phone,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = warung.phone,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
                 }
