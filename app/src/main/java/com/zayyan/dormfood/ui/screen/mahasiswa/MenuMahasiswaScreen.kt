@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,6 +44,7 @@ fun MenuMahasiswa(
     LaunchedEffect(userId) {
         menuViewModel.loadWarungDetail(userId)
     }
+
     Scaffold(
         containerColor = Background,
         topBar = {
@@ -109,6 +111,15 @@ fun MenuMahasiswaContent(
     val menuList by menuViewModel.menuListByWarung.collectAsState()
     var showMenuPreview by remember { mutableStateOf(false) }
     var showQrPreview by remember { mutableStateOf(false) }
+
+    val quantities = remember { mutableStateMapOf<String, Int>() }
+
+    val makanan = menuList.filter { it.tipe.contains("makanan", ignoreCase = true) }
+    val minuman = menuList.filter { it.tipe.contains("minuman", ignoreCase = true) }
+    val lainnya = menuList.filter {
+        !it.tipe.contains("makanan", ignoreCase = true) &&
+                !it.tipe.contains("minuman", ignoreCase = true)
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -180,15 +191,6 @@ fun MenuMahasiswaContent(
             }
         }
 
-        item {
-            Text(
-                text = "Daftar Menu",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
-
         if (menuList.isEmpty()) {
             item {
                 Box(
@@ -204,9 +206,59 @@ fun MenuMahasiswaContent(
                     )
                 }
             }
-        } else {
-            items(menuList) { menu ->
-                MenuItemCard(menu = menu)
+        }
+
+        if (makanan.isNotEmpty()) {
+            item {
+                MenuSectionHeader(title = "🍽️ Makanan")
+            }
+            items(makanan) { menu ->
+                val key = menu.namaMenu
+                MenuItemCard(
+                    menu = menu,
+                    quantity = quantities[key] ?: 0,
+                    onAdd = { quantities[key] = (quantities[key] ?: 0) + 1 },
+                    onRemove = {
+                        val current = quantities[key] ?: 0
+                        if (current > 0) quantities[key] = current - 1
+                    }
+                )
+            }
+        }
+
+        if (minuman.isNotEmpty()) {
+            item {
+                MenuSectionHeader(title = "🥤 Minuman")
+            }
+            items(minuman) { menu ->
+                val key = menu.namaMenu
+                MenuItemCard(
+                    menu = menu,
+                    quantity = quantities[key] ?: 0,
+                    onAdd = { quantities[key] = (quantities[key] ?: 0) + 1 },
+                    onRemove = {
+                        val current = quantities[key] ?: 0
+                        if (current > 0) quantities[key] = current - 1
+                    }
+                )
+            }
+        }
+
+        if (lainnya.isNotEmpty()) {
+            item {
+                MenuSectionHeader(title = "🛒 Lainnya")
+            }
+            items(lainnya) { menu ->
+                val key = menu.namaMenu
+                MenuItemCard(
+                    menu = menu,
+                    quantity = quantities[key] ?: 0,
+                    onAdd = { quantities[key] = (quantities[key] ?: 0) + 1 },
+                    onRemove = {
+                        val current = quantities[key] ?: 0
+                        if (current > 0) quantities[key] = current - 1
+                    }
+                )
             }
         }
     }
@@ -225,6 +277,16 @@ fun MenuMahasiswaContent(
             onDismiss = { showQrPreview = false }
         )
     }
+}
+
+@Composable
+fun MenuSectionHeader(title: String) {
+    Text(
+        text = title,
+        fontSize = 17.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
 }
 
 @Composable
@@ -300,7 +362,12 @@ fun MediaCard(
 }
 
 @Composable
-fun MenuItemCard(menu: MenuItem) {
+fun MenuItemCard(
+    menu: MenuItem,
+    quantity: Int,
+    onAdd: () -> Unit,
+    onRemove: () -> Unit
+) {
     val formattedHarga = NumberFormat.getCurrencyInstance(Locale("id", "ID")).format(menu.harga)
 
     Card(
@@ -327,15 +394,19 @@ fun MenuItemCard(menu: MenuItem) {
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
-            }
-            Column(horizontalAlignment = Alignment.End) {
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = formattedHarga,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = DormRed
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Surface(
                     shape = RoundedCornerShape(6.dp),
                     color = if (menu.ketersediaan) Color(0xFF4CAF50).copy(alpha = 0.1f)
@@ -348,6 +419,55 @@ fun MenuItemCard(menu: MenuItem) {
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
+                }
+
+                if (menu.ketersediaan) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        FilledIconButton(
+                            onClick = onRemove,
+                            modifier = Modifier.size(30.dp),
+                            enabled = quantity > 0,
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = if (quantity > 0) DormRed else Color.Gray.copy(alpha = 0.25f),
+                                disabledContainerColor = Color.Gray.copy(alpha = 0.25f)
+                            )
+                        ) {
+                            Text(
+                                text = "−",
+                                fontSize = 18.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 18.sp
+                            )
+                        }
+
+                        Text(
+                            text = quantity.toString(),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.widthIn(min = 24.dp)
+                        )
+
+                        FilledIconButton(
+                            onClick = onAdd,
+                            modifier = Modifier.size(30.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = DormRed
+                            )
+                        ) {
+                            Text(
+                                text = "+",
+                                fontSize = 18.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -118,7 +118,6 @@ fun BerandaMahasiswaContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Search Bar
             item {
                 OutlinedTextField(
                     value = searchQuery,
@@ -157,7 +156,6 @@ fun BerandaMahasiswaContent(
                 )
             }
 
-            // Filter Chips: Semua / Buka / Tutup
             item {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -183,7 +181,6 @@ fun BerandaMahasiswaContent(
                 }
             }
 
-            // Header jumlah hasil
             item {
                 Text(
                     text = if (searchQuery.isEmpty() && activeFilter == FilterStatus.SEMUA)
@@ -197,7 +194,6 @@ fun BerandaMahasiswaContent(
                 )
             }
 
-            // Hasil daftar warung
             if (filteredWarungs.isEmpty()) {
                 item {
                     Box(
@@ -350,7 +346,6 @@ fun WarungCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Badge BUKA / TUTUP
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
@@ -368,7 +363,6 @@ fun WarungCard(
                         )
                     }
 
-                    // Tombol WhatsApp
                     if (warung.phone.isNotEmpty()) {
                         Box(
                             modifier = Modifier
