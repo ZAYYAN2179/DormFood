@@ -26,9 +26,11 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.model.MenuViewModel
 import com.zayyan.dormfood.ui.model.MenuWarungDetail
 import com.zayyan.dormfood.ui.model.MenuItem
+import com.zayyan.dormfood.ui.model.PesananViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog
 import com.zayyan.dormfood.ui.theme.Background
@@ -41,7 +43,8 @@ import java.util.Locale
 fun MenuMahasiswa(
     navController: NavHostController,
     userId: String,
-    menuViewModel: MenuViewModel = viewModel()
+    menuViewModel: MenuViewModel = viewModel(),
+    pesananViewModel: PesananViewModel = viewModel()
 ) {
     val detail by menuViewModel.warungDetail.collectAsState()
     val isLoading by menuViewModel.isLoadingDetail.collectAsState()
@@ -101,7 +104,8 @@ fun MenuMahasiswa(
                     paddingValues = paddingValues,
                     detail = data,
                     menuViewModel = menuViewModel,
-                    navController = navController
+                    navController = navController,
+                    pesananViewModel = pesananViewModel
                 )
             }
         }
@@ -114,7 +118,8 @@ fun MenuMahasiswaContent(
     paddingValues: PaddingValues,
     detail: MenuWarungDetail,
     menuViewModel: MenuViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    pesananViewModel: PesananViewModel
 ) {
     val menuList by menuViewModel.menuListByWarung.collectAsState()
     var showMenuPreview by remember { mutableStateOf(false) }
@@ -360,7 +365,24 @@ fun MenuMahasiswaContent(
                         )
                     }
                     Button(
-                        onClick = { navController.navigate(Screen.PembayaranMahasiswaScreen.route) },
+                        onClick = {
+                            val items = menuList
+                                .filter { (quantities[it.namaMenu] ?: 0) > 0 }
+                                .map {
+                                    ItemPesanan(
+                                        namaMenu = it.namaMenu,
+                                        harga = it.harga,
+                                        quantity = quantities[it.namaMenu] ?: 0
+                                    )
+                                }
+                            pesananViewModel.buatPesanan(
+                                items = items,
+                                total = totalHarga,
+                                fotoQr = detail.fotoQr,
+                                namaWarung = detail.namaWarung
+                            )
+                            navController.navigate(Screen.PembayaranMahasiswaScreen.route)
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
