@@ -360,7 +360,7 @@ fun MenuMahasiswaContent(
                         )
                     }
                     Button(
-                        onClick = { navController.navigate(Screen.PembayaranScreen.route) },
+                        onClick = { navController.navigate(Screen.PembayaranMahasiswaScreen.route) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)

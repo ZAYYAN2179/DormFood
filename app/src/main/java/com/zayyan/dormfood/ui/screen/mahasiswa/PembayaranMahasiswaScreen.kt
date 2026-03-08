@@ -20,7 +20,7 @@ import com.zayyan.dormfood.ui.theme.DormRed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PembayaranScreen(navController: NavHostController) {
+fun PembayaranMahasiswaScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -50,10 +50,10 @@ fun PembayaranScreen(navController: NavHostController) {
         },
         containerColor = Background
     ) { paddingValues ->
-        PembayaranScreenContent(paddingValues = paddingValues)
+        PembayaranMahasiswaScreenContent(paddingValues = paddingValues)
     }
 }
 
 @Composable
-fun PembayaranScreenContent(paddingValues: PaddingValues) {
+fun PembayaranMahasiswaScreenContent(paddingValues: PaddingValues) {
 }
