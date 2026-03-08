@@ -2,6 +2,7 @@ package com.zayyan.dormfood.ui.screen.mahasiswa
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
@@ -114,6 +116,7 @@ fun MenuMahasiswaContent(
     val menuList by menuViewModel.menuListByWarung.collectAsState()
     var showMenuPreview by remember { mutableStateOf(false) }
     val quantities = remember { mutableStateMapOf<String, Int>() }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     val makanan = menuList.filter { it.tipe.contains("makanan", ignoreCase = true) }
     val minuman = menuList.filter { it.tipe.contains("minuman", ignoreCase = true) }
@@ -231,15 +234,24 @@ fun MenuMahasiswaContent(
                                 Text("Lihat Ulasan", fontSize = 12.sp, color = Color.White)
                             }
                             if (detail.phone.isNotEmpty()) {
-                                Surface(
-                                    shape = RoundedCornerShape(8.dp),
-                                    color = Color(0xFF16A34A),
-                                    modifier = Modifier.fillMaxWidth()
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFF4CAF50))
+                                        .clickable {
+                                            val formatted = detail.phone.trim().let {
+                                                if (it.startsWith("0")) "+62" + it.drop(1) else it
+                                            }
+                                            val uri = "https://wa.me/$formatted".toUri()
+                                            val intent = android.content.Intent(
+                                                android.content.Intent.ACTION_VIEW, uri
+                                            )
+                                            context.startActivity(intent)
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Outlined.Phone,
                                             contentDescription = null,
