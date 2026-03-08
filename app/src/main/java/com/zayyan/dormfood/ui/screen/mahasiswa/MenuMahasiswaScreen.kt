@@ -29,6 +29,7 @@ import coil.compose.AsyncImage
 import com.zayyan.dormfood.ui.model.MenuViewModel
 import com.zayyan.dormfood.ui.model.MenuWarungDetail
 import com.zayyan.dormfood.ui.model.MenuItem
+import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
@@ -99,7 +100,8 @@ fun MenuMahasiswa(
                 MenuMahasiswaContent(
                     paddingValues = paddingValues,
                     detail = data,
-                    menuViewModel = menuViewModel
+                    menuViewModel = menuViewModel,
+                    navController = navController
                 )
             }
         }
@@ -111,7 +113,8 @@ fun MenuMahasiswa(
 fun MenuMahasiswaContent(
     paddingValues: PaddingValues,
     detail: MenuWarungDetail,
-    menuViewModel: MenuViewModel
+    menuViewModel: MenuViewModel,
+    navController: NavHostController
 ) {
     val menuList by menuViewModel.menuListByWarung.collectAsState()
     var showMenuPreview by remember { mutableStateOf(false) }
@@ -357,7 +360,7 @@ fun MenuMahasiswaContent(
                         )
                     }
                     Button(
-                        onClick = { },
+                        onClick = { navController.navigate(Screen.PembayaranScreen.route) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)

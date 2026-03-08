@@ -13,6 +13,7 @@ import com.zayyan.dormfood.ui.screen.SplashScreen
 import com.zayyan.dormfood.ui.screen.UserRoleScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.MenuMahasiswa
+import com.zayyan.dormfood.ui.screen.mahasiswa.PembayaranScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.PesananMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.ProfilMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
@@ -69,6 +70,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString("userId") ?: ""
             MenuMahasiswa(navController = navController, userId = userId)
+        }
+        composable(route = Screen.PembayaranScreen.route) {
+            PembayaranScreen(navController)
         }
     }
 }
