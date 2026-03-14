@@ -370,8 +370,9 @@ fun PembayaranMahasiswaScreenContent(
                     confirmButton = {
                         TextButton(onClick = {
                             showSuccessDialog = false
+                            pesananViewModel.resetPesananState()  // ← reset state pembayaran
                             navController.navigate(Screen.PesananMahasiswaScreen.route) {
-                                popUpTo(Screen.PesananMahasiswaScreen.route) { inclusive = true }
+                                popUpTo(Screen.BerandaMahasiswaScreen.route)
                                 launchSingleTop = true
                             }
                         }) {

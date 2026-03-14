@@ -35,7 +35,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             LandingPage(navController)
         }
         composable(route = Screen.LoginScreen.route) {
-            LoginScreen(navController)
+            LoginScreen(
+                navController = navController,
+                pesananViewModel = pesananViewModel
+            )
         }
         composable(route = Screen.RegisterScreen.route) {
             RegisterScreen(navController)

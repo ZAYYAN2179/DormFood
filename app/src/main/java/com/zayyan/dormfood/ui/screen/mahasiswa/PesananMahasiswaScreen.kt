@@ -61,15 +61,15 @@ fun PesananMahasiswaContent(
     paddingValues: PaddingValues,
     pesananViewModel: PesananViewModel
 ) {
-    LaunchedEffect(Unit) {
-        pesananViewModel.loadOrders()
-    }
-
     val orders by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
 
     val aktif = orders.filter {
-        it.statusPesanan in listOf("Menunggu Konfirmasi", "Dibuat", "Diantar")
+        it.statusPesanan.lowercase() in listOf(
+            "menunggu konfirmasi",
+            "dibuat",
+            "diantar"
+        )
     }
     val selesai = orders.filter { it.statusPesanan == "Selesai" }
 

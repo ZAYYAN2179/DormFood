@@ -46,6 +46,7 @@ import androidx.navigation.NavHostController
 import com.zayyan.dormfood.R
 import com.zayyan.dormfood.ui.model.AuthState
 import com.zayyan.dormfood.ui.model.AuthViewModel
+import com.zayyan.dormfood.ui.model.PesananViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
@@ -53,7 +54,8 @@ import com.zayyan.dormfood.ui.theme.DormRed
 @Composable
 fun LoginScreen(
     navController: NavHostController,
-    viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    pesananViewModel: PesananViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -70,6 +72,7 @@ fun LoginScreen(
                     "warung" -> Screen.ProfilWarungScreen.route
                     else -> Screen.BerandaMahasiswaScreen.route
                 }
+                pesananViewModel.clearAndReload()
 
                 navController.navigate(destination) {
                     popUpTo(Screen.LoginScreen.route) { inclusive = true }

@@ -68,7 +68,6 @@ class PesananViewModel : ViewModel() {
     val isLoadingOrders: StateFlow<Boolean> = _isLoadingOrders
 
     private var ordersListener: ListenerRegistration? = null
-
     private val warungNamesCache = mutableMapOf<String, String>()
 
     init {
@@ -81,7 +80,7 @@ class PesananViewModel : ViewModel() {
             "DIBUAT"  -> "Dibuat"
             "DIANTAR" -> "Diantar"
             "SELESAI" -> "Selesai"
-            else      -> raw
+            else      -> raw.trim()
         }
     }
 
@@ -178,7 +177,10 @@ class PesananViewModel : ViewModel() {
 
     fun loadOrders() {
         val currentUser = auth.currentUser ?: return
-        _isLoadingOrders.value = true
+
+        if (ordersListener == null) {
+            _isLoadingOrders.value = true
+        }
 
         ordersListener?.remove()
 
@@ -269,6 +271,24 @@ class PesananViewModel : ViewModel() {
                     }
                 }
             }
+    }
+
+    // Dipanggil saat logout agar listener bersih dan data tidak bocor ke user lain
+    fun clearAndReload() {
+        ordersListener?.remove()
+        ordersListener = null
+        warungNamesCache.clear()
+        _orders.value = emptyList()
+        _isLoadingOrders.value = false
+        loadOrders()
+    }
+
+    fun resetPesananState() {
+        _itemPesanan.value = emptyList()
+        _totalHarga.value = 0L
+        _fotoQr.value = ""
+        _namaWarung.value = ""
+        currentWarungId = ""
     }
 
     override fun onCleared() {
