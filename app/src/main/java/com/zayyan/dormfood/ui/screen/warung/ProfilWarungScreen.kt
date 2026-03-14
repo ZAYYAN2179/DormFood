@@ -49,6 +49,10 @@ fun ProfilWarung(
     authViewModel: AuthViewModel = viewModel(),
     warungViewModel: WarungViewModel = viewModel()
 ) {
+    LaunchedEffect(Unit) {
+        warungViewModel.loadWarungData()
+    }
+
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val isLoading by warungViewModel.isLoading.collectAsState()
 

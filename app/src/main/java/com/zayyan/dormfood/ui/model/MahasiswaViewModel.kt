@@ -26,14 +26,11 @@ class MahasiswaViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    init {
-        fetchMahasiswaData()
-    }
-
-    private fun fetchMahasiswaData() {
+    fun fetchMahasiswaData() {
         val uid = auth.currentUser?.uid ?: return
-        _isLoading.value = true
+        if (_mahasiswaData.value != null) return
 
+        _isLoading.value = true
         firestore.collection("users")
             .document(uid)
             .get()
@@ -50,9 +47,7 @@ class MahasiswaViewModel : ViewModel() {
                 }
                 _isLoading.value = false
             }
-            .addOnFailureListener {
-                _isLoading.value = false
-            }
+            .addOnFailureListener { _isLoading.value = false }
     }
 
     fun updateName(

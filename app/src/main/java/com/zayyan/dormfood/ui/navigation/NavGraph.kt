@@ -8,7 +8,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.zayyan.dormfood.ui.model.MahasiswaViewModel
+import com.zayyan.dormfood.ui.model.MenuViewModel
 import com.zayyan.dormfood.ui.model.PesananViewModel
+import com.zayyan.dormfood.ui.model.WarungViewModel
 import com.zayyan.dormfood.ui.screen.LandingPage
 import com.zayyan.dormfood.ui.screen.LoginScreen
 import com.zayyan.dormfood.ui.screen.SplashScreen
@@ -27,6 +30,10 @@ import com.zayyan.dormfood.ui.screen.warung.ProfilWarung
 @Composable
 fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
     val pesananViewModel: PesananViewModel = viewModel()
+    val warungViewModel: WarungViewModel = viewModel()
+    val mahasiswaViewModel: MahasiswaViewModel = viewModel()
+    val menuViewModel: MenuViewModel = viewModel()
+
     NavHost(
         navController = navController,
         startDestination = Screen.SplashScreen.route
@@ -44,7 +51,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             RegisterScreen(navController)
         }
         composable(route = Screen.BerandaMahasiswaScreen.route) {
-            BerandaMahasiswa(navController)
+            BerandaMahasiswa(
+                navController = navController,
+                warungViewModel = warungViewModel
+            )
         }
         composable(route = Screen.PesananMahasiswaScreen.route) {
             PesananMahasiswa(
@@ -53,7 +63,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             )
         }
         composable(route = Screen.ProfilMahasiswaScreen.route) {
-            ProfilMahasiswa(navController)
+            ProfilMahasiswa(
+                navController = navController,
+                mahasiswaViewModel = mahasiswaViewModel
+            )
         }
         composable(route = Screen.BerandaWarungScreen.route) {
             BerandaWarung(navController)
@@ -65,7 +78,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             PesananWarung(navController)
         }
         composable(route = Screen.ProfilWarungScreen.route) {
-            ProfilWarung(navController)
+            ProfilWarung(
+                navController = navController,
+                warungViewModel = warungViewModel
+            )
         }
         composable(route = Screen.UserRoleScreen.route) {
             UserRoleScreen(navController)
@@ -81,6 +97,7 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             MenuMahasiswa(
                 navController = navController,
                 userId = userId,
+                menuViewModel = menuViewModel,
                 pesananViewModel = pesananViewModel
             )
         }

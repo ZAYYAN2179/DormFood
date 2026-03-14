@@ -42,11 +42,11 @@ fun BerandaMahasiswa(
     navController: NavHostController,
     warungViewModel: WarungViewModel = viewModel()
 ) {
-    val currentRoute = navController.currentBackStackEntry?.destination?.route
-
     LaunchedEffect(Unit) {
         warungViewModel.loadAllWarungs()
     }
+
+    val currentRoute = navController.currentBackStackEntry?.destination?.route
 
     Scaffold(
         topBar = {

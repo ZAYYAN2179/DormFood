@@ -11,6 +11,9 @@ class MenuViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+    private val warungDetailCache = mutableMapOf<String, MenuWarungDetail>()
+    private val menuByWarungCache = mutableMapOf<String, List<MenuItem>>()
+
     private val _menuList = MutableStateFlow<List<MenuItem>>(emptyList())
     val menuList: StateFlow<List<MenuItem>> = _menuList
 
@@ -65,6 +68,15 @@ class MenuViewModel : ViewModel() {
     }
 
     fun loadWarungDetail(userId: String) {
+        val cachedDetail = warungDetailCache[userId]
+        val cachedMenu = menuByWarungCache[userId]
+
+        if (cachedDetail != null && cachedMenu != null) {
+            _warungDetail.value = cachedDetail
+            _menuListByWarung.value = cachedMenu
+            return
+        }
+
         _isLoadingDetail.value = true
 
         firestore.collection("users").document(userId).get()
@@ -74,13 +86,15 @@ class MenuViewModel : ViewModel() {
 
                 firestore.collection("warungs").document(userId).get()
                     .addOnSuccessListener { warungDoc ->
-                        _warungDetail.value = MenuWarungDetail(
+                        val detail = MenuWarungDetail(
                             namaWarung = nama,
                             alamatWarung = warungDoc.getString("alamatWarung") ?: "",
                             phone = phone,
                             fotoMenu = warungDoc.getString("fotoMenu") ?: "",
                             fotoQr = warungDoc.getString("fotoQr") ?: ""
                         )
+                        _warungDetail.value = detail
+                        warungDetailCache[userId] = detail  // ← simpan ke cache
 
                         firestore.collection("menus")
                             .whereEqualTo("warungId", userId)
@@ -99,6 +113,7 @@ class MenuViewModel : ViewModel() {
                                     } catch (_: Exception) { null }
                                 }.sortedBy { it.namaMenu.lowercase() }
                                 _menuListByWarung.value = menus
+                                menuByWarungCache[userId] = menus  // ← simpan ke cache
                                 _isLoadingDetail.value = false
                             }
                             .addOnFailureListener { _isLoadingDetail.value = false }
@@ -106,6 +121,12 @@ class MenuViewModel : ViewModel() {
                     .addOnFailureListener { _isLoadingDetail.value = false }
             }
             .addOnFailureListener { _isLoadingDetail.value = false }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        warungDetailCache.clear()
+        menuByWarungCache.clear()
     }
 
     fun addMenu(

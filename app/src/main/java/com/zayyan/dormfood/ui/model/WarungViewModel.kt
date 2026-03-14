@@ -30,12 +30,10 @@ class WarungViewModel : ViewModel() {
     private val _isLoadingList = MutableStateFlow(false)
     val isLoadingList: StateFlow<Boolean> = _isLoadingList
 
-    init {
-        loadWarungData()
-    }
-
     fun loadWarungData() {
         val currentUser = auth.currentUser ?: return
+        if (_warungData.value != null) return
+
         _isLoading.value = true
 
         firestore.collection("users")
@@ -93,6 +91,7 @@ class WarungViewModel : ViewModel() {
     }
 
     fun loadAllWarungs() {
+        if (_warungList.value.isNotEmpty()) return
         _isLoadingList.value = true
 
         firestore.collection("users")
@@ -221,9 +220,11 @@ class WarungViewModel : ViewModel() {
                             _isLoading.value = false
                         }
                 }
+
                 override fun onError(requestId: String, error: ErrorInfo) {
                     _isLoading.value = false
                 }
+
                 override fun onReschedule(requestId: String, error: ErrorInfo) {}
             })
             .dispatch()
@@ -249,9 +250,11 @@ class WarungViewModel : ViewModel() {
                             _isLoading.value = false
                         }
                 }
+
                 override fun onError(requestId: String, error: ErrorInfo) {
                     _isLoading.value = false
                 }
+
                 override fun onReschedule(requestId: String, error: ErrorInfo) {}
             })
             .dispatch()

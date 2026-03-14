@@ -40,6 +40,11 @@ fun ProfilMahasiswa(
     authViewModel: AuthViewModel = viewModel(),
     mahasiswaViewModel: MahasiswaViewModel = viewModel()
 ) {
+
+    LaunchedEffect(Unit) {
+        mahasiswaViewModel.fetchMahasiswaData()
+    }
+
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val isLoading by mahasiswaViewModel.isLoading.collectAsState()
 

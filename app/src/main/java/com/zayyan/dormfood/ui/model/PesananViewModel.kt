@@ -178,9 +178,9 @@ class PesananViewModel : ViewModel() {
     fun loadOrders() {
         val currentUser = auth.currentUser ?: return
 
-        if (ordersListener == null) {
-            _isLoadingOrders.value = true
-        }
+        if (ordersListener != null) return
+
+        _isLoadingOrders.value = true
 
         ordersListener?.remove()
 
