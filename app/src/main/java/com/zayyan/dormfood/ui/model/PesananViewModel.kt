@@ -14,7 +14,6 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-// ── Models ──
 data class ItemPesanan(
     val namaMenu: String,
     val harga: Int,
@@ -41,12 +40,10 @@ enum class StatusPesanan(val label: String) {
     SELESAI("Selesai")
 }
 
-// ── ViewModel ──
 class PesananViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
-    // ── State untuk membuat pesanan baru ──
     private val _itemPesanan = MutableStateFlow<List<ItemPesanan>>(emptyList())
     val itemPesanan: StateFlow<List<ItemPesanan>> = _itemPesanan
 
@@ -64,7 +61,6 @@ class PesananViewModel : ViewModel() {
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
 
-    // ── State untuk daftar order user ──
     private val _orders = MutableStateFlow<List<OrderItem>>(emptyList())
     val orders: StateFlow<List<OrderItem>> = _orders
 
@@ -73,7 +69,6 @@ class PesananViewModel : ViewModel() {
 
     private var ordersListener: ListenerRegistration? = null
 
-    // Cache nama warung agar tidak fetch ulang setiap snapshot
     private val warungNamesCache = mutableMapOf<String, String>()
 
     init {
@@ -89,10 +84,6 @@ class PesananViewModel : ViewModel() {
             else      -> raw
         }
     }
-
-    // ──────────────────────────────────────
-    // Membuat & mengirim pesanan baru
-    // ──────────────────────────────────────
 
     fun buatPesanan(
         items: List<ItemPesanan>,
@@ -171,7 +162,7 @@ class PesananViewModel : ViewModel() {
         val orderData = hashMapOf(
             "userId" to userId,
             "warungId" to currentWarungId,
-            "namaWarung" to _namaWarung.value,  // ← simpan namaWarung langsung
+            "namaWarung" to _namaWarung.value,
             "items" to itemsMap,
             "totalHarga" to _totalHarga.value,
             "statusPesanan" to StatusPesanan.MENUNGGU_KONFIRMASI.label,
@@ -184,10 +175,6 @@ class PesananViewModel : ViewModel() {
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onError(e.message ?: "Gagal menyimpan pesanan") }
     }
-
-    // ──────────────────────────────────────
-    // Memuat daftar order milik user
-    // ──────────────────────────────────────
 
     fun loadOrders() {
         val currentUser = auth.currentUser ?: return
@@ -219,8 +206,6 @@ class PesananViewModel : ViewModel() {
                             orderId = doc.id,
                             userId = doc.getString("userId") ?: "",
                             warungId = doc.getString("warungId") ?: "",
-                            // Baca namaWarung dari dokumen order langsung
-                            // Fallback ke cache jika belum ada field namaWarung (order lama)
                             namaWarung = doc.getString("namaWarung")
                                 ?: warungNamesCache[doc.getString("warungId") ?: ""]
                                 ?: "",
@@ -235,15 +220,12 @@ class PesananViewModel : ViewModel() {
                     } catch (_: Exception) { null }
                 } ?: emptyList()
 
-                // Untuk order lama yang belum punya namaWarung, resolve dari users
                 val needResolve = orderList.filter { it.namaWarung.isEmpty() }
 
                 if (needResolve.isEmpty()) {
-                    // Semua sudah punya nama → langsung update
                     _orders.value = orderList
                     _isLoadingOrders.value = false
                 } else {
-                    // Resolve hanya order lama yang belum punya namaWarung
                     val uniqueIds = needResolve.map { it.warungId }.distinct()
                         .filter { !warungNamesCache.containsKey(it) }
 

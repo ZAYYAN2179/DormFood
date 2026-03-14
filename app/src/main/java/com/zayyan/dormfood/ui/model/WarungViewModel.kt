@@ -32,12 +32,10 @@ class WarungViewModel : ViewModel() {
 
     init {
         loadWarungData()
-        loadWarungProfile()
     }
 
     fun loadWarungData() {
         val currentUser = auth.currentUser ?: return
-
         _isLoading.value = true
 
         firestore.collection("users")
@@ -45,14 +43,20 @@ class WarungViewModel : ViewModel() {
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
+                    val role = document.getString("role") ?: ""
                     val data = WarungData(
                         uid = document.getString("uid") ?: "",
                         name = document.getString("name") ?: "",
                         email = document.getString("email") ?: "",
                         phone = document.getString("phone") ?: "",
-                        role = document.getString("role") ?: ""
+                        role = role
                     )
                     _warungData.value = data
+
+                    // Hanya load/buat profil warung jika role memang warung
+                    if (role == "warung") {
+                        loadWarungProfile()
+                    }
                 }
                 _isLoading.value = false
             }
@@ -78,7 +82,12 @@ class WarungViewModel : ViewModel() {
                     )
                     _warungProfile.value = data
                 } else {
-                    createWarungProfile()
+                    // Hanya buat profil warung baru jika role memang warung
+                    val role = _warungData.value?.role ?: ""
+                    if (role == "warung") {
+                        createWarungProfile()
+                    }
+                    // Jika bukan warung, tidak lakukan apa-apa
                 }
             }
     }

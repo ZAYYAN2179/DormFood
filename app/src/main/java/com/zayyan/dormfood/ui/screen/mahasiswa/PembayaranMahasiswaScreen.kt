@@ -56,6 +56,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.model.PesananViewModel
+import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import java.text.NumberFormat
@@ -361,7 +362,6 @@ fun PembayaranMahasiswaScreenContent(
                 }
             }
 
-// Tambah dialog sukses
             if (showSuccessDialog) {
                 AlertDialog(
                     onDismissRequest = {},
@@ -370,7 +370,10 @@ fun PembayaranMahasiswaScreenContent(
                     confirmButton = {
                         TextButton(onClick = {
                             showSuccessDialog = false
-                            navController.popBackStack()
+                            navController.navigate(Screen.PesananMahasiswaScreen.route) {
+                                popUpTo(Screen.PesananMahasiswaScreen.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }) {
                             Text("OK")
                         }
@@ -378,7 +381,6 @@ fun PembayaranMahasiswaScreenContent(
                 )
             }
 
-// Tampilkan error jika ada
             errorMessage?.let { msg ->
                 AlertDialog(
                     onDismissRequest = { errorMessage = null },
