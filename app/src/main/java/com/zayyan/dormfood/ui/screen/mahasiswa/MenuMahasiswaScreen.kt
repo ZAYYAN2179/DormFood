@@ -105,7 +105,8 @@ fun MenuMahasiswa(
                     detail = data,
                     menuViewModel = menuViewModel,
                     navController = navController,
-                    pesananViewModel = pesananViewModel
+                    pesananViewModel = pesananViewModel,
+                    userId = userId
                 )
             }
         }
@@ -119,7 +120,8 @@ fun MenuMahasiswaContent(
     detail: MenuWarungDetail,
     menuViewModel: MenuViewModel,
     navController: NavHostController,
-    pesananViewModel: PesananViewModel
+    pesananViewModel: PesananViewModel,
+    userId: String
 ) {
     val menuList by menuViewModel.menuListByWarung.collectAsState()
     var showMenuPreview by remember { mutableStateOf(false) }
@@ -379,7 +381,8 @@ fun MenuMahasiswaContent(
                                 items = items,
                                 total = totalHarga,
                                 fotoQr = detail.fotoQr,
-                                namaWarung = detail.namaWarung
+                                namaWarung = detail.namaWarung,
+                                warungId = userId
                             )
                             navController.navigate(Screen.PembayaranMahasiswaScreen.route)
                         },

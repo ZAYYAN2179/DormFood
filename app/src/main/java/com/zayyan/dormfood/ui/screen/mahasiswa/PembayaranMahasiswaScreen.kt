@@ -20,10 +20,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -95,7 +98,8 @@ fun PembayaranMahasiswaScreen(
     ) { paddingValues ->
         PembayaranMahasiswaScreenContent(
             paddingValues = paddingValues,
-            pesananViewModel = pesananViewModel
+            pesananViewModel = pesananViewModel,
+            navController = navController
         )
     }
 }
@@ -103,12 +107,16 @@ fun PembayaranMahasiswaScreen(
 @Composable
 fun PembayaranMahasiswaScreenContent(
     paddingValues: PaddingValues,
+    navController: NavHostController,
     pesananViewModel: PesananViewModel
 ) {
     val itemPesanan by pesananViewModel.itemPesanan.collectAsState()
     val totalHarga by pesananViewModel.totalHarga.collectAsState()
     val fotoQr by pesananViewModel.fotoQr.collectAsState()
     val namaWarung by pesananViewModel.namaWarung.collectAsState()
+    val isUploading by pesananViewModel.isUploading.collectAsState()
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var buktiUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
@@ -318,22 +326,67 @@ fun PembayaranMahasiswaScreenContent(
 
         item {
             Button(
-                onClick = { /* TODO: kirim pesanan */ },
+                onClick = {
+                    buktiUri?.let { uri ->
+                        pesananViewModel.uploadBuktiDanKirimPesanan(
+                            buktiUri = uri,
+                            onSuccess = { showSuccessDialog = true },
+                            onError = { err -> errorMessage = err }
+                        )
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                enabled = buktiUri != null,
+                enabled = buktiUri != null && !isUploading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF1A0A00),
                     disabledContainerColor = Color.Gray.copy(alpha = 0.3f)
                 ),
                 shape = RoundedCornerShape(50.dp)
             ) {
-                Text(
-                    text = "Kirim",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                if (isUploading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Kirim",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+
+// Tambah dialog sukses
+            if (showSuccessDialog) {
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = { Text("Pesanan Terkirim!") },
+                    text = { Text("Bukti pembayaran berhasil dikirim. Tunggu konfirmasi dari warung.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showSuccessDialog = false
+                            navController.popBackStack()
+                        }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
+
+// Tampilkan error jika ada
+            errorMessage?.let { msg ->
+                AlertDialog(
+                    onDismissRequest = { errorMessage = null },
+                    title = { Text("Gagal") },
+                    text = { Text(msg) },
+                    confirmButton = {
+                        TextButton(onClick = { errorMessage = null }) { Text("OK") }
+                    }
                 )
             }
         }
