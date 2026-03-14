@@ -5,37 +5,54 @@ import androidx.lifecycle.ViewModel
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+// ── Models ──
 data class ItemPesanan(
     val namaMenu: String,
     val harga: Int,
     val quantity: Int
 )
 
+data class OrderItem(
+    val orderId: String = "",
+    val userId: String = "",
+    val warungId: String = "",
+    val namaWarung: String = "",
+    val items: List<ItemPesanan> = emptyList(),
+    val totalHarga: Long = 0,
+    val statusPesanan: String = "",
+    val buktiPembayaranUrl: String = "",
+    val createdAt: Timestamp? = null
+)
+
+// Hanya MENUNGGU_KONFIRMASI yang dipakai di ViewModel
+// Status lain (Dibuat, Diantar, Selesai) diset oleh warung via Firestore
 enum class StatusPesanan(val label: String) {
-    BELUM_BAYAR("Belum Bayar"),
+    MENUNGGU_KONFIRMASI("Menunggu Konfirmasi"),
     DIBUAT("Dibuat"),
     DIANTAR("Diantar"),
     SELESAI("Selesai")
 }
 
+// ── ViewModel ──
 class PesananViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+    // ── State untuk membuat pesanan baru ──
     private val _itemPesanan = MutableStateFlow<List<ItemPesanan>>(emptyList())
     val itemPesanan: StateFlow<List<ItemPesanan>> = _itemPesanan
 
     private val _totalHarga = MutableStateFlow(0L)
     val totalHarga: StateFlow<Long> = _totalHarga
-
-    private val _status = MutableStateFlow(StatusPesanan.BELUM_BAYAR)
-    val status: StateFlow<StatusPesanan> = _status
 
     private val _fotoQr = MutableStateFlow("")
     val fotoQr: StateFlow<String> = _fotoQr
@@ -43,11 +60,28 @@ class PesananViewModel : ViewModel() {
     private val _namaWarung = MutableStateFlow("")
     val namaWarung: StateFlow<String> = _namaWarung
 
-    private val _warungId = MutableStateFlow("")
-    val warungId: StateFlow<String> = _warungId
+    // warungId hanya dipakai internal, tidak perlu di-expose
+    private var currentWarungId: String = ""
 
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
+
+    // ── State untuk daftar order user ──
+    private val _orders = MutableStateFlow<List<OrderItem>>(emptyList())
+    val orders: StateFlow<List<OrderItem>> = _orders
+
+    private val _isLoadingOrders = MutableStateFlow(false)
+    val isLoadingOrders: StateFlow<Boolean> = _isLoadingOrders
+
+    private var ordersListener: ListenerRegistration? = null
+
+    init {
+        loadOrders()
+    }
+
+    // ──────────────────────────────────────
+    // Membuat & mengirim pesanan baru
+    // ──────────────────────────────────────
 
     fun buatPesanan(
         items: List<ItemPesanan>,
@@ -60,12 +94,7 @@ class PesananViewModel : ViewModel() {
         _totalHarga.value = total
         _fotoQr.value = fotoQr
         _namaWarung.value = namaWarung
-        _warungId.value = warungId
-        _status.value = StatusPesanan.BELUM_BAYAR
-    }
-
-    fun updateStatus(status: StatusPesanan) {
-        _status.value = status
+        currentWarungId = warungId
     }
 
     fun uploadBuktiDanKirimPesanan(
@@ -120,7 +149,6 @@ class PesananViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        // Konversi ItemPesanan ke Map agar bisa disimpan di Firestore
         val itemsMap = _itemPesanan.value.map { item ->
             mapOf(
                 "namaMenu" to item.namaMenu,
@@ -131,22 +159,103 @@ class PesananViewModel : ViewModel() {
 
         val orderData = hashMapOf(
             "userId" to userId,
-            "warungId" to _warungId.value,
+            "warungId" to currentWarungId,
             "items" to itemsMap,
             "totalHarga" to _totalHarga.value,
-            "statusPesanan" to StatusPesanan.BELUM_BAYAR.label,
+            "statusPesanan" to StatusPesanan.MENUNGGU_KONFIRMASI.label,
             "buktiPembayaranUrl" to buktiPembayaranUrl,
             "createdAt" to FieldValue.serverTimestamp()
         )
 
-        // Firestore auto-generate orderId
         firestore.collection("orders")
             .add(orderData)
-            .addOnSuccessListener {
-                onSuccess()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onError(e.message ?: "Gagal menyimpan pesanan") }
+    }
+
+    // ──────────────────────────────────────
+    // Memuat daftar order milik user
+    // ──────────────────────────────────────
+
+    fun loadOrders() {
+        val currentUser = auth.currentUser ?: return
+        _isLoadingOrders.value = true
+
+        ordersListener?.remove()
+
+        ordersListener = firestore.collection("orders")
+            .whereEqualTo("userId", currentUser.uid)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    _isLoadingOrders.value = false
+                    return@addSnapshotListener
+                }
+
+                @Suppress("UNCHECKED_CAST")
+                val orderList = snapshot?.documents?.mapNotNull { doc ->
+                    try {
+                        val rawItems = doc.get("items") as? List<Map<String, Any>> ?: emptyList()
+                        val items = rawItems.map { map ->
+                            ItemPesanan(
+                                namaMenu = map["namaMenu"] as? String ?: "",
+                                harga = (map["harga"] as? Long)?.toInt() ?: 0,
+                                quantity = (map["quantity"] as? Long)?.toInt() ?: 0
+                            )
+                        }
+                        OrderItem(
+                            orderId = doc.id,
+                            userId = doc.getString("userId") ?: "",
+                            warungId = doc.getString("warungId") ?: "",
+                            items = items,
+                            totalHarga = doc.getLong("totalHarga") ?: 0,
+                            statusPesanan = doc.getString("statusPesanan") ?: "",
+                            buktiPembayaranUrl = doc.getString("buktiPembayaranUrl") ?: "",
+                            createdAt = doc.getTimestamp("createdAt")
+                        )
+                    } catch (_: Exception) { null }
+                } ?: emptyList()
+
+                if (orderList.isEmpty()) {
+                    _orders.value = emptyList()
+                    _isLoadingOrders.value = false
+                } else {
+                    resolveWarungNames(orderList)
+                    _isLoadingOrders.value = false
+                }
             }
-            .addOnFailureListener { e ->
-                onError(e.message ?: "Gagal menyimpan pesanan")
-            }
+    }
+
+    private fun resolveWarungNames(orderList: List<OrderItem>) {
+        val uniqueWarungIds = orderList.map { it.warungId }.distinct()
+        val warungNames = mutableMapOf<String, String>()
+        var resolved = 0
+
+        for (warungId in uniqueWarungIds) {
+            firestore.collection("users").document(warungId).get()
+                .addOnSuccessListener { doc ->
+                    warungNames[warungId] = doc.getString("name") ?: "Warung"
+                    resolved++
+                    if (resolved == uniqueWarungIds.size) {
+                        _orders.value = orderList.map { order ->
+                            order.copy(namaWarung = warungNames[order.warungId] ?: "Warung")
+                        }
+                    }
+                }
+                .addOnFailureListener {
+                    warungNames[warungId] = "Warung"
+                    resolved++
+                    if (resolved == uniqueWarungIds.size) {
+                        _orders.value = orderList.map { order ->
+                            order.copy(namaWarung = warungNames[order.warungId] ?: "Warung")
+                        }
+                    }
+                }
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        ordersListener?.remove()
     }
 }
