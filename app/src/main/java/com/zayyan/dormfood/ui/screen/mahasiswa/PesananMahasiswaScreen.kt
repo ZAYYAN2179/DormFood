@@ -61,6 +61,10 @@ fun PesananMahasiswaContent(
     paddingValues: PaddingValues,
     pesananViewModel: PesananViewModel
 ) {
+    LaunchedEffect(Unit) {
+        pesananViewModel.loadOrders()
+    }
+
     val orders by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
 

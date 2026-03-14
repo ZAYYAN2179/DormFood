@@ -33,8 +33,7 @@ data class OrderItem(
     val createdAt: Timestamp? = null
 )
 
-// Hanya MENUNGGU_KONFIRMASI yang dipakai di ViewModel
-// Status lain (Dibuat, Diantar, Selesai) diset oleh warung via Firestore
+@Suppress("unused")
 enum class StatusPesanan(val label: String) {
     MENUNGGU_KONFIRMASI("Menunggu Konfirmasi"),
     DIBUAT("Dibuat"),
@@ -60,7 +59,6 @@ class PesananViewModel : ViewModel() {
     private val _namaWarung = MutableStateFlow("")
     val namaWarung: StateFlow<String> = _namaWarung
 
-    // warungId hanya dipakai internal, tidak perlu di-expose
     private var currentWarungId: String = ""
 
     private val _isUploading = MutableStateFlow(false)
@@ -75,8 +73,21 @@ class PesananViewModel : ViewModel() {
 
     private var ordersListener: ListenerRegistration? = null
 
+    // Cache nama warung agar tidak fetch ulang setiap snapshot
+    private val warungNamesCache = mutableMapOf<String, String>()
+
     init {
         loadOrders()
+    }
+
+    private fun normalizeStatus(raw: String): String {
+        return when (raw.trim().uppercase()) {
+            "MENUNGGU KONFIRMASI", "MENUNGGU_KONFIRMASI" -> "Menunggu Konfirmasi"
+            "DIBUAT"  -> "Dibuat"
+            "DIANTAR" -> "Diantar"
+            "SELESAI" -> "Selesai"
+            else      -> raw
+        }
     }
 
     // ──────────────────────────────────────
@@ -160,6 +171,7 @@ class PesananViewModel : ViewModel() {
         val orderData = hashMapOf(
             "userId" to userId,
             "warungId" to currentWarungId,
+            "namaWarung" to _namaWarung.value,  // ← simpan namaWarung langsung
             "items" to itemsMap,
             "totalHarga" to _totalHarga.value,
             "statusPesanan" to StatusPesanan.MENUNGGU_KONFIRMASI.label,
@@ -207,55 +219,79 @@ class PesananViewModel : ViewModel() {
                             orderId = doc.id,
                             userId = doc.getString("userId") ?: "",
                             warungId = doc.getString("warungId") ?: "",
+                            // Baca namaWarung dari dokumen order langsung
+                            // Fallback ke cache jika belum ada field namaWarung (order lama)
+                            namaWarung = doc.getString("namaWarung")
+                                ?: warungNamesCache[doc.getString("warungId") ?: ""]
+                                ?: "",
                             items = items,
                             totalHarga = doc.getLong("totalHarga") ?: 0,
-                            statusPesanan = doc.getString("statusPesanan") ?: "",
+                            statusPesanan = normalizeStatus(
+                                doc.getString("statusPesanan") ?: ""
+                            ),
                             buktiPembayaranUrl = doc.getString("buktiPembayaranUrl") ?: "",
                             createdAt = doc.getTimestamp("createdAt")
                         )
                     } catch (_: Exception) { null }
                 } ?: emptyList()
 
-                if (orderList.isEmpty()) {
-                    _orders.value = emptyList()
+                // Untuk order lama yang belum punya namaWarung, resolve dari users
+                val needResolve = orderList.filter { it.namaWarung.isEmpty() }
+
+                if (needResolve.isEmpty()) {
+                    // Semua sudah punya nama → langsung update
+                    _orders.value = orderList
                     _isLoadingOrders.value = false
                 } else {
-                    resolveWarungNames(orderList)
-                    _isLoadingOrders.value = false
+                    // Resolve hanya order lama yang belum punya namaWarung
+                    val uniqueIds = needResolve.map { it.warungId }.distinct()
+                        .filter { !warungNamesCache.containsKey(it) }
+
+                    if (uniqueIds.isEmpty()) {
+                        _orders.value = orderList.map { order ->
+                            if (order.namaWarung.isEmpty())
+                                order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
+                            else order
+                        }
+                        _isLoadingOrders.value = false
+                        return@addSnapshotListener
+                    }
+
+                    var resolved = 0
+                    for (warungId in uniqueIds) {
+                        firestore.collection("users").document(warungId).get()
+                            .addOnSuccessListener { doc ->
+                                warungNamesCache[warungId] = doc.getString("name") ?: "Warung"
+                                resolved++
+                                if (resolved == uniqueIds.size) {
+                                    _orders.value = orderList.map { order ->
+                                        if (order.namaWarung.isEmpty())
+                                            order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
+                                        else order
+                                    }
+                                    _isLoadingOrders.value = false
+                                }
+                            }
+                            .addOnFailureListener {
+                                warungNamesCache[warungId] = "Warung"
+                                resolved++
+                                if (resolved == uniqueIds.size) {
+                                    _orders.value = orderList.map { order ->
+                                        if (order.namaWarung.isEmpty())
+                                            order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
+                                        else order
+                                    }
+                                    _isLoadingOrders.value = false
+                                }
+                            }
+                    }
                 }
             }
-    }
-
-    private fun resolveWarungNames(orderList: List<OrderItem>) {
-        val uniqueWarungIds = orderList.map { it.warungId }.distinct()
-        val warungNames = mutableMapOf<String, String>()
-        var resolved = 0
-
-        for (warungId in uniqueWarungIds) {
-            firestore.collection("users").document(warungId).get()
-                .addOnSuccessListener { doc ->
-                    warungNames[warungId] = doc.getString("name") ?: "Warung"
-                    resolved++
-                    if (resolved == uniqueWarungIds.size) {
-                        _orders.value = orderList.map { order ->
-                            order.copy(namaWarung = warungNames[order.warungId] ?: "Warung")
-                        }
-                    }
-                }
-                .addOnFailureListener {
-                    warungNames[warungId] = "Warung"
-                    resolved++
-                    if (resolved == uniqueWarungIds.size) {
-                        _orders.value = orderList.map { order ->
-                            order.copy(namaWarung = warungNames[order.warungId] ?: "Warung")
-                        }
-                    }
-                }
-        }
     }
 
     override fun onCleared() {
         super.onCleared()
         ordersListener?.remove()
+        warungNamesCache.clear()
     }
 }

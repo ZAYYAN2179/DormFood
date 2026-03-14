@@ -44,7 +44,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             BerandaMahasiswa(navController)
         }
         composable(route = Screen.PesananMahasiswaScreen.route) {
-            PesananMahasiswa(navController)
+            PesananMahasiswa(
+                navController = navController,
+                pesananViewModel = pesananViewModel
+            )
         }
         composable(route = Screen.ProfilMahasiswaScreen.route) {
             ProfilMahasiswa(navController)
