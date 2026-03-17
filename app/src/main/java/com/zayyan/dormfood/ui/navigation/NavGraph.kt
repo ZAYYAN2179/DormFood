@@ -75,7 +75,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             MenuWarung(navController)
         }
         composable(route = Screen.PesananWarungScreen.route) {
-            PesananWarung(navController)
+            PesananWarung(
+                navController = navController,
+                pesananViewModel = pesananViewModel
+            )
         }
         composable(route = Screen.ProfilWarungScreen.route) {
             ProfilWarung(

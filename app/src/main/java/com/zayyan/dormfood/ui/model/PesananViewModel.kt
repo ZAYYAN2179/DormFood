@@ -41,9 +41,13 @@ enum class StatusPesanan(val label: String) {
 }
 
 class PesananViewModel : ViewModel() {
+
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+    // ─────────────────────────────────────────────────────────────
+    // State: buat pesanan (sisi mahasiswa, sebelum submit)
+    // ─────────────────────────────────────────────────────────────
     private val _itemPesanan = MutableStateFlow<List<ItemPesanan>>(emptyList())
     val itemPesanan: StateFlow<List<ItemPesanan>> = _itemPesanan
 
@@ -61,6 +65,9 @@ class PesananViewModel : ViewModel() {
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
 
+    // ─────────────────────────────────────────────────────────────
+    // State: riwayat pesanan mahasiswa
+    // ─────────────────────────────────────────────────────────────
     private val _orders = MutableStateFlow<List<OrderItem>>(emptyList())
     val orders: StateFlow<List<OrderItem>> = _orders
 
@@ -70,10 +77,31 @@ class PesananViewModel : ViewModel() {
     private var ordersListener: ListenerRegistration? = null
     private val warungNamesCache = mutableMapOf<String, String>()
 
+    // ─────────────────────────────────────────────────────────────
+    // State: pesanan masuk (sisi warung)
+    // ─────────────────────────────────────────────────────────────
+    private val _warungOrders = MutableStateFlow<List<OrderItem>>(emptyList())
+    val warungOrders: StateFlow<List<OrderItem>> = _warungOrders
+
+    private val _isLoadingWarungOrders = MutableStateFlow(false)
+    val isLoadingWarungOrders: StateFlow<Boolean> = _isLoadingWarungOrders
+
+    private val _updateStatusResult = MutableStateFlow<String?>(null)
+
+    private var warungOrdersListener: ListenerRegistration? = null
+
+    // ─────────────────────────────────────────────────────────────
+    // Init: hanya load pesanan mahasiswa (skip kalau belum login)
+    // ─────────────────────────────────────────────────────────────
     init {
-        loadOrders()
+        if (auth.currentUser != null) {
+            loadOrders()
+        }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Helper
+    // ─────────────────────────────────────────────────────────────
     private fun normalizeStatus(raw: String): String {
         return when (raw.trim().uppercase()) {
             "MENUNGGU KONFIRMASI", "MENUNGGU_KONFIRMASI" -> "Menunggu Konfirmasi"
@@ -84,6 +112,34 @@ class PesananViewModel : ViewModel() {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    private fun parseOrderDoc(doc: com.google.firebase.firestore.DocumentSnapshot): OrderItem? {
+        return try {
+            val rawItems = doc.get("items") as? List<Map<String, Any>> ?: emptyList()
+            val items = rawItems.map { map ->
+                ItemPesanan(
+                    namaMenu = map["namaMenu"] as? String ?: "",
+                    harga    = (map["harga"]    as? Long)?.toInt() ?: 0,
+                    quantity = (map["quantity"] as? Long)?.toInt() ?: 0
+                )
+            }
+            OrderItem(
+                orderId            = doc.id,   // ← selalu pakai doc.id, bukan field
+                userId             = doc.getString("userId")             ?: "",
+                warungId           = doc.getString("warungId")           ?: "",
+                namaWarung         = doc.getString("namaWarung")         ?: "",
+                items              = items,
+                totalHarga         = doc.getLong("totalHarga")           ?: 0,
+                statusPesanan      = normalizeStatus(doc.getString("statusPesanan") ?: ""),
+                buktiPembayaranUrl = doc.getString("buktiPembayaranUrl") ?: "",
+                createdAt          = doc.getTimestamp("createdAt")
+            )
+        } catch (_: Exception) { null }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Sisi mahasiswa: simpan state sebelum ke halaman pembayaran
+    // ─────────────────────────────────────────────────────────────
     fun buatPesanan(
         items: List<ItemPesanan>,
         total: Long,
@@ -91,24 +147,22 @@ class PesananViewModel : ViewModel() {
         namaWarung: String,
         warungId: String
     ) {
-        _itemPesanan.value = items
-        _totalHarga.value = total
-        _fotoQr.value = fotoQr
-        _namaWarung.value = namaWarung
-        currentWarungId = warungId
+        _itemPesanan.value  = items
+        _totalHarga.value   = total
+        _fotoQr.value       = fotoQr
+        _namaWarung.value   = namaWarung
+        currentWarungId     = warungId
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Sisi mahasiswa: upload bukti → simpan order ke Firestore
+    // ─────────────────────────────────────────────────────────────
     fun uploadBuktiDanKirimPesanan(
         buktiUri: Uri,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
-            onError("User tidak ditemukan")
-            return
-        }
-
+        val currentUser = auth.currentUser ?: run { onError("User tidak ditemukan"); return }
         _isUploading.value = true
 
         MediaManager.get().upload(buktiUri)
@@ -121,16 +175,10 @@ class PesananViewModel : ViewModel() {
                 override fun onSuccess(requestId: String, resultData: Map<*, *>) {
                     val buktiUrl = resultData["secure_url"].toString()
                     simpanOrderKeFirestore(
-                        userId = currentUser.uid,
+                        userId             = currentUser.uid,
                         buktiPembayaranUrl = buktiUrl,
-                        onSuccess = {
-                            _isUploading.value = false
-                            onSuccess()
-                        },
-                        onError = { err ->
-                            _isUploading.value = false
-                            onError(err)
-                        }
+                        onSuccess          = { _isUploading.value = false; onSuccess() },
+                        onError            = { err -> _isUploading.value = false; onError(err) }
                     )
                 }
 
@@ -153,20 +201,20 @@ class PesananViewModel : ViewModel() {
         val itemsMap = _itemPesanan.value.map { item ->
             mapOf(
                 "namaMenu" to item.namaMenu,
-                "harga" to item.harga,
+                "harga"    to item.harga,
                 "quantity" to item.quantity
             )
         }
 
         val orderData = hashMapOf(
-            "userId" to userId,
-            "warungId" to currentWarungId,
-            "namaWarung" to _namaWarung.value,
-            "items" to itemsMap,
-            "totalHarga" to _totalHarga.value,
-            "statusPesanan" to StatusPesanan.MENUNGGU_KONFIRMASI.label,
+            "userId"             to userId,
+            "warungId"           to currentWarungId,
+            "namaWarung"         to _namaWarung.value,
+            "items"              to itemsMap,
+            "totalHarga"         to _totalHarga.value,
+            "statusPesanan"      to StatusPesanan.MENUNGGU_KONFIRMASI.label,
             "buktiPembayaranUrl" to buktiPembayaranUrl,
-            "createdAt" to FieldValue.serverTimestamp()
+            "createdAt"          to FieldValue.serverTimestamp()
         )
 
         firestore.collection("orders")
@@ -175,14 +223,15 @@ class PesananViewModel : ViewModel() {
             .addOnFailureListener { e -> onError(e.message ?: "Gagal menyimpan pesanan") }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Sisi mahasiswa: load riwayat pesanan milik user ini
+    // ─────────────────────────────────────────────────────────────
     fun loadOrders() {
         val currentUser = auth.currentUser ?: return
-
+        // Guard: listener sudah aktif → tidak perlu double subscribe
         if (ordersListener != null) return
 
         _isLoadingOrders.value = true
-
-        ordersListener?.remove()
 
         ordersListener = firestore.collection("orders")
             .whereEqualTo("userId", currentUser.uid)
@@ -193,107 +242,141 @@ class PesananViewModel : ViewModel() {
                     return@addSnapshotListener
                 }
 
-                @Suppress("UNCHECKED_CAST")
-                val orderList = snapshot?.documents?.mapNotNull { doc ->
-                    try {
-                        val rawItems = doc.get("items") as? List<Map<String, Any>> ?: emptyList()
-                        val items = rawItems.map { map ->
-                            ItemPesanan(
-                                namaMenu = map["namaMenu"] as? String ?: "",
-                                harga = (map["harga"] as? Long)?.toInt() ?: 0,
-                                quantity = (map["quantity"] as? Long)?.toInt() ?: 0
-                            )
-                        }
-                        OrderItem(
-                            orderId = doc.id,
-                            userId = doc.getString("userId") ?: "",
-                            warungId = doc.getString("warungId") ?: "",
-                            namaWarung = doc.getString("namaWarung")
-                                ?: warungNamesCache[doc.getString("warungId") ?: ""]
-                                ?: "",
-                            items = items,
-                            totalHarga = doc.getLong("totalHarga") ?: 0,
-                            statusPesanan = normalizeStatus(
-                                doc.getString("statusPesanan") ?: ""
-                            ),
-                            buktiPembayaranUrl = doc.getString("buktiPembayaranUrl") ?: "",
-                            createdAt = doc.getTimestamp("createdAt")
-                        )
-                    } catch (_: Exception) { null }
-                } ?: emptyList()
+                val orderList = snapshot?.documents
+                    ?.mapNotNull { parseOrderDoc(it) }
+                    ?: emptyList()
 
+                // Resolve nama warung yang kosong dari cache / Firestore
                 val needResolve = orderList.filter { it.namaWarung.isEmpty() }
 
                 if (needResolve.isEmpty()) {
-                    _orders.value = orderList
+                    _orders.value          = orderList
                     _isLoadingOrders.value = false
-                } else {
-                    val uniqueIds = needResolve.map { it.warungId }.distinct()
-                        .filter { !warungNamesCache.containsKey(it) }
+                    return@addSnapshotListener
+                }
 
-                    if (uniqueIds.isEmpty()) {
-                        _orders.value = orderList.map { order ->
-                            if (order.namaWarung.isEmpty())
-                                order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
-                            else order
+                val uniqueIds = needResolve
+                    .map { it.warungId }
+                    .distinct()
+                    .filter { !warungNamesCache.containsKey(it) }
+
+                if (uniqueIds.isEmpty()) {
+                    _orders.value = orderList.map { order ->
+                        if (order.namaWarung.isEmpty())
+                            order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
+                        else order
+                    }
+                    _isLoadingOrders.value = false
+                    return@addSnapshotListener
+                }
+
+                var resolved = 0
+                for (warungId in uniqueIds) {
+                    firestore.collection("users").document(warungId).get()
+                        .addOnCompleteListener { task ->
+                            warungNamesCache[warungId] =
+                                if (task.isSuccessful) task.result?.getString("name") ?: "Warung"
+                                else "Warung"
+                            resolved++
+                            if (resolved == uniqueIds.size) {
+                                _orders.value = orderList.map { order ->
+                                    if (order.namaWarung.isEmpty())
+                                        order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
+                                    else order
+                                }
+                                _isLoadingOrders.value = false
+                            }
                         }
-                        _isLoadingOrders.value = false
-                        return@addSnapshotListener
-                    }
-
-                    var resolved = 0
-                    for (warungId in uniqueIds) {
-                        firestore.collection("users").document(warungId).get()
-                            .addOnSuccessListener { doc ->
-                                warungNamesCache[warungId] = doc.getString("name") ?: "Warung"
-                                resolved++
-                                if (resolved == uniqueIds.size) {
-                                    _orders.value = orderList.map { order ->
-                                        if (order.namaWarung.isEmpty())
-                                            order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
-                                        else order
-                                    }
-                                    _isLoadingOrders.value = false
-                                }
-                            }
-                            .addOnFailureListener {
-                                warungNamesCache[warungId] = "Warung"
-                                resolved++
-                                if (resolved == uniqueIds.size) {
-                                    _orders.value = orderList.map { order ->
-                                        if (order.namaWarung.isEmpty())
-                                            order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
-                                        else order
-                                    }
-                                    _isLoadingOrders.value = false
-                                }
-                            }
-                    }
                 }
             }
     }
 
-    // Dipanggil saat logout agar listener bersih dan data tidak bocor ke user lain
+    // ─────────────────────────────────────────────────────────────
+    // Sisi warung: load pesanan masuk ke warung yang sedang login
+    // ─────────────────────────────────────────────────────────────
+    fun loadWarungOrders() {
+        val currentUser = auth.currentUser ?: return
+        // Guard: listener sudah aktif → tidak perlu double subscribe
+        if (warungOrdersListener != null) return
+
+        _isLoadingWarungOrders.value = true
+
+        warungOrdersListener = firestore.collection("orders")
+            .whereEqualTo("warungId", currentUser.uid)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    android.util.Log.e("PesananVM", "WarungOrders error: ${error.message}")
+                    // Jika ada link index di sini, buka dan buat indexnya
+                    _isLoadingWarungOrders.value = false
+                    return@addSnapshotListener
+                }
+                android.util.Log.d("PesananVM", "WarungOrders docs: ${snapshot?.documents?.size}")
+
+                _warungOrders.value          = snapshot?.documents
+                    ?.mapNotNull { parseOrderDoc(it) }
+                    ?: emptyList()
+                _isLoadingWarungOrders.value = false
+            }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Sisi warung: update status pesanan
+    // ─────────────────────────────────────────────────────────────
+    fun updateStatusPesanan(
+        orderId: String,
+        statusBaru: StatusPesanan,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        if (orderId.isBlank()) {
+            _updateStatusResult.value = "Error: orderId kosong"
+            return
+        }
+        firestore.collection("orders")
+            .document(orderId)
+            .update("statusPesanan", statusBaru.label)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                _updateStatusResult.value = "Gagal: ${e.message}"
+                onError(e.message ?: "Terjadi kesalahan")
+            }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Reset state sementara (setelah pesanan berhasil dikirim)
+    // ─────────────────────────────────────────────────────────────
+    fun resetPesananState() {
+        _itemPesanan.value  = emptyList()
+        _totalHarga.value   = 0L
+        _fotoQr.value       = ""
+        _namaWarung.value   = ""
+        currentWarungId     = ""
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Dipanggil saat logout mahasiswa: bersihkan listener + cache,
+    // lalu reload untuk user baru yang mungkin login berikutnya
+    // ─────────────────────────────────────────────────────────────
     fun clearAndReload() {
         ordersListener?.remove()
         ordersListener = null
         warungNamesCache.clear()
-        _orders.value = emptyList()
+        _orders.value          = emptyList()
         _isLoadingOrders.value = false
         loadOrders()
     }
-
-    fun resetPesananState() {
-        _itemPesanan.value = emptyList()
-        _totalHarga.value = 0L
-        _fotoQr.value = ""
-        _namaWarung.value = ""
-        currentWarungId = ""
-    }
-
+    // ─────────────────────────────────────────────────────────────
+    // Cleanup saat ViewModel di-destroy
+    // ─────────────────────────────────────────────────────────────
     override fun onCleared() {
         super.onCleared()
         ordersListener?.remove()
+        ordersListener = null
+        warungOrdersListener?.remove()   // ← fix: sebelumnya tidak dibersihkan
+        warungOrdersListener = null
         warungNamesCache.clear()
     }
 }
