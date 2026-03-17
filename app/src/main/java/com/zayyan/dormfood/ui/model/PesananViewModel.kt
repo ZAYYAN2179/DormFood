@@ -25,6 +25,9 @@ data class OrderItem(
     val userId: String = "",
     val warungId: String = "",
     val namaWarung: String = "",
+    val namaUser: String = "",
+    val building: String = "",
+    val roomNumber: String = "",
     val items: List<ItemPesanan> = emptyList(),
     val totalHarga: Long = 0,
     val statusPesanan: String = "",
@@ -41,6 +44,10 @@ enum class StatusPesanan(val label: String) {
 }
 
 class PesananViewModel : ViewModel() {
+
+    private var currentNamaUser: String = ""
+    private var currentBuilding: String = ""
+    private var currentRoomNumber: String = ""
 
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
@@ -124,10 +131,13 @@ class PesananViewModel : ViewModel() {
                 )
             }
             OrderItem(
-                orderId            = doc.id,   // ← selalu pakai doc.id, bukan field
+                orderId            = doc.id,
                 userId             = doc.getString("userId")             ?: "",
                 warungId           = doc.getString("warungId")           ?: "",
                 namaWarung         = doc.getString("namaWarung")         ?: "",
+                namaUser           = doc.getString("namaUser")           ?: "",
+                building           = doc.getString("building")           ?: "",
+                roomNumber         = doc.getString("roomNumber")         ?: "",
                 items              = items,
                 totalHarga         = doc.getLong("totalHarga")           ?: 0,
                 statusPesanan      = normalizeStatus(doc.getString("statusPesanan") ?: ""),
@@ -145,13 +155,19 @@ class PesananViewModel : ViewModel() {
         total: Long,
         fotoQr: String,
         namaWarung: String,
-        warungId: String
+        warungId: String,
+        namaUser: String = "",      // ← tambah
+        building: String = "",      // ← tambah
+        roomNumber: String = ""     // ← tambah
     ) {
         _itemPesanan.value  = items
         _totalHarga.value   = total
         _fotoQr.value       = fotoQr
         _namaWarung.value   = namaWarung
         currentWarungId     = warungId
+        currentNamaUser     = namaUser
+        currentBuilding     = building
+        currentRoomNumber   = roomNumber
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -210,6 +226,9 @@ class PesananViewModel : ViewModel() {
             "userId"             to userId,
             "warungId"           to currentWarungId,
             "namaWarung"         to _namaWarung.value,
+            "namaUser"           to currentNamaUser,
+            "building"           to currentBuilding,
+            "roomNumber"         to currentRoomNumber,
             "items"              to itemsMap,
             "totalHarga"         to _totalHarga.value,
             "statusPesanan"      to StatusPesanan.MENUNGGU_KONFIRMASI.label,
@@ -354,6 +373,9 @@ class PesananViewModel : ViewModel() {
         _fotoQr.value       = ""
         _namaWarung.value   = ""
         currentWarungId     = ""
+        currentNamaUser     = ""
+        currentBuilding     = ""
+        currentRoomNumber   = ""
     }
 
     // ─────────────────────────────────────────────────────────────

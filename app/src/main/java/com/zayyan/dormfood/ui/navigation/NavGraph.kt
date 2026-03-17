@@ -101,7 +101,8 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
                 navController = navController,
                 userId = userId,
                 menuViewModel = menuViewModel,
-                pesananViewModel = pesananViewModel
+                pesananViewModel = pesananViewModel,
+                mahasiswaViewModel = mahasiswaViewModel
             )
         }
         composable(route = Screen.PembayaranMahasiswaScreen.route) {

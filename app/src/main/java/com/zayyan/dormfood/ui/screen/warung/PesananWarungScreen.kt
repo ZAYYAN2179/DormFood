@@ -112,13 +112,14 @@ fun PesananWarungContent(
     }
 
     val filteredOrders = when (selectedFilter) {
-        "Baru"    -> orders.filter {
+        "Baru" -> orders.filter {
             it.statusPesanan == StatusPesanan.MENUNGGU_KONFIRMASI.label
         }
-        "Dibuat"  -> orders.filter { it.statusPesanan == StatusPesanan.DIBUAT.label }
+
+        "Dibuat" -> orders.filter { it.statusPesanan == StatusPesanan.DIBUAT.label }
         "Diantar" -> orders.filter { it.statusPesanan == StatusPesanan.DIANTAR.label }
         "Selesai" -> orders.filter { it.statusPesanan == StatusPesanan.SELESAI.label }
-        else      -> orders
+        else -> orders
     }
 
     if (isLoading) {
@@ -250,18 +251,18 @@ fun WarungOrderCard(
 
     val statusColor = when (order.statusPesanan) {
         StatusPesanan.MENUNGGU_KONFIRMASI.label -> Color(0xFFE53935)
-        StatusPesanan.DIBUAT.label              -> Color(0xFFF57C00)
-        StatusPesanan.DIANTAR.label             -> Color(0xFF1976D2)
-        StatusPesanan.SELESAI.label             -> Color(0xFF2E7D32)
-        else                                    -> Color.Gray
+        StatusPesanan.DIBUAT.label -> Color(0xFFF57C00)
+        StatusPesanan.DIANTAR.label -> Color(0xFF1976D2)
+        StatusPesanan.SELESAI.label -> Color(0xFF2E7D32)
+        else -> Color.Gray
     }
 
     // Setiap status hanya punya 1 pilihan selanjutnya (bertahap)
     val nextStatuses: List<StatusPesanan> = when (order.statusPesanan) {
         StatusPesanan.MENUNGGU_KONFIRMASI.label -> listOf(StatusPesanan.DIBUAT)
-        StatusPesanan.DIBUAT.label             -> listOf(StatusPesanan.DIANTAR)
-        StatusPesanan.DIANTAR.label            -> listOf(StatusPesanan.SELESAI)
-        else                                   -> emptyList()
+        StatusPesanan.DIBUAT.label -> listOf(StatusPesanan.DIANTAR)
+        StatusPesanan.DIANTAR.label -> listOf(StatusPesanan.SELESAI)
+        else -> emptyList()
     }
 
     // Dialog konfirmasi ubah status
@@ -321,10 +322,25 @@ fun WarungOrderCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = order.namaWarung.ifBlank { "Pelanggan" },
+                        text = order.namaUser.ifBlank { "Pelanggan" },  // ← namaUser bukan namaWarung
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
+                    if (order.building.isNotBlank() || order.roomNumber.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = buildString {
+                                if (order.building.isNotBlank()) append("Gedung ${order.building}")
+                                if (order.building.isNotBlank() && order.roomNumber.isNotBlank()) append(
+                                    ", "
+                                )
+                                if (order.roomNumber.isNotBlank()) append("Kamar ${order.roomNumber}")
+                            },
+                            fontSize = 12.sp,
+                            color = Color(0xFF1976D2),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = formatTimestampWarung(order.createdAt),
@@ -427,10 +443,10 @@ fun WarungOrderCard(
                         if (nextStatuses.isNotEmpty()) {
                             val nextStatus = nextStatuses.first()
                             val buttonColor = when (nextStatus) {
-                                StatusPesanan.DIBUAT  -> Color(0xFFF57C00)
+                                StatusPesanan.DIBUAT -> Color(0xFFF57C00)
                                 StatusPesanan.DIANTAR -> Color(0xFF1976D2)
                                 StatusPesanan.SELESAI -> Color(0xFF2E7D32)
-                                else                  -> DormRed
+                                else -> DormRed
                             }
                             Button(
                                 onClick = {

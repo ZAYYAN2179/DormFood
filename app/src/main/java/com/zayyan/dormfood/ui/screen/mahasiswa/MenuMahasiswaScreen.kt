@@ -27,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.zayyan.dormfood.ui.model.ItemPesanan
+import com.zayyan.dormfood.ui.model.MahasiswaViewModel
 import com.zayyan.dormfood.ui.model.MenuViewModel
 import com.zayyan.dormfood.ui.model.MenuWarungDetail
 import com.zayyan.dormfood.ui.model.MenuItem
@@ -44,7 +45,8 @@ fun MenuMahasiswa(
     navController: NavHostController,
     userId: String,
     menuViewModel: MenuViewModel = viewModel(),
-    pesananViewModel: PesananViewModel = viewModel()
+    pesananViewModel: PesananViewModel = viewModel(),
+    mahasiswaViewModel: MahasiswaViewModel = viewModel()
 ) {
     val detail by menuViewModel.warungDetail.collectAsState()
     val isLoading by menuViewModel.isLoadingDetail.collectAsState()
@@ -106,6 +108,7 @@ fun MenuMahasiswa(
                     menuViewModel = menuViewModel,
                     navController = navController,
                     pesananViewModel = pesananViewModel,
+                    mahasiswaViewModel = mahasiswaViewModel,
                     userId = userId
                 )
             }
@@ -121,8 +124,10 @@ fun MenuMahasiswaContent(
     menuViewModel: MenuViewModel,
     navController: NavHostController,
     pesananViewModel: PesananViewModel,
+    mahasiswaViewModel: MahasiswaViewModel,
     userId: String
 ) {
+    val mahasiswaData by mahasiswaViewModel.mahasiswaData.collectAsState()
     val menuList by menuViewModel.menuListByWarung.collectAsState()
     var showMenuPreview by remember { mutableStateOf(false) }
     val quantities = remember { mutableStateMapOf<String, Int>() }
@@ -382,7 +387,10 @@ fun MenuMahasiswaContent(
                                 total = totalHarga,
                                 fotoQr = detail.fotoQr,
                                 namaWarung = detail.namaWarung,
-                                warungId = userId
+                                warungId = userId,
+                                namaUser = mahasiswaData?.name ?: "",
+                                building = mahasiswaData?.building ?: "",
+                                roomNumber = mahasiswaData?.roomNumber ?: ""
                             )
                             navController.navigate(Screen.PembayaranMahasiswaScreen.route)
                         },
