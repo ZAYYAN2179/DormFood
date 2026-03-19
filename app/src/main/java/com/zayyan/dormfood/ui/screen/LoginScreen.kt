@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -151,7 +152,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("inputEmail"),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -176,7 +177,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("inputPassword"),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
@@ -191,7 +192,6 @@ fun LoginScreen(
                 }
             )
         )
-
         Spacer(modifier = Modifier.height(8.dp))
 
         TextButton(
@@ -199,7 +199,7 @@ fun LoginScreen(
                 // TODO: Implement forgot password
                 navController.navigate(Screen.LandingPage.route)
             },
-            modifier = Modifier.align(Alignment.End)
+            modifier = Modifier.align(Alignment.End).testTag("btnForgotPassword")
         ) {
             Text(
                 text = "Lupa Kata Sandi?",
@@ -215,7 +215,8 @@ fun LoginScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .height(52.dp)
+                .testTag("tombolMasuk"),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = DormRed
