@@ -28,7 +28,6 @@ class MahasiswaViewModel : ViewModel() {
 
     fun fetchMahasiswaData() {
         val uid = auth.currentUser?.uid ?: return
-        if (_mahasiswaData.value != null) return
 
         _isLoading.value = true
         firestore.collection("users")
@@ -48,6 +47,10 @@ class MahasiswaViewModel : ViewModel() {
                 _isLoading.value = false
             }
             .addOnFailureListener { _isLoading.value = false }
+    }
+
+    fun clearData() {
+        _mahasiswaData.value = null
     }
 
     fun updateName(

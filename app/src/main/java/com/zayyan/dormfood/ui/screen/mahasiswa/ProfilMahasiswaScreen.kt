@@ -231,6 +231,7 @@ fun ProfilMahasiswaContent(
             onDismiss = { showLogoutDialog = false },
             onConfirm = {
                 showLogoutDialog = false
+                mahasiswaViewModel.clearData()
                 authViewModel.logout()
                 navController.navigate(Screen.LoginScreen.route) {
                     popUpTo(0) { inclusive = true }
