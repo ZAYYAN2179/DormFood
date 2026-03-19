@@ -214,32 +214,41 @@ class PesananViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val itemsMap = _itemPesanan.value.map { item ->
-            mapOf(
-                "namaMenu" to item.namaMenu,
-                "harga"    to item.harga,
-                "quantity" to item.quantity
-            )
-        }
+        // Ambil data user dari Firestore dulu sebelum simpan order
+        firestore.collection("users").document(userId).get()
+            .addOnSuccessListener { userDoc ->
+                val namaUser = currentNamaUser.ifBlank { userDoc.getString("name") ?: "" }
+                val building = currentBuilding.ifBlank { userDoc.getString("building") ?: "" }
+                val roomNumber = currentRoomNumber.ifBlank { userDoc.getString("roomNumber") ?: "" }
 
-        val orderData = hashMapOf(
-            "userId"             to userId,
-            "warungId"           to currentWarungId,
-            "namaWarung"         to _namaWarung.value,
-            "namaUser"           to currentNamaUser,
-            "building"           to currentBuilding,
-            "roomNumber"         to currentRoomNumber,
-            "items"              to itemsMap,
-            "totalHarga"         to _totalHarga.value,
-            "statusPesanan"      to StatusPesanan.MENUNGGU_KONFIRMASI.label,
-            "buktiPembayaranUrl" to buktiPembayaranUrl,
-            "createdAt"          to FieldValue.serverTimestamp()
-        )
+                val itemsMap = _itemPesanan.value.map { item ->
+                    mapOf(
+                        "namaMenu" to item.namaMenu,
+                        "harga"    to item.harga,
+                        "quantity" to item.quantity
+                    )
+                }
 
-        firestore.collection("orders")
-            .add(orderData)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onError(e.message ?: "Gagal menyimpan pesanan") }
+                val orderData = hashMapOf(
+                    "userId"             to userId,
+                    "warungId"           to currentWarungId,
+                    "namaWarung"         to _namaWarung.value,
+                    "namaUser"           to namaUser,
+                    "building"           to building,
+                    "roomNumber"         to roomNumber,
+                    "items"              to itemsMap,
+                    "totalHarga"         to _totalHarga.value,
+                    "statusPesanan"      to StatusPesanan.MENUNGGU_KONFIRMASI.label,
+                    "buktiPembayaranUrl" to buktiPembayaranUrl,
+                    "createdAt"          to FieldValue.serverTimestamp()
+                )
+
+                firestore.collection("orders")
+                    .add(orderData)
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { e -> onError(e.message ?: "Gagal menyimpan pesanan") }
+            }
+            .addOnFailureListener { e -> onError(e.message ?: "Gagal mengambil data user") }
     }
 
     // ─────────────────────────────────────────────────────────────
