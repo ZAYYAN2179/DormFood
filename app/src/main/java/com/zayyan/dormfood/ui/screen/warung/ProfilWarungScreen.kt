@@ -295,6 +295,7 @@ fun ProfilWarungContent(
             onDismiss = { showLogoutDialog = false },
             onConfirm = {
                 showLogoutDialog = false
+                warungViewModel.clearData()
                 authViewModel.logout()
                 navController.navigate(Screen.LoginScreen.route) {
                     popUpTo(0) { inclusive = true }

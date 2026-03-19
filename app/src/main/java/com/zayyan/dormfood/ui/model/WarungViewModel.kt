@@ -30,9 +30,17 @@ class WarungViewModel : ViewModel() {
     private val _isLoadingList = MutableStateFlow(false)
     val isLoadingList: StateFlow<Boolean> = _isLoadingList
 
+    // ── Dipanggil saat logout agar data tidak tersisa ────────────
+    fun clearData() {
+        _warungData.value = null
+        _warungProfile.value = null
+    }
+
     fun loadWarungData() {
         val currentUser = auth.currentUser ?: return
-        if (_warungData.value != null) return
+
+        // Hanya skip kalau data sudah ada DAN milik user yang sama
+        if (_warungData.value != null && _warungData.value?.uid == currentUser.uid) return
 
         _isLoading.value = true
 
@@ -196,7 +204,6 @@ class WarungViewModel : ViewModel() {
             }
     }
 
-    // ── Tambahan: toggle layanan antar dari beranda ──────────────
     fun updateLayananAntar(isActive: Boolean, onError: (String) -> Unit) {
         val currentUser = auth.currentUser ?: return
 
@@ -204,7 +211,6 @@ class WarungViewModel : ViewModel() {
             .document(currentUser.uid)
             .update("layananAntar", isActive)
             .addOnSuccessListener {
-                // Update local state langsung agar UI responsif
                 _warungProfile.value = _warungProfile.value?.copy(layananAntar = isActive)
             }
             .addOnFailureListener {
