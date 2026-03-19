@@ -74,8 +74,10 @@ fun PesananWarung(
 ) {
     val currentRoute = navController.currentBackStackEntry?.destination?.route
 
+    // Setiap kali screen ini dibuka, refresh listener agar data user
+    // (nama, gedung, no kamar) selalu diambil terbaru dari Firestore
     LaunchedEffect(Unit) {
-        pesananViewModel.loadWarungOrders()
+        pesananViewModel.refreshWarungOrders()
     }
 
     Scaffold(
@@ -112,14 +114,11 @@ fun PesananWarungContent(
     }
 
     val filteredOrders = when (selectedFilter) {
-        "Baru" -> orders.filter {
-            it.statusPesanan == StatusPesanan.MENUNGGU_KONFIRMASI.label
-        }
-
-        "Dibuat" -> orders.filter { it.statusPesanan == StatusPesanan.DIBUAT.label }
+        "Baru"    -> orders.filter { it.statusPesanan == StatusPesanan.MENUNGGU_KONFIRMASI.label }
+        "Dibuat"  -> orders.filter { it.statusPesanan == StatusPesanan.DIBUAT.label }
         "Diantar" -> orders.filter { it.statusPesanan == StatusPesanan.DIANTAR.label }
         "Selesai" -> orders.filter { it.statusPesanan == StatusPesanan.SELESAI.label }
-        else -> orders
+        else      -> orders
     }
 
     if (isLoading) {
@@ -225,7 +224,6 @@ fun PesananWarungContent(
         }
     }
 
-    // Dialog preview bukti pembayaran
     if (showBuktiDialog && buktiUrl.isNotEmpty()) {
         ImagePreviewDialog(
             imageUrl = buktiUrl,
@@ -251,21 +249,19 @@ fun WarungOrderCard(
 
     val statusColor = when (order.statusPesanan) {
         StatusPesanan.MENUNGGU_KONFIRMASI.label -> Color(0xFFE53935)
-        StatusPesanan.DIBUAT.label -> Color(0xFFF57C00)
-        StatusPesanan.DIANTAR.label -> Color(0xFF1976D2)
-        StatusPesanan.SELESAI.label -> Color(0xFF2E7D32)
-        else -> Color.Gray
+        StatusPesanan.DIBUAT.label              -> Color(0xFFF57C00)
+        StatusPesanan.DIANTAR.label             -> Color(0xFF1976D2)
+        StatusPesanan.SELESAI.label             -> Color(0xFF2E7D32)
+        else                                    -> Color.Gray
     }
 
-    // Setiap status hanya punya 1 pilihan selanjutnya (bertahap)
     val nextStatuses: List<StatusPesanan> = when (order.statusPesanan) {
         StatusPesanan.MENUNGGU_KONFIRMASI.label -> listOf(StatusPesanan.DIBUAT)
-        StatusPesanan.DIBUAT.label -> listOf(StatusPesanan.DIANTAR)
-        StatusPesanan.DIANTAR.label -> listOf(StatusPesanan.SELESAI)
-        else -> emptyList()
+        StatusPesanan.DIBUAT.label              -> listOf(StatusPesanan.DIANTAR)
+        StatusPesanan.DIANTAR.label             -> listOf(StatusPesanan.SELESAI)
+        else                                    -> emptyList()
     }
 
-    // Dialog konfirmasi ubah status
     if (showKonfirmasiDialog && statusYakanDiubah != null) {
         AlertDialog(
             onDismissRequest = {
@@ -322,7 +318,7 @@ fun WarungOrderCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = order.namaUser.ifBlank { "Pelanggan" },  // ← namaUser bukan namaWarung
+                        text = order.namaUser.ifBlank { "Pelanggan" },
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -331,9 +327,7 @@ fun WarungOrderCard(
                         Text(
                             text = buildString {
                                 if (order.building.isNotBlank()) append("Gedung ${order.building}")
-                                if (order.building.isNotBlank() && order.roomNumber.isNotBlank()) append(
-                                    ", "
-                                )
+                                if (order.building.isNotBlank() && order.roomNumber.isNotBlank()) append(", ")
                                 if (order.roomNumber.isNotBlank()) append("Kamar ${order.roomNumber}")
                             },
                             fontSize = 12.sp,
@@ -418,7 +412,6 @@ fun WarungOrderCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Tombol lihat bukti bayar
                         if (order.buktiPembayaranUrl.isNotBlank()) {
                             OutlinedButton(
                                 onClick = { onLihatBukti(order.buktiPembayaranUrl) },
@@ -439,26 +432,22 @@ fun WarungOrderCard(
                             }
                         }
 
-                        // Tombol ubah status — hanya tampil jika ada next status
                         if (nextStatuses.isNotEmpty()) {
                             val nextStatus = nextStatuses.first()
                             val buttonColor = when (nextStatus) {
-                                StatusPesanan.DIBUAT -> Color(0xFFF57C00)
+                                StatusPesanan.DIBUAT  -> Color(0xFFF57C00)
                                 StatusPesanan.DIANTAR -> Color(0xFF1976D2)
                                 StatusPesanan.SELESAI -> Color(0xFF2E7D32)
-                                else -> DormRed
+                                else                  -> DormRed
                             }
                             Button(
                                 onClick = {
-                                    // Tampilkan konfirmasi sebelum ubah
                                     statusYakanDiubah = nextStatus
                                     showKonfirmasiDialog = true
                                 },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = buttonColor
-                                )
+                                colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
                             ) {
                                 Text(
                                     text = nextStatus.label,

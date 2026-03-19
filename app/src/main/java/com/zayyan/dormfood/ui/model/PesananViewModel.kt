@@ -97,6 +97,10 @@ class PesananViewModel : ViewModel() {
 
     private var warungOrdersListener: ListenerRegistration? = null
 
+    // Cache data user (namaUser, building, roomNumber) untuk sisi warung
+    // Triple<namaUser, building, roomNumber>
+    private val userDataCache = mutableMapOf<String, Triple<String, String, String>>()
+
     // ─────────────────────────────────────────────────────────────
     // Init: hanya load pesanan mahasiswa (skip kalau belum login)
     // ─────────────────────────────────────────────────────────────
@@ -156,9 +160,9 @@ class PesananViewModel : ViewModel() {
         fotoQr: String,
         namaWarung: String,
         warungId: String,
-        namaUser: String = "",      // ← tambah
-        building: String = "",      // ← tambah
-        roomNumber: String = ""     // ← tambah
+        namaUser: String = "",
+        building: String = "",
+        roomNumber: String = ""
     ) {
         _itemPesanan.value  = items
         _totalHarga.value   = total
@@ -214,11 +218,11 @@ class PesananViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        // Ambil data user dari Firestore dulu sebelum simpan order
+        // Selalu ambil data user terbaru dari Firestore sebelum simpan order
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { userDoc ->
-                val namaUser = currentNamaUser.ifBlank { userDoc.getString("name") ?: "" }
-                val building = currentBuilding.ifBlank { userDoc.getString("building") ?: "" }
+                val namaUser   = currentNamaUser.ifBlank { userDoc.getString("name")       ?: "" }
+                val building   = currentBuilding.ifBlank { userDoc.getString("building")   ?: "" }
                 val roomNumber = currentRoomNumber.ifBlank { userDoc.getString("roomNumber") ?: "" }
 
                 val itemsMap = _itemPesanan.value.map { item ->
@@ -256,7 +260,6 @@ class PesananViewModel : ViewModel() {
     // ─────────────────────────────────────────────────────────────
     fun loadOrders() {
         val currentUser = auth.currentUser ?: return
-        // Guard: listener sudah aktif → tidak perlu double subscribe
         if (ordersListener != null) return
 
         _isLoadingOrders.value = true
@@ -274,7 +277,6 @@ class PesananViewModel : ViewModel() {
                     ?.mapNotNull { parseOrderDoc(it) }
                     ?: emptyList()
 
-                // Resolve nama warung yang kosong dari cache / Firestore
                 val needResolve = orderList.filter { it.namaWarung.isEmpty() }
 
                 if (needResolve.isEmpty()) {
@@ -321,10 +323,12 @@ class PesananViewModel : ViewModel() {
 
     // ─────────────────────────────────────────────────────────────
     // Sisi warung: load pesanan masuk ke warung yang sedang login
+    // Data namaUser, building, roomNumber selalu diambil fresh dari
+    // koleksi users — bukan dari snapshot order — agar tetap sinkron
+    // walau mahasiswa mengubah profilnya.
     // ─────────────────────────────────────────────────────────────
     fun loadWarungOrders() {
         val currentUser = auth.currentUser ?: return
-        // Guard: listener sudah aktif → tidak perlu double subscribe
         if (warungOrdersListener != null) return
 
         _isLoadingWarungOrders.value = true
@@ -335,17 +339,67 @@ class PesananViewModel : ViewModel() {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     android.util.Log.e("PesananVM", "WarungOrders error: ${error.message}")
-                    // Jika ada link index di sini, buka dan buat indexnya
                     _isLoadingWarungOrders.value = false
                     return@addSnapshotListener
                 }
-                android.util.Log.d("PesananVM", "WarungOrders docs: ${snapshot?.documents?.size}")
 
-                _warungOrders.value          = snapshot?.documents
+                val orderList = snapshot?.documents
                     ?.mapNotNull { parseOrderDoc(it) }
                     ?: emptyList()
-                _isLoadingWarungOrders.value = false
+
+                if (orderList.isEmpty()) {
+                    _warungOrders.value          = emptyList()
+                    _isLoadingWarungOrders.value = false
+                    return@addSnapshotListener
+                }
+
+                // Ambil semua userId unik, lalu fetch data user terbaru
+                val uniqueUserIds = orderList.map { it.userId }.distinct()
+                var resolved = 0
+
+                for (uid in uniqueUserIds) {
+                    // Selalu fetch fresh — tidak pakai cache — agar perubahan profil langsung terlihat
+                    firestore.collection("users").document(uid).get()
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val doc = task.result
+                                userDataCache[uid] = Triple(
+                                    doc?.getString("name")       ?: "",
+                                    doc?.getString("building")   ?: "",
+                                    doc?.getString("roomNumber") ?: ""
+                                )
+                            }
+                            resolved++
+                            if (resolved == uniqueUserIds.size) {
+                                // Gabungkan data order dengan data user terbaru
+                                _warungOrders.value = orderList.map { order ->
+                                    val userData = userDataCache[order.userId]
+                                    if (userData != null) {
+                                        order.copy(
+                                            namaUser   = userData.first,
+                                            building   = userData.second,
+                                            roomNumber = userData.third
+                                        )
+                                    } else order
+                                }
+                                _isLoadingWarungOrders.value = false
+                            }
+                        }
+                }
             }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Sisi warung: reset listener + cache lalu load ulang
+    // Dipanggil saat screen dibuka agar data user selalu fresh
+    // ─────────────────────────────────────────────────────────────
+    fun refreshWarungOrders() {
+        warungOrdersListener?.remove()
+        warungOrdersListener = null
+        userDataCache.clear()
+        _warungOrders.value          = emptyList()
+        _isLoadingWarungOrders.value = false
+        loadWarungOrders()
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -364,9 +418,7 @@ class PesananViewModel : ViewModel() {
         firestore.collection("orders")
             .document(orderId)
             .update("statusPesanan", statusBaru.label)
-            .addOnSuccessListener {
-                onSuccess()
-            }
+            .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e ->
                 _updateStatusResult.value = "Gagal: ${e.message}"
                 onError(e.message ?: "Terjadi kesalahan")
@@ -399,6 +451,7 @@ class PesananViewModel : ViewModel() {
         _isLoadingOrders.value = false
         loadOrders()
     }
+
     // ─────────────────────────────────────────────────────────────
     // Cleanup saat ViewModel di-destroy
     // ─────────────────────────────────────────────────────────────
@@ -406,8 +459,9 @@ class PesananViewModel : ViewModel() {
         super.onCleared()
         ordersListener?.remove()
         ordersListener = null
-        warungOrdersListener?.remove()   // ← fix: sebelumnya tidak dibersihkan
+        warungOrdersListener?.remove()
         warungOrdersListener = null
         warungNamesCache.clear()
+        userDataCache.clear()
     }
 }
