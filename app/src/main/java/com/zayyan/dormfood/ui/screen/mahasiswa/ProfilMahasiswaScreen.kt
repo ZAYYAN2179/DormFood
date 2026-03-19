@@ -40,13 +40,28 @@ fun ProfilMahasiswa(
     authViewModel: AuthViewModel = viewModel(),
     mahasiswaViewModel: MahasiswaViewModel = viewModel()
 ) {
-
     LaunchedEffect(Unit) {
         mahasiswaViewModel.fetchMahasiswaData()
     }
 
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val isLoading by mahasiswaViewModel.isLoading.collectAsState()
+
+    // SnackbarHostState di sini agar bisa dioper ke Scaffold dan Content
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Observe updateMessage dari ViewModel — setiap ada pesan baru, tampilkan snackbar
+    val updateMessage by mahasiswaViewModel.updateMessage.collectAsState()
+    LaunchedEffect(updateMessage) {
+        updateMessage?.let { message ->
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            mahasiswaViewModel.clearUpdateMessage()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -57,6 +72,10 @@ fun ProfilMahasiswa(
                 navController = navController,
                 currentRoute = currentRoute
             )
+        },
+        // ← snackbarHost di dalam Scaffold agar tampil di posisi yang benar
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         containerColor = Background
     ) { paddingValues ->
@@ -84,22 +103,6 @@ fun ProfilMahasiswaContent(
     var showEditNameDialog by remember { mutableStateOf(false) }
     var showEditBuildingDialog by remember { mutableStateOf(false) }
     var showEditRoomDialog by remember { mutableStateOf(false) }
-    var showSuccessSnackbar by remember { mutableStateOf(false) }
-    var successMessage by remember { mutableStateOf("") }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(showSuccessSnackbar) {
-        if (showSuccessSnackbar) {
-            snackbarHostState.showSnackbar(
-                message = successMessage,
-                duration = SnackbarDuration.Short
-            )
-            showSuccessSnackbar = false
-        }
-    }
-
-    SnackbarHost(snackbarHostState)
 
     if (isLoading) {
         Box(
@@ -156,7 +159,6 @@ fun ProfilMahasiswaContent(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-
                         IconButton(onClick = { showEditNameDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
@@ -221,6 +223,7 @@ fun ProfilMahasiswaContent(
         }
     }
 
+    // ── Dialog logout ────────────────────────────────────────────
     if (showLogoutDialog) {
         AlertDialog(
             icon = Icons.AutoMirrored.Outlined.ExitToApp,
@@ -240,6 +243,7 @@ fun ProfilMahasiswaContent(
         )
     }
 
+    // ── Dialog edit nama ─────────────────────────────────────────
     if (showEditNameDialog) {
         EditTextDialog(
             title = "Edit Nama",
@@ -253,18 +257,18 @@ fun ProfilMahasiswaContent(
                     newName = newName,
                     onSuccess = {
                         showEditNameDialog = false
-                        successMessage = "Nama berhasil diperbarui"
-                        showSuccessSnackbar = true
+                        // Pesan akan ditampilkan via updateMessage state
+                        mahasiswaViewModel.setUpdateMessage("Nama berhasil diperbarui")
                     },
                     onError = { error ->
-                        successMessage = "Gagal memperbarui: $error"
-                        showSuccessSnackbar = true
+                        mahasiswaViewModel.setUpdateMessage("Gagal memperbarui: $error")
                     }
                 )
             }
         )
     }
 
+    // ── Dialog edit gedung ───────────────────────────────────────
     if (showEditBuildingDialog) {
         EditTextDialog(
             title = "Edit Gedung",
@@ -279,18 +283,17 @@ fun ProfilMahasiswaContent(
                     newBuilding = newBuilding,
                     onSuccess = {
                         showEditBuildingDialog = false
-                        successMessage = "Gedung berhasil diperbarui"
-                        showSuccessSnackbar = true
+                        mahasiswaViewModel.setUpdateMessage("Gedung berhasil diperbarui")
                     },
                     onError = { error ->
-                        successMessage = "Gagal memperbarui: $error"
-                        showSuccessSnackbar = true
+                        mahasiswaViewModel.setUpdateMessage("Gagal memperbarui: $error")
                     }
                 )
             }
         )
     }
 
+    // ── Dialog edit nomor kamar ──────────────────────────────────
     if (showEditRoomDialog) {
         EditTextDialog(
             title = "Edit Nomor Kamar",
@@ -305,12 +308,10 @@ fun ProfilMahasiswaContent(
                     newRoomNumber = newRoom,
                     onSuccess = {
                         showEditRoomDialog = false
-                        successMessage = "Nomor kamar berhasil diperbarui"
-                        showSuccessSnackbar = true
+                        mahasiswaViewModel.setUpdateMessage("Nomor kamar berhasil diperbarui")
                     },
                     onError = { error ->
-                        successMessage = "Gagal memperbarui: $error"
-                        showSuccessSnackbar = true
+                        mahasiswaViewModel.setUpdateMessage("Gagal memperbarui: $error")
                     }
                 )
             }
