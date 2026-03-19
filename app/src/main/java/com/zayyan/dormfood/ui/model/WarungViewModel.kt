@@ -51,7 +51,6 @@ class WarungViewModel : ViewModel() {
                     )
                     _warungData.value = data
 
-                    // Hanya load/buat profil warung jika role memang warung
                     if (role == "warung") {
                         loadWarungProfile()
                     }
@@ -80,12 +79,10 @@ class WarungViewModel : ViewModel() {
                     )
                     _warungProfile.value = data
                 } else {
-                    // Hanya buat profil warung baru jika role memang warung
                     val role = _warungData.value?.role ?: ""
                     if (role == "warung") {
                         createWarungProfile()
                     }
-                    // Jika bukan warung, tidak lakukan apa-apa
                 }
             }
     }
@@ -119,7 +116,6 @@ class WarungViewModel : ViewModel() {
                         .addOnSuccessListener { warungDoc ->
                             val alamat = warungDoc.getString("alamatWarung") ?: ""
                             val fotoMenu = warungDoc.getString("fotoMenu") ?: ""
-
                             val layananAntar = warungDoc.getBoolean("layananAntar") ?: false
                             result.add(
                                 WarungItem(
@@ -200,6 +196,22 @@ class WarungViewModel : ViewModel() {
             }
     }
 
+    // ── Tambahan: toggle layanan antar dari beranda ──────────────
+    fun updateLayananAntar(isActive: Boolean, onError: (String) -> Unit) {
+        val currentUser = auth.currentUser ?: return
+
+        firestore.collection("warungs")
+            .document(currentUser.uid)
+            .update("layananAntar", isActive)
+            .addOnSuccessListener {
+                // Update local state langsung agar UI responsif
+                _warungProfile.value = _warungProfile.value?.copy(layananAntar = isActive)
+            }
+            .addOnFailureListener {
+                onError(it.message ?: "Gagal update status delivery")
+            }
+    }
+
     fun uploadMenuImage(imageUri: Uri) {
         val currentUser = auth.currentUser ?: return
         _isLoading.value = true
@@ -220,11 +232,9 @@ class WarungViewModel : ViewModel() {
                             _isLoading.value = false
                         }
                 }
-
                 override fun onError(requestId: String, error: ErrorInfo) {
                     _isLoading.value = false
                 }
-
                 override fun onReschedule(requestId: String, error: ErrorInfo) {}
             })
             .dispatch()
@@ -250,11 +260,9 @@ class WarungViewModel : ViewModel() {
                             _isLoading.value = false
                         }
                 }
-
                 override fun onError(requestId: String, error: ErrorInfo) {
                     _isLoading.value = false
                 }
-
                 override fun onReschedule(requestId: String, error: ErrorInfo) {}
             })
             .dispatch()
