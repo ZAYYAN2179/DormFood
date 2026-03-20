@@ -30,6 +30,18 @@ class WarungViewModel : ViewModel() {
     private val _isLoadingList = MutableStateFlow(false)
     val isLoadingList: StateFlow<Boolean> = _isLoadingList
 
+    // ── State untuk pesan snackbar — null berarti tidak ada pesan ─
+    private val _updateMessage = MutableStateFlow<String?>(null)
+    val updateMessage: StateFlow<String?> = _updateMessage
+
+    fun setUpdateMessage(message: String) {
+        _updateMessage.value = message
+    }
+
+    fun clearUpdateMessage() {
+        _updateMessage.value = null
+    }
+
     // ── Dipanggil saat logout agar data tidak tersisa ────────────
     fun clearData() {
         _warungData.value = null
@@ -190,7 +202,8 @@ class WarungViewModel : ViewModel() {
             }
     }
 
-    fun updatePhone(newPhone: String, onError: (String) -> Unit) {
+    // ← tambah onSuccess agar bisa tahu kapan berhasil
+    fun updatePhone(newPhone: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val currentUser = auth.currentUser ?: return
 
         firestore.collection("users")
@@ -198,6 +211,7 @@ class WarungViewModel : ViewModel() {
             .update("phone", newPhone)
             .addOnSuccessListener {
                 _warungData.value = _warungData.value?.copy(phone = newPhone)
+                onSuccess()
             }
             .addOnFailureListener {
                 onError(it.message ?: "Gagal update phone")
@@ -236,6 +250,8 @@ class WarungViewModel : ViewModel() {
                         .addOnSuccessListener {
                             _warungProfile.value = _warungProfile.value?.copy(fotoMenu = imageUrl)
                             _isLoading.value = false
+                            // ← beritahu UI lewat updateMessage
+                            setUpdateMessage("Foto menu berhasil diupload")
                         }
                 }
                 override fun onError(requestId: String, error: ErrorInfo) {
@@ -264,6 +280,8 @@ class WarungViewModel : ViewModel() {
                         .addOnSuccessListener {
                             _warungProfile.value = _warungProfile.value?.copy(fotoQr = imageUrl)
                             _isLoading.value = false
+                            // ← beritahu UI lewat updateMessage
+                            setUpdateMessage("QR Pembayaran berhasil diupload")
                         }
                 }
                 override fun onError(requestId: String, error: ErrorInfo) {

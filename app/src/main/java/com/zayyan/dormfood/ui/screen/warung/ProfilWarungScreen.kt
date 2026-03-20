@@ -56,6 +56,22 @@ fun ProfilWarung(
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val isLoading by warungViewModel.isLoading.collectAsState()
 
+    // ← pindah ke sini agar bisa dioper ke Scaffold
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // ← observe updateMessage dari ViewModel, tampilkan snackbar setiap ada pesan baru
+    val updateMessage by warungViewModel.updateMessage.collectAsState()
+    LaunchedEffect(updateMessage) {
+        updateMessage?.let { message ->
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            warungViewModel.clearUpdateMessage()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(title = "Profil Warung")
@@ -65,6 +81,10 @@ fun ProfilWarung(
                 navController = navController,
                 currentRoute = currentRoute
             )
+        },
+        // ← snackbarHost di dalam Scaffold agar muncul di posisi yang benar
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         containerColor = Background
     ) { paddingValues ->
@@ -93,42 +113,20 @@ fun ProfilWarungContent(
     var showEditPhoneDialog by remember { mutableStateOf(false) }
     var showEditAlamatDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    var showSuccessSnackbar by remember { mutableStateOf(false) }
-    var successMessage by remember { mutableStateOf("") }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(showSuccessSnackbar) {
-        if (showSuccessSnackbar) {
-            snackbarHostState.showSnackbar(
-                message = successMessage,
-                duration = SnackbarDuration.Short
-            )
-            showSuccessSnackbar = false
-        }
-    }
-
+    // ← launcher tidak perlu lagi set successMessage manual,
+    //    karena ViewModel sudah setUpdateMessage() setelah upload selesai
     val menuLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let {
-            warungViewModel.uploadMenuImage(it)
-            successMessage = "Foto menu berhasil diupload"
-            showSuccessSnackbar = true
-        }
+        uri?.let { warungViewModel.uploadMenuImage(it) }
     }
 
     val qrLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let {
-            warungViewModel.uploadQrImage(it)
-            successMessage = "QR Pembayaran berhasil diupload"
-            showSuccessSnackbar = true
-        }
+        uri?.let { warungViewModel.uploadQrImage(it) }
     }
-
-    SnackbarHost(snackbarHostState)
 
     if (isLoading) {
         Box(
@@ -317,12 +315,11 @@ fun ProfilWarungContent(
                     newName = newName,
                     onSuccess = {
                         showEditNameDialog = false
-                        successMessage = "Nama warung berhasil diperbarui"
-                        showSuccessSnackbar = true
+                        // ← gunakan setUpdateMessage, bukan showSuccessSnackbar
+                        warungViewModel.setUpdateMessage("Nama warung berhasil diperbarui")
                     },
                     onError = { error ->
-                        successMessage = "Gagal memperbarui: $error"
-                        showSuccessSnackbar = true
+                        warungViewModel.setUpdateMessage("Gagal memperbarui: $error")
                     }
                 )
             }
@@ -342,12 +339,10 @@ fun ProfilWarungContent(
                     newAlamat = newAlamat,
                     onSuccess = {
                         showEditAlamatDialog = false
-                        successMessage = "Alamat warung berhasil diperbarui"
-                        showSuccessSnackbar = true
+                        warungViewModel.setUpdateMessage("Alamat warung berhasil diperbarui")
                     },
                     onError = { error ->
-                        successMessage = "Gagal memperbarui: $error"
-                        showSuccessSnackbar = true
+                        warungViewModel.setUpdateMessage("Gagal memperbarui: $error")
                     }
                 )
             }
@@ -366,9 +361,13 @@ fun ProfilWarungContent(
             onConfirm = { newPhone ->
                 warungViewModel.updatePhone(
                     newPhone = newPhone,
+                    // ← sekarang ada onSuccess
+                    onSuccess = {
+                        showEditPhoneDialog = false
+                        warungViewModel.setUpdateMessage("Nomor telepon berhasil diperbarui")
+                    },
                     onError = { error ->
-                        successMessage = "Gagal memperbarui: $error"
-                        showSuccessSnackbar = true
+                        warungViewModel.setUpdateMessage("Gagal memperbarui: $error")
                     }
                 )
             }
@@ -540,16 +539,12 @@ fun UploadCard(
                         modifier = Modifier
                             .size(36.dp)
                             .clickable(
-                                onClick = {
-                                    onClick()
-                                },
+                                onClick = { onClick() },
                                 indication = null,
                                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
                             )
                     ) {
-                        Box(
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(contentAlignment = Alignment.Center) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit",
@@ -704,7 +699,6 @@ fun InfoCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Surface(
                 shape = CircleShape,
                 color = DormRed.copy(alpha = 0.1f),
