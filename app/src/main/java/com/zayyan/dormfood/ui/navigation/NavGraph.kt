@@ -137,9 +137,16 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
                 ratingViewModel = ratingViewModel
             )
         }
-        composable(route = Screen.RatingUlasanWarungScreen.route) {
+        composable(
+            route = Screen.RatingUlasanWarungScreen.route,
+            arguments = listOf(
+                navArgument("warungId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val warungId = backStackEntry.arguments?.getString("warungId") ?: ""
             RatingUlasanWarungScreen(
                 navController   = navController,
+                warungId        = warungId,
                 ratingViewModel = ratingViewModel
             )
         }

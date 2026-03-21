@@ -135,10 +135,23 @@ class RatingViewModel : ViewModel() {
 
     // ─────────────────────────────────────────────────────────────────────────
     // LOAD REVIEWS WARUNG (realtime)
-    // Gunakan di halaman profil/dashboard warung.
+    // Dipakai oleh RatingUlasanWarungScreen — baik dari sisi warung sendiri
+    // maupun dari sisi mahasiswa yang ingin lihat ulasan warung tertentu.
+    // Jika warungId berbeda dari yang sedang di-listen, listener lama dihapus
+    // dan diganti dengan listener baru untuk warung yang diminta.
     // ─────────────────────────────────────────────────────────────────────────
+    private var currentListenedWarungId: String = ""
+
     fun loadWarungReviews(warungId: String) {
-        if (reviewsListener != null) return
+        // Jika warungId sama dan listener sudah aktif, tidak perlu reload
+        if (warungId == currentListenedWarungId && reviewsListener != null) return
+
+        // Hapus listener lama (pindah ke warung berbeda)
+        reviewsListener?.remove()
+        reviewsListener = null
+        currentListenedWarungId = warungId
+        _warungReviews.value = emptyList()
+        _averageRating.value = 0.0
         _isLoadingReviews.value = true
 
         reviewsListener = firestore.collection("reviews")

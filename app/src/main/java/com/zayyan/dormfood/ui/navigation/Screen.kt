@@ -29,5 +29,9 @@ sealed class Screen (val route: String) {
             return "ratingulasanmahasiswascreen/$orderId/$warungId/$encodedNama"
         }
     }
-    data object RatingUlasanWarungScreen: Screen("ratingulasanwarungscreen")
+    data object RatingUlasanWarungScreen : Screen(
+        "ratingulasanwarungscreen/{warungId}"
+    ) {
+        fun createRoute(warungId: String) = "ratingulasanwarungscreen/$warungId"
+    }
 }

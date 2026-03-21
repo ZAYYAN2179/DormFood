@@ -157,7 +157,7 @@ fun MenuMahasiswaContent(
     }
 
     val formatRupiah = { amount: Long ->
-        "Rp ${NumberFormat.getNumberInstance(Locale("id", "ID")).format(amount)}"
+        "Rp ${NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).format(amount)}"
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -260,7 +260,11 @@ fun MenuMahasiswaContent(
                             }
                             Button(
                                 onClick = {
-                                    navController.navigate(Screen.RatingUlasanWarungScreen.route)  // ✅ navigasi
+                                    navController.navigate(
+                                        Screen.RatingUlasanWarungScreen.createRoute(
+                                            userId
+                                        )
+                                    )
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = DormRed),
                                 shape = RoundedCornerShape(8.dp),
@@ -497,7 +501,7 @@ fun MenuItemRow(
     onRemove: () -> Unit
 ) {
     val formattedHarga =
-        "Rp ${NumberFormat.getNumberInstance(Locale("id", "ID")).format(menu.harga)}"
+        "Rp ${NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).format(menu.harga)}"
 
     Row(
         modifier = Modifier

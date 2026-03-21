@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
 import com.zayyan.dormfood.ui.model.RatingViewModel
 import com.zayyan.dormfood.ui.model.ReviewItem
 import com.zayyan.dormfood.ui.theme.Background
@@ -43,12 +42,12 @@ private val AvatarColors = listOf(
 @Composable
 fun RatingUlasanWarungScreen(
     navController: NavHostController,
+    // warungId dari navigasi — bisa dari warung sendiri (via FirebaseAuth) atau
+    // dari mahasiswa yang tap "Lihat Ulasan" di MenuMahasiswaScreen
+    warungId: String,
     ratingViewModel: RatingViewModel = viewModel()
 ) {
-    // Ambil warungId dari user yang sedang login
-    val warungId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-
-    // Load reviews saat screen pertama dibuka
+    // Load reviews saat screen pertama dibuka atau warungId berubah
     LaunchedEffect(warungId) {
         if (warungId.isNotBlank()) {
             ratingViewModel.loadWarungReviews(warungId)
