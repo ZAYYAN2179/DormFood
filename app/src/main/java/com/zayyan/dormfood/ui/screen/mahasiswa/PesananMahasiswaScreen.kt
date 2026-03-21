@@ -26,6 +26,7 @@ import com.zayyan.dormfood.ui.component.TopAppBar
 import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.model.OrderItem
 import com.zayyan.dormfood.ui.model.PesananViewModel
+import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import java.text.NumberFormat
@@ -51,7 +52,8 @@ fun PesananMahasiswa(
     ) { paddingValues ->
         PesananMahasiswaContent(
             paddingValues = paddingValues,
-            pesananViewModel = pesananViewModel
+            pesananViewModel = pesananViewModel,
+            navController = navController
         )
     }
 }
@@ -59,7 +61,8 @@ fun PesananMahasiswa(
 @Composable
 fun PesananMahasiswaContent(
     paddingValues: PaddingValues,
-    pesananViewModel: PesananViewModel
+    pesananViewModel: PesananViewModel,
+    navController: NavHostController
 ) {
     val orders by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
@@ -74,7 +77,7 @@ fun PesananMahasiswaContent(
     val selesai = orders.filter { it.statusPesanan == "Selesai" }
 
     val formatRupiah = { amount: Long ->
-        "Rp ${NumberFormat.getNumberInstance(Locale("id", "ID")).format(amount)}"
+        "Rp ${NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).format(amount)}"
     }
 
     if (isLoading) {
@@ -130,7 +133,8 @@ fun PesananMahasiswaContent(
                 OrderCard(
                     order = order,
                     formatRupiah = formatRupiah,
-                    showReviewButton = false
+                    showReviewButton = false,
+                    navController = navController
                 )
             }
         }
@@ -143,7 +147,8 @@ fun PesananMahasiswaContent(
                 OrderCard(
                     order = order,
                     formatRupiah = formatRupiah,
-                    showReviewButton = true
+                    showReviewButton = true,
+                    navController = navController
                 )
             }
         }
@@ -168,7 +173,8 @@ fun SectionLabel(title: String) {
 fun OrderCard(
     order: OrderItem,
     formatRupiah: (Long) -> String,
-    showReviewButton: Boolean
+    showReviewButton: Boolean,
+    navController: NavHostController
 ) {
     var expanded by remember { mutableStateOf(true) }
 
@@ -280,7 +286,7 @@ fun OrderCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             OutlinedButton(
-                                onClick = { /* TODO: navigasi ke review */ },
+                                onClick = { navController.navigate(Screen.RatingUlasanMahasiswaScreen.route) },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.outlinedButtonColors(
@@ -297,7 +303,7 @@ fun OrderCard(
                                 )
                             }
                             Button(
-                                onClick = { /* TODO: pesan lagi */ },
+                                onClick = {  },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(
@@ -341,6 +347,6 @@ fun OrderItemRow(item: ItemPesanan, formatRupiah: (Long) -> String) {
 
 fun formatTimestamp(timestamp: Timestamp?): String {
     if (timestamp == null) return ""
-    val sdf = SimpleDateFormat("dd MMMM yyyy, HH:mm z", Locale("id", "ID"))
+    val sdf = SimpleDateFormat("dd MMMM yyyy, HH:mm z", Locale.forLanguageTag("id-ID"))
     return sdf.format(timestamp.toDate())
 }
