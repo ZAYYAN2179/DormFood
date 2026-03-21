@@ -174,6 +174,36 @@ class RatingViewModel : ViewModel() {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // FETCH RINGKASAN RATING SATU WARUNG (one-time, untuk MenuMahasiswa)
+    // Hasilnya disimpan di map warungId -> Pair(average, totalUlasan)
+    // sehingga bisa dipakai di berbagai card tanpa realtime listener.
+    // ─────────────────────────────────────────────────────────────────────────
+    private val _ratingSummaryMap = MutableStateFlow<Map<String, Pair<Double, Int>>>(emptyMap())
+    val ratingSummaryMap: StateFlow<Map<String, Pair<Double, Int>>> = _ratingSummaryMap
+
+    fun fetchRatingSummary(warungId: String) {
+        // Skip jika warungId ini sudah pernah di-fetch
+        if (_ratingSummaryMap.value.containsKey(warungId)) return
+
+        firestore.collection("reviews")
+            .whereEqualTo("warungId", warungId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val ratings = snapshot.documents.mapNotNull { doc ->
+                    doc.getLong("rating")?.toInt()
+                }
+                val avg   = if (ratings.isEmpty()) 0.0
+                else ratings.sum() / ratings.size.toDouble()
+                val total = ratings.size
+                _ratingSummaryMap.value = _ratingSummaryMap.value + (warungId to Pair(avg, total))
+            }
+            .addOnFailureListener {
+                // Gagal fetch -> simpan 0 agar tidak retry terus
+                _ratingSummaryMap.value = _ratingSummaryMap.value + (warungId to Pair(0.0, 0))
+            }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // CEGAH TOMBOL "Berikan Ulasan" muncul lagi jika sudah diulas
     // Panggil dari OrderCard atau PesananScreen.
     // ─────────────────────────────────────────────────────────────────────────

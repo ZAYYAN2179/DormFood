@@ -32,6 +32,7 @@ import com.zayyan.dormfood.ui.model.MenuViewModel
 import com.zayyan.dormfood.ui.model.MenuWarungDetail
 import com.zayyan.dormfood.ui.model.MenuItem
 import com.zayyan.dormfood.ui.model.PesananViewModel
+import com.zayyan.dormfood.ui.model.RatingViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog
 import com.zayyan.dormfood.ui.theme.Background
@@ -46,7 +47,8 @@ fun MenuMahasiswa(
     userId: String,
     menuViewModel: MenuViewModel = viewModel(),
     pesananViewModel: PesananViewModel = viewModel(),
-    mahasiswaViewModel: MahasiswaViewModel = viewModel()
+    mahasiswaViewModel: MahasiswaViewModel = viewModel(),
+    ratingViewModel: RatingViewModel = viewModel()
 ) {
     val detail by menuViewModel.warungDetail.collectAsState()
     val isLoading by menuViewModel.isLoadingDetail.collectAsState()
@@ -109,7 +111,8 @@ fun MenuMahasiswa(
                     navController = navController,
                     pesananViewModel = pesananViewModel,
                     mahasiswaViewModel = mahasiswaViewModel,
-                    userId = userId
+                    userId = userId,
+                    ratingViewModel = ratingViewModel
                 )
             }
         }
@@ -125,8 +128,16 @@ fun MenuMahasiswaContent(
     navController: NavHostController,
     pesananViewModel: PesananViewModel,
     mahasiswaViewModel: MahasiswaViewModel,
-    userId: String
+    userId: String,
+    ratingViewModel: RatingViewModel
 ) {
+
+    LaunchedEffect(userId) {
+        ratingViewModel.fetchRatingSummary(userId)
+    }
+
+    val ratingSummaryMap by ratingViewModel.ratingSummaryMap.collectAsState()
+    val (avgRating, totalUlasan) = ratingSummaryMap[userId] ?: Pair(0.0, 0)
     val mahasiswaData by mahasiswaViewModel.mahasiswaData.collectAsState()
     val menuList by menuViewModel.menuListByWarung.collectAsState()
     var showMenuPreview by remember { mutableStateOf(false) }
@@ -182,7 +193,10 @@ fun MenuMahasiswaContent(
                             if (detail.fotoMenu.isNotEmpty()) {
                                 Card(
                                     modifier = Modifier.fillMaxSize(),
-                                    shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp),
+                                    shape = RoundedCornerShape(
+                                        topStart = 16.dp,
+                                        bottomStart = 16.dp
+                                    ),
                                     onClick = { showMenuPreview = true }
                                 ) {
                                     AsyncImage(
@@ -197,7 +211,12 @@ fun MenuMahasiswaContent(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .background(Color(0xFFF0F0F0))
-                                        .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp)),
+                                        .clip(
+                                            RoundedCornerShape(
+                                                topStart = 16.dp,
+                                                bottomStart = 16.dp
+                                            )
+                                        ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text("📋", fontSize = 32.sp)
@@ -226,14 +245,23 @@ fun MenuMahasiswaContent(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "5.0 / 3 ulasan",
+                                    text = if (totalUlasan == 0) "Belum ada ulasan"
+                                    else "${
+                                        String.format(
+                                            Locale.getDefault(),
+                                            "%.1f",
+                                            avgRating
+                                        )
+                                    } / $totalUlasan ulasan",
                                     fontSize = 13.sp,
                                     color = Color.DarkGray,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
                             Button(
-                                onClick = { },
+                                onClick = {
+                                    navController.navigate(Screen.RatingUlasanWarungScreen.route)  // ✅ navigasi
+                                },
                                 colors = ButtonDefaults.buttonColors(containerColor = DormRed),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
@@ -468,7 +496,8 @@ fun MenuItemRow(
     onAdd: () -> Unit,
     onRemove: () -> Unit
 ) {
-    val formattedHarga = "Rp ${NumberFormat.getNumberInstance(Locale("id", "ID")).format(menu.harga)}"
+    val formattedHarga =
+        "Rp ${NumberFormat.getNumberInstance(Locale("id", "ID")).format(menu.harga)}"
 
     Row(
         modifier = Modifier
