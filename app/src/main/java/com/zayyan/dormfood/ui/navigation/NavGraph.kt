@@ -21,6 +21,7 @@ import com.zayyan.dormfood.ui.screen.mahasiswa.MenuMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.PembayaranMahasiswaScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.PesananMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.ProfilMahasiswa
+import com.zayyan.dormfood.ui.screen.mahasiswa.RatingUlasanMahasiswaScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
 import com.zayyan.dormfood.ui.screen.warung.BerandaWarung
 import com.zayyan.dormfood.ui.screen.warung.MenuWarung
@@ -110,6 +111,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
                 navController = navController,
                 pesananViewModel = pesananViewModel
             )
+        }
+        composable(route = Screen.RatingUlasanMahasiswaScreen.route) {
+            RatingUlasanMahasiswaScreen(navController)
         }
     }
 }
