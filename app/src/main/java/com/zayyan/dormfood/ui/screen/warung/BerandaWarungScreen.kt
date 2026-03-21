@@ -57,6 +57,7 @@ import com.zayyan.dormfood.ui.model.OrderItem
 import com.zayyan.dormfood.ui.model.PesananViewModel
 import com.zayyan.dormfood.ui.model.StatusPesanan
 import com.zayyan.dormfood.ui.model.WarungViewModel
+import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import java.text.NumberFormat
@@ -89,7 +90,8 @@ fun BerandaWarung(
         BerandaWarungContent(
             paddingValues = paddingValues,
             warungViewModel = warungViewModel,
-            pesananViewModel = pesananViewModel
+            pesananViewModel = pesananViewModel,
+            navController = navController
         )
     }
 }
@@ -98,7 +100,8 @@ fun BerandaWarung(
 fun BerandaWarungContent(
     paddingValues: PaddingValues,
     warungViewModel: WarungViewModel = viewModel(),
-    pesananViewModel: PesananViewModel = viewModel()
+    pesananViewModel: PesananViewModel = viewModel(),
+    navController: NavHostController
 ) {
     val warungProfile by warungViewModel.warungProfile.collectAsState()
     val orders by pesananViewModel.warungOrders.collectAsState()
@@ -278,7 +281,7 @@ fun BerandaWarungContent(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
-                    onClick = { /* TODO: navigasi ke penilaian & ulasan */ },
+                    onClick = { navController.navigate(Screen.RatingUlasanWarungScreen.route) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

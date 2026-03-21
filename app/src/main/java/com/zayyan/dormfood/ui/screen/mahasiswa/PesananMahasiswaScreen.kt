@@ -340,7 +340,6 @@ fun OrderCard(
                                     }
                                 }
                                 false -> {
-                                    // Belum diulas → tombol aktif seperti biasa
                                     OutlinedButton(
                                         onClick = {
                                             navController.navigate(

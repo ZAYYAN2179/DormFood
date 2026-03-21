@@ -37,12 +37,11 @@ private val PlaceholderColor = Color(0xFFBDBDBD)
 @Composable
 fun RatingUlasanMahasiswaScreen(
     navController: NavHostController,
-    orderId: String,       // ID pesanan yang diulas
-    warungId: String,      // ID warung yang diulas
-    namaWarung: String,    // Nama warung (untuk disimpan ke Firestore)
+    orderId: String,
+    warungId: String,
+    namaWarung: String,
     ratingViewModel: RatingViewModel = viewModel()
 ) {
-    // Reset state setiap kali screen dibuka
     LaunchedEffect(Unit) { ratingViewModel.resetState() }
 
     Scaffold(
