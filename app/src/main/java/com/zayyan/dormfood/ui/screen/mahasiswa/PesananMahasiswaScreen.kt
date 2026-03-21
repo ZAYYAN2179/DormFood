@@ -26,6 +26,7 @@ import com.zayyan.dormfood.ui.component.TopAppBar
 import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.model.OrderItem
 import com.zayyan.dormfood.ui.model.PesananViewModel
+import com.zayyan.dormfood.ui.model.RatingViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
@@ -51,9 +52,9 @@ fun PesananMahasiswa(
         containerColor = Background
     ) { paddingValues ->
         PesananMahasiswaContent(
-            paddingValues = paddingValues,
+            paddingValues    = paddingValues,
             pesananViewModel = pesananViewModel,
-            navController = navController
+            navController    = navController
         )
     }
 }
@@ -64,14 +65,15 @@ fun PesananMahasiswaContent(
     pesananViewModel: PesananViewModel,
     navController: NavHostController
 ) {
-    val orders by pesananViewModel.orders.collectAsState()
+    // ✅ RatingViewModel diinisialisasi di sini agar satu instance untuk semua OrderCard
+    val ratingViewModel: RatingViewModel = viewModel()
+
+    val orders    by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
 
     val aktif = orders.filter {
         it.statusPesanan.lowercase() in listOf(
-            "menunggu konfirmasi",
-            "dibuat",
-            "diantar"
+            "menunggu konfirmasi", "dibuat", "diantar"
         )
     }
     val selesai = orders.filter { it.statusPesanan == "Selesai" }
@@ -126,29 +128,27 @@ fun PesananMahasiswaContent(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (aktif.isNotEmpty()) {
-            item {
-                SectionLabel(title = "Status Pesanan")
-            }
+            item { SectionLabel(title = "Status Pesanan") }
             items(aktif, key = { it.orderId }) { order ->
                 OrderCard(
-                    order = order,
-                    formatRupiah = formatRupiah,
+                    order            = order,
+                    formatRupiah     = formatRupiah,
                     showReviewButton = false,
-                    navController = navController
+                    navController    = navController,
+                    ratingViewModel  = ratingViewModel
                 )
             }
         }
 
         if (selesai.isNotEmpty()) {
-            item {
-                SectionLabel(title = "Riwayat Pesanan")
-            }
+            item { SectionLabel(title = "Riwayat Pesanan") }
             items(selesai, key = { it.orderId }) { order ->
                 OrderCard(
-                    order = order,
-                    formatRupiah = formatRupiah,
+                    order            = order,
+                    formatRupiah     = formatRupiah,
                     showReviewButton = true,
-                    navController = navController
+                    navController    = navController,
+                    ratingViewModel  = ratingViewModel
                 )
             }
         }
@@ -174,9 +174,24 @@ fun OrderCard(
     order: OrderItem,
     formatRupiah: (Long) -> String,
     showReviewButton: Boolean,
-    navController: NavHostController
+    navController: NavHostController,
+    ratingViewModel: RatingViewModel  // ✅ Terima RatingViewModel
 ) {
     var expanded by remember { mutableStateOf(true) }
+
+    // ✅ State: apakah order ini sudah pernah diulas
+    // null = masih loading cek, true = sudah, false = belum
+    var sudahDiulas by remember { mutableStateOf<Boolean?>(null) }
+
+    // ✅ Cek ke Firestore saat pertama kali OrderCard muncul
+    // Hanya cek jika tombol ulasan memang ditampilkan (order Selesai)
+    LaunchedEffect(order.orderId) {
+        if (showReviewButton) {
+            ratingViewModel.cekSudahDiulas(order.orderId) { hasil ->
+                sudahDiulas = hasil
+            }
+        }
+    }
 
     val statusColor = when (order.statusPesanan) {
         "Menunggu Konfirmasi" -> Color(0xFFE53935)
@@ -285,29 +300,81 @@ fun OrderCard(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            OutlinedButton(
-                                onClick = { navController.navigate(Screen.RatingUlasanMahasiswaScreen.route) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFFF57C00)
-                                ),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp, Color(0xFFF57C00)
-                                )
-                            ) {
-                                Text(
-                                    text = "Berikan Ulasan",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+
+                            // ✅ Tombol Berikan Ulasan dengan 3 kondisi tampilan
+                            when (sudahDiulas) {
+                                null -> {
+                                    // Masih loading cek Firestore → tampilkan shimmer/disabled
+                                    OutlinedButton(
+                                        onClick = {},
+                                        enabled = false,
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(14.dp),
+                                            strokeWidth = 2.dp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                                true -> {
+                                    // Sudah diulas → tombol nonaktif dengan label berbeda
+                                    OutlinedButton(
+                                        onClick = {},
+                                        enabled = false,
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            disabledContentColor = Color(0xFF9E9E9E)
+                                        ),
+                                        border = androidx.compose.foundation.BorderStroke(
+                                            1.dp, Color(0xFFBDBDBD)
+                                        )
+                                    ) {
+                                        Text(
+                                            text = "✓ Sudah Diulas",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                                false -> {
+                                    // Belum diulas → tombol aktif seperti biasa
+                                    OutlinedButton(
+                                        onClick = {
+                                            navController.navigate(
+                                                Screen.RatingUlasanMahasiswaScreen.createRoute(
+                                                    orderId    = order.orderId,
+                                                    warungId   = order.warungId,
+                                                    namaWarung = order.namaWarung
+                                                )
+                                            )
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = Color(0xFFF57C00)
+                                        ),
+                                        border = androidx.compose.foundation.BorderStroke(
+                                            1.dp, Color(0xFFF57C00)
+                                        )
+                                    ) {
+                                        Text(
+                                            text = "Berikan Ulasan",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
                             }
+
                             Button(
-                                onClick = {  },
+                                onClick = { },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF1A0A00)
+                                    containerColor = DormRed
                                 )
                             ) {
                                 Text(

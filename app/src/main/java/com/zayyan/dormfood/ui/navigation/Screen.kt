@@ -17,5 +17,16 @@ sealed class Screen (val route: String) {
         fun createRoute(userId: String) = "menumahasiswascreen/$userId"
     }
     data object PembayaranMahasiswaScreen: Screen("pembayaranmahasiswascreen")
-    data object RatingUlasanMahasiswaScreen: Screen("ratingulasanmahasiswascreen")
+    data object RatingUlasanMahasiswaScreen : Screen(
+        "ratingulasanmahasiswascreen/{orderId}/{warungId}/{namaWarung}"
+    ) {
+        fun createRoute(
+            orderId: String,
+            warungId: String,
+            namaWarung: String
+        ): String {
+            val encodedNama = java.net.URLEncoder.encode(namaWarung, "UTF-8")
+            return "ratingulasanmahasiswascreen/$orderId/$warungId/$encodedNama"
+        }
+    }
 }
