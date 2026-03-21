@@ -138,7 +138,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             )
         }
         composable(route = Screen.RatingUlasanWarungScreen.route) {
-            RatingUlasanWarungScreen(navController)
+            RatingUlasanWarungScreen(
+                navController   = navController,
+                ratingViewModel = ratingViewModel
+            )
         }
     }
 }
