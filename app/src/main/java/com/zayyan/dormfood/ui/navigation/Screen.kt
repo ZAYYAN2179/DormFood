@@ -16,7 +16,6 @@ sealed class Screen(val route: String) {
     data object MenuMahasiswaScreen : Screen("menumahasiswascreen/{userId}") {
         fun createRoute(userId: String) = "menumahasiswascreen/$userId"
     }
-
     data object PembayaranMahasiswaScreen : Screen("pembayaranmahasiswascreen")
     data object RatingUlasanMahasiswaScreen : Screen(
         "ratingulasanmahasiswascreen/{orderId}/{warungId}/{namaWarung}"
@@ -30,10 +29,10 @@ sealed class Screen(val route: String) {
             return "ratingulasanmahasiswascreen/$orderId/$warungId/$encodedNama"
         }
     }
-
     data object RatingUlasanWarungScreen : Screen(
         "ratingulasanwarungscreen/{warungId}"
     ) {
         fun createRoute(warungId: String) = "ratingulasanwarungscreen/$warungId"
     }
+    data object PrediksiStokMenuWarungScreen : Screen("prediksistokmenuwarungscreen")
 }

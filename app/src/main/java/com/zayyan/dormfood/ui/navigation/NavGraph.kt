@@ -27,6 +27,7 @@ import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
 import com.zayyan.dormfood.ui.screen.warung.BerandaWarung
 import com.zayyan.dormfood.ui.screen.warung.MenuWarung
 import com.zayyan.dormfood.ui.screen.warung.PesananWarung
+import com.zayyan.dormfood.ui.screen.warung.PrediksiStokMenuWarungScreen
 import com.zayyan.dormfood.ui.screen.warung.ProfilWarung
 import com.zayyan.dormfood.ui.screen.warung.RatingUlasanWarungScreen
 import java.net.URLDecoder
@@ -149,6 +150,9 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
                 warungId = warungId,
                 ratingViewModel = ratingViewModel
             )
+        }
+        composable(route = Screen.PrediksiStokMenuWarungScreen.route) {
+            PrediksiStokMenuWarungScreen(navController)
         }
     }
 }
