@@ -47,10 +47,8 @@ fun ProfilMahasiswa(
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val isLoading by mahasiswaViewModel.isLoading.collectAsState()
 
-    // SnackbarHostState di sini agar bisa dioper ke Scaffold dan Content
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Observe updateMessage dari ViewModel — setiap ada pesan baru, tampilkan snackbar
     val updateMessage by mahasiswaViewModel.updateMessage.collectAsState()
     LaunchedEffect(updateMessage) {
         updateMessage?.let { message ->
@@ -73,7 +71,6 @@ fun ProfilMahasiswa(
                 currentRoute = currentRoute
             )
         },
-        // ← snackbarHost di dalam Scaffold agar tampil di posisi yang benar
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
@@ -223,7 +220,6 @@ fun ProfilMahasiswaContent(
         }
     }
 
-    // ── Dialog logout ────────────────────────────────────────────
     if (showLogoutDialog) {
         AlertDialog(
             icon = Icons.AutoMirrored.Outlined.ExitToApp,
@@ -243,7 +239,6 @@ fun ProfilMahasiswaContent(
         )
     }
 
-    // ── Dialog edit nama ─────────────────────────────────────────
     if (showEditNameDialog) {
         EditTextDialog(
             title = "Edit Nama",
@@ -257,7 +252,6 @@ fun ProfilMahasiswaContent(
                     newName = newName,
                     onSuccess = {
                         showEditNameDialog = false
-                        // Pesan akan ditampilkan via updateMessage state
                         mahasiswaViewModel.setUpdateMessage("Nama berhasil diperbarui")
                     },
                     onError = { error ->
@@ -268,7 +262,6 @@ fun ProfilMahasiswaContent(
         )
     }
 
-    // ── Dialog edit gedung ───────────────────────────────────────
     if (showEditBuildingDialog) {
         EditTextDialog(
             title = "Edit Gedung",
@@ -293,7 +286,6 @@ fun ProfilMahasiswaContent(
         )
     }
 
-    // ── Dialog edit nomor kamar ──────────────────────────────────
     if (showEditRoomDialog) {
         EditTextDialog(
             title = "Edit Nomor Kamar",

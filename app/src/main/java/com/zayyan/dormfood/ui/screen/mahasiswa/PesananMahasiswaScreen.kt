@@ -52,9 +52,9 @@ fun PesananMahasiswa(
         containerColor = Background
     ) { paddingValues ->
         PesananMahasiswaContent(
-            paddingValues    = paddingValues,
+            paddingValues = paddingValues,
             pesananViewModel = pesananViewModel,
-            navController    = navController
+            navController = navController
         )
     }
 }
@@ -65,10 +65,9 @@ fun PesananMahasiswaContent(
     pesananViewModel: PesananViewModel,
     navController: NavHostController
 ) {
-    // ✅ RatingViewModel diinisialisasi di sini agar satu instance untuk semua OrderCard
     val ratingViewModel: RatingViewModel = viewModel()
 
-    val orders    by pesananViewModel.orders.collectAsState()
+    val orders by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
 
     val aktif = orders.filter {
@@ -131,11 +130,11 @@ fun PesananMahasiswaContent(
             item { SectionLabel(title = "Status Pesanan") }
             items(aktif, key = { it.orderId }) { order ->
                 OrderCard(
-                    order            = order,
-                    formatRupiah     = formatRupiah,
+                    order = order,
+                    formatRupiah = formatRupiah,
                     showReviewButton = false,
-                    navController    = navController,
-                    ratingViewModel  = ratingViewModel
+                    navController = navController,
+                    ratingViewModel = ratingViewModel
                 )
             }
         }
@@ -144,11 +143,11 @@ fun PesananMahasiswaContent(
             item { SectionLabel(title = "Riwayat Pesanan") }
             items(selesai, key = { it.orderId }) { order ->
                 OrderCard(
-                    order            = order,
-                    formatRupiah     = formatRupiah,
+                    order = order,
+                    formatRupiah = formatRupiah,
                     showReviewButton = true,
-                    navController    = navController,
-                    ratingViewModel  = ratingViewModel
+                    navController = navController,
+                    ratingViewModel = ratingViewModel
                 )
             }
         }
@@ -175,16 +174,12 @@ fun OrderCard(
     formatRupiah: (Long) -> String,
     showReviewButton: Boolean,
     navController: NavHostController,
-    ratingViewModel: RatingViewModel  // ✅ Terima RatingViewModel
+    ratingViewModel: RatingViewModel
 ) {
     var expanded by remember { mutableStateOf(true) }
 
-    // ✅ State: apakah order ini sudah pernah diulas
-    // null = masih loading cek, true = sudah, false = belum
     var sudahDiulas by remember { mutableStateOf<Boolean?>(null) }
 
-    // ✅ Cek ke Firestore saat pertama kali OrderCard muncul
-    // Hanya cek jika tombol ulasan memang ditampilkan (order Selesai)
     LaunchedEffect(order.orderId) {
         if (showReviewButton) {
             ratingViewModel.cekSudahDiulas(order.orderId) { hasil ->
@@ -195,10 +190,10 @@ fun OrderCard(
 
     val statusColor = when (order.statusPesanan) {
         "Menunggu Konfirmasi" -> Color(0xFFE53935)
-        "Dibuat"              -> Color(0xFFF57C00)
-        "Diantar"             -> Color(0xFF1976D2)
-        "Selesai"             -> Color(0xFF2E7D32)
-        else                  -> Color.Gray
+        "Dibuat" -> Color(0xFFF57C00)
+        "Diantar" -> Color(0xFF1976D2)
+        "Selesai" -> Color(0xFF2E7D32)
+        else -> Color.Gray
     }
 
     Card(
@@ -301,10 +296,8 @@ fun OrderCard(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
 
-                            // ✅ Tombol Berikan Ulasan dengan 3 kondisi tampilan
                             when (sudahDiulas) {
                                 null -> {
-                                    // Masih loading cek Firestore → tampilkan shimmer/disabled
                                     OutlinedButton(
                                         onClick = {},
                                         enabled = false,
@@ -318,8 +311,8 @@ fun OrderCard(
                                         )
                                     }
                                 }
+
                                 true -> {
-                                    // Sudah diulas → tombol nonaktif dengan label berbeda
                                     OutlinedButton(
                                         onClick = {},
                                         enabled = false,
@@ -339,13 +332,14 @@ fun OrderCard(
                                         )
                                     }
                                 }
+
                                 false -> {
                                     OutlinedButton(
                                         onClick = {
                                             navController.navigate(
                                                 Screen.RatingUlasanMahasiswaScreen.createRoute(
-                                                    orderId    = order.orderId,
-                                                    warungId   = order.warungId,
+                                                    orderId = order.orderId,
+                                                    warungId = order.warungId,
                                                     namaWarung = order.namaWarung
                                                 )
                                             )

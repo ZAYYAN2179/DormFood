@@ -122,7 +122,7 @@ fun PembayaranMahasiswaScreenContent(
     var buktiUri by remember { mutableStateOf<android.net.Uri?>(null) }
 
     val formatRupiah = { amount: Long ->
-        "Rp ${NumberFormat.getNumberInstance(Locale("id", "ID")).format(amount)}"
+        "Rp ${NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).format(amount)}"
     }
 
     val imagePicker = rememberLauncherForActivityResult(
@@ -370,7 +370,7 @@ fun PembayaranMahasiswaScreenContent(
                     confirmButton = {
                         TextButton(onClick = {
                             showSuccessDialog = false
-                            pesananViewModel.resetPesananState()  // ← reset state pembayaran
+                            pesananViewModel.resetPesananState()
                             navController.navigate(Screen.PesananMahasiswaScreen.route) {
                                 popUpTo(Screen.BerandaMahasiswaScreen.route)
                                 launchSingleTop = true

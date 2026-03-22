@@ -25,14 +25,12 @@ import com.zayyan.dormfood.ui.model.SubmitReviewState
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 
-private val StarSelected     = Color(0xFFF5A623)
-private val StarUnselected   = Color(0xFFBDBDBD)
-private val CardBg           = Color(0xFFFFFFFF)
-private val LabelColor       = Color(0xFF1A1A1A)
+private val StarSelected = Color(0xFFF5A623)
+private val StarUnselected = Color(0xFFBDBDBD)
+private val CardBg = Color(0xFFFFFFFF)
+private val LabelColor = Color(0xFF1A1A1A)
 private val PlaceholderColor = Color(0xFFBDBDBD)
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
-// Terima 3 parameter dari navigasi: orderId, warungId, namaWarung
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RatingUlasanMahasiswaScreen(
@@ -74,17 +72,16 @@ fun RatingUlasanMahasiswaScreen(
         containerColor = Background
     ) { paddingValues ->
         RatingUlasanMahasiswaContent(
-            paddingValues      = paddingValues,
-            orderId            = orderId,
-            warungId           = warungId,
-            namaWarung         = namaWarung,
-            ratingViewModel    = ratingViewModel,
+            paddingValues = paddingValues,
+            orderId = orderId,
+            warungId = warungId,
+            namaWarung = namaWarung,
+            ratingViewModel = ratingViewModel,
             onBackAfterSuccess = { navController.popBackStack() }
         )
     }
 }
 
-// ─── Content ──────────────────────────────────────────────────────────────────
 @Composable
 fun RatingUlasanMahasiswaContent(
     paddingValues: PaddingValues,
@@ -99,7 +96,6 @@ fun RatingUlasanMahasiswaContent(
 
     val submitState by ratingViewModel.submitState.collectAsState()
 
-    // Navigasi kembali otomatis 1.5 detik setelah sukses
     LaunchedEffect(submitState) {
         if (submitState is SubmitReviewState.Success) {
             kotlinx.coroutines.delay(1500)
@@ -119,7 +115,6 @@ fun RatingUlasanMahasiswaContent(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
 
-        // ── Info warung yang diulas ───────────────────────────────────────────
         Text(
             text = "Ulasan untuk: $namaWarung",
             fontSize = 13.sp,
@@ -127,7 +122,6 @@ fun RatingUlasanMahasiswaContent(
             fontWeight = FontWeight.Medium
         )
 
-        // ── Rating Bintang ────────────────────────────────────────────────────
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 text = "Berikan rating bintang",
@@ -155,7 +149,6 @@ fun RatingUlasanMahasiswaContent(
             }
         }
 
-        // ── Tulis Ulasan ──────────────────────────────────────────────────────
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 text = "Tulis Ulasan",
@@ -178,11 +171,11 @@ fun RatingUlasanMahasiswaContent(
                 },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor   = CardBg,
+                    focusedContainerColor = CardBg,
                     unfocusedContainerColor = CardBg,
-                    disabledContainerColor  = CardBg,
-                    focusedBorderColor      = DormRed,
-                    unfocusedBorderColor    = Color.Transparent,
+                    disabledContainerColor = CardBg,
+                    focusedBorderColor = DormRed,
+                    unfocusedBorderColor = Color.Transparent,
                 ),
                 maxLines = 6,
                 enabled = isInteractable
@@ -191,15 +184,14 @@ fun RatingUlasanMahasiswaContent(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // ── Tombol Kirim ──────────────────────────────────────────────────────
         Button(
             onClick = {
                 ratingViewModel.kirimUlasan(
-                    orderId    = orderId,
-                    warungId   = warungId,
+                    orderId = orderId,
+                    warungId = warungId,
                     namaWarung = namaWarung,
-                    rating     = rating,
-                    ulasan     = ulasan
+                    rating = rating,
+                    ulasan = ulasan
                 )
             },
             modifier = Modifier
@@ -225,32 +217,33 @@ fun RatingUlasanMahasiswaContent(
             }
         }
 
-        // ── Feedback state ────────────────────────────────────────────────────
         when (submitState) {
             is SubmitReviewState.Success -> FeedbackBox(
-                emoji     = "✅",
-                message   = "Ulasan berhasil dikirim! Terima kasih.",
-                bgColor   = Color(0xFFEDF7ED),
+                emoji = "✅",
+                message = "Ulasan berhasil dikirim! Terima kasih.",
+                bgColor = Color(0xFFEDF7ED),
                 textColor = Color(0xFF2E7D32)
             )
+
             is SubmitReviewState.AlreadyReviewed -> FeedbackBox(
-                emoji     = "ℹ️",
-                message   = "Kamu sudah memberikan ulasan untuk pesanan ini.",
-                bgColor   = Color(0xFFE3F2FD),
+                emoji = "ℹ️",
+                message = "Kamu sudah memberikan ulasan untuk pesanan ini.",
+                bgColor = Color(0xFFE3F2FD),
                 textColor = Color(0xFF1565C0)
             )
+
             is SubmitReviewState.Error -> FeedbackBox(
-                emoji     = "❌",
-                message   = (submitState as SubmitReviewState.Error).message,
-                bgColor   = Color(0xFFFFEBEE),
+                emoji = "❌",
+                message = (submitState as SubmitReviewState.Error).message,
+                bgColor = Color(0xFFFFEBEE),
                 textColor = Color(0xFFC62828)
             )
+
             else -> Unit
         }
     }
 }
 
-// ─── Reusable feedback box ────────────────────────────────────────────────────
 @Composable
 private fun FeedbackBox(
     emoji: String,

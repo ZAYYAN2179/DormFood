@@ -37,7 +37,7 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
     val warungViewModel: WarungViewModel = viewModel()
     val mahasiswaViewModel: MahasiswaViewModel = viewModel()
     val menuViewModel: MenuViewModel = viewModel()
-    val ratingViewModel: RatingViewModel = viewModel() // ✅ Tambah ini
+    val ratingViewModel: RatingViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -119,21 +119,21 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         composable(
             route = Screen.RatingUlasanMahasiswaScreen.route,
             arguments = listOf(
-                navArgument("orderId")    { type = NavType.StringType },
-                navArgument("warungId")   { type = NavType.StringType },
+                navArgument("orderId") { type = NavType.StringType },
+                navArgument("warungId") { type = NavType.StringType },
                 navArgument("namaWarung") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val orderId    = backStackEntry.arguments?.getString("orderId")    ?: ""
-            val warungId   = backStackEntry.arguments?.getString("warungId")   ?: ""
+            val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+            val warungId = backStackEntry.arguments?.getString("warungId") ?: ""
             val namaWarung = URLDecoder.decode(
                 backStackEntry.arguments?.getString("namaWarung") ?: "", "UTF-8"
             )
             RatingUlasanMahasiswaScreen(
-                navController   = navController,
-                orderId         = orderId,
-                warungId        = warungId,
-                namaWarung      = namaWarung,
+                navController = navController,
+                orderId = orderId,
+                warungId = warungId,
+                namaWarung = namaWarung,
                 ratingViewModel = ratingViewModel
             )
         }
@@ -145,8 +145,8 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
         ) { backStackEntry ->
             val warungId = backStackEntry.arguments?.getString("warungId") ?: ""
             RatingUlasanWarungScreen(
-                navController   = navController,
-                warungId        = warungId,
+                navController = navController,
+                warungId = warungId,
                 ratingViewModel = ratingViewModel
             )
         }
