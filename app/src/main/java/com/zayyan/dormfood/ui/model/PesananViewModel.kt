@@ -44,82 +44,49 @@ enum class StatusPesanan(val label: String) {
 }
 
 class PesananViewModel : ViewModel() {
-
     private var currentNamaUser: String = ""
     private var currentBuilding: String = ""
     private var currentRoomNumber: String = ""
-
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-
-    // ─────────────────────────────────────────────────────────────
-    // State: buat pesanan (sisi mahasiswa, sebelum submit)
-    // ─────────────────────────────────────────────────────────────
     private val _itemPesanan = MutableStateFlow<List<ItemPesanan>>(emptyList())
     val itemPesanan: StateFlow<List<ItemPesanan>> = _itemPesanan
-
     private val _totalHarga = MutableStateFlow(0L)
     val totalHarga: StateFlow<Long> = _totalHarga
-
     private val _fotoQr = MutableStateFlow("")
     val fotoQr: StateFlow<String> = _fotoQr
-
     private val _namaWarung = MutableStateFlow("")
     val namaWarung: StateFlow<String> = _namaWarung
-
     private var currentWarungId: String = ""
-
     private val _isUploading = MutableStateFlow(false)
     val isUploading: StateFlow<Boolean> = _isUploading
-
-    // ─────────────────────────────────────────────────────────────
-    // State: riwayat pesanan mahasiswa
-    // ─────────────────────────────────────────────────────────────
     private val _orders = MutableStateFlow<List<OrderItem>>(emptyList())
     val orders: StateFlow<List<OrderItem>> = _orders
-
     private val _isLoadingOrders = MutableStateFlow(false)
     val isLoadingOrders: StateFlow<Boolean> = _isLoadingOrders
-
     private var ordersListener: ListenerRegistration? = null
     private val warungNamesCache = mutableMapOf<String, String>()
-
-    // ─────────────────────────────────────────────────────────────
-    // State: pesanan masuk (sisi warung)
-    // ─────────────────────────────────────────────────────────────
     private val _warungOrders = MutableStateFlow<List<OrderItem>>(emptyList())
     val warungOrders: StateFlow<List<OrderItem>> = _warungOrders
-
     private val _isLoadingWarungOrders = MutableStateFlow(false)
     val isLoadingWarungOrders: StateFlow<Boolean> = _isLoadingWarungOrders
-
     private val _updateStatusResult = MutableStateFlow<String?>(null)
-
     private var warungOrdersListener: ListenerRegistration? = null
-
-    // Cache data user (namaUser, building, roomNumber) untuk sisi warung
-    // Triple<namaUser, building, roomNumber>
     private val userDataCache = mutableMapOf<String, Triple<String, String, String>>()
 
-    // ─────────────────────────────────────────────────────────────
-    // Init: hanya load pesanan mahasiswa (skip kalau belum login)
-    // ─────────────────────────────────────────────────────────────
     init {
         if (auth.currentUser != null) {
             loadOrders()
         }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Helper
-    // ─────────────────────────────────────────────────────────────
     private fun normalizeStatus(raw: String): String {
         return when (raw.trim().uppercase()) {
             "MENUNGGU KONFIRMASI", "MENUNGGU_KONFIRMASI" -> "Menunggu Konfirmasi"
-            "DIBUAT"  -> "Dibuat"
+            "DIBUAT" -> "Dibuat"
             "DIANTAR" -> "Diantar"
             "SELESAI" -> "Selesai"
-            else      -> raw.trim()
+            else -> raw.trim()
         }
     }
 
@@ -130,30 +97,29 @@ class PesananViewModel : ViewModel() {
             val items = rawItems.map { map ->
                 ItemPesanan(
                     namaMenu = map["namaMenu"] as? String ?: "",
-                    harga    = (map["harga"]    as? Long)?.toInt() ?: 0,
+                    harga = (map["harga"] as? Long)?.toInt() ?: 0,
                     quantity = (map["quantity"] as? Long)?.toInt() ?: 0
                 )
             }
             OrderItem(
-                orderId            = doc.id,
-                userId             = doc.getString("userId")             ?: "",
-                warungId           = doc.getString("warungId")           ?: "",
-                namaWarung         = doc.getString("namaWarung")         ?: "",
-                namaUser           = doc.getString("namaUser")           ?: "",
-                building           = doc.getString("building")           ?: "",
-                roomNumber         = doc.getString("roomNumber")         ?: "",
-                items              = items,
-                totalHarga         = doc.getLong("totalHarga")           ?: 0,
-                statusPesanan      = normalizeStatus(doc.getString("statusPesanan") ?: ""),
+                orderId = doc.id,
+                userId = doc.getString("userId") ?: "",
+                warungId = doc.getString("warungId") ?: "",
+                namaWarung = doc.getString("namaWarung") ?: "",
+                namaUser = doc.getString("namaUser") ?: "",
+                building = doc.getString("building") ?: "",
+                roomNumber = doc.getString("roomNumber") ?: "",
+                items = items,
+                totalHarga = doc.getLong("totalHarga") ?: 0,
+                statusPesanan = normalizeStatus(doc.getString("statusPesanan") ?: ""),
                 buktiPembayaranUrl = doc.getString("buktiPembayaranUrl") ?: "",
-                createdAt          = doc.getTimestamp("createdAt")
+                createdAt = doc.getTimestamp("createdAt")
             )
-        } catch (_: Exception) { null }
+        } catch (_: Exception) {
+            null
+        }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Sisi mahasiswa: simpan state sebelum ke halaman pembayaran
-    // ─────────────────────────────────────────────────────────────
     fun buatPesanan(
         items: List<ItemPesanan>,
         total: Long,
@@ -164,19 +130,16 @@ class PesananViewModel : ViewModel() {
         building: String = "",
         roomNumber: String = ""
     ) {
-        _itemPesanan.value  = items
-        _totalHarga.value   = total
-        _fotoQr.value       = fotoQr
-        _namaWarung.value   = namaWarung
-        currentWarungId     = warungId
-        currentNamaUser     = namaUser
-        currentBuilding     = building
-        currentRoomNumber   = roomNumber
+        _itemPesanan.value = items
+        _totalHarga.value = total
+        _fotoQr.value = fotoQr
+        _namaWarung.value = namaWarung
+        currentWarungId = warungId
+        currentNamaUser = namaUser
+        currentBuilding = building
+        currentRoomNumber = roomNumber
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Sisi mahasiswa: upload bukti → simpan order ke Firestore
-    // ─────────────────────────────────────────────────────────────
     fun uploadBuktiDanKirimPesanan(
         buktiUri: Uri,
         onSuccess: () -> Unit,
@@ -195,10 +158,10 @@ class PesananViewModel : ViewModel() {
                 override fun onSuccess(requestId: String, resultData: Map<*, *>) {
                     val buktiUrl = resultData["secure_url"].toString()
                     simpanOrderKeFirestore(
-                        userId             = currentUser.uid,
+                        userId = currentUser.uid,
                         buktiPembayaranUrl = buktiUrl,
-                        onSuccess          = { _isUploading.value = false; onSuccess() },
-                        onError            = { err -> _isUploading.value = false; onError(err) }
+                        onSuccess = { _isUploading.value = false; onSuccess() },
+                        onError = { err -> _isUploading.value = false; onError(err) }
                     )
                 }
 
@@ -218,33 +181,32 @@ class PesananViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        // Selalu ambil data user terbaru dari Firestore sebelum simpan order
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { userDoc ->
-                val namaUser   = currentNamaUser.ifBlank { userDoc.getString("name")       ?: "" }
-                val building   = currentBuilding.ifBlank { userDoc.getString("building")   ?: "" }
+                val namaUser = currentNamaUser.ifBlank { userDoc.getString("name") ?: "" }
+                val building = currentBuilding.ifBlank { userDoc.getString("building") ?: "" }
                 val roomNumber = currentRoomNumber.ifBlank { userDoc.getString("roomNumber") ?: "" }
 
                 val itemsMap = _itemPesanan.value.map { item ->
                     mapOf(
                         "namaMenu" to item.namaMenu,
-                        "harga"    to item.harga,
+                        "harga" to item.harga,
                         "quantity" to item.quantity
                     )
                 }
 
                 val orderData = hashMapOf(
-                    "userId"             to userId,
-                    "warungId"           to currentWarungId,
-                    "namaWarung"         to _namaWarung.value,
-                    "namaUser"           to namaUser,
-                    "building"           to building,
-                    "roomNumber"         to roomNumber,
-                    "items"              to itemsMap,
-                    "totalHarga"         to _totalHarga.value,
-                    "statusPesanan"      to StatusPesanan.MENUNGGU_KONFIRMASI.label,
+                    "userId" to userId,
+                    "warungId" to currentWarungId,
+                    "namaWarung" to _namaWarung.value,
+                    "namaUser" to namaUser,
+                    "building" to building,
+                    "roomNumber" to roomNumber,
+                    "items" to itemsMap,
+                    "totalHarga" to _totalHarga.value,
+                    "statusPesanan" to StatusPesanan.MENUNGGU_KONFIRMASI.label,
                     "buktiPembayaranUrl" to buktiPembayaranUrl,
-                    "createdAt"          to FieldValue.serverTimestamp()
+                    "createdAt" to FieldValue.serverTimestamp()
                 )
 
                 firestore.collection("orders")
@@ -255,9 +217,6 @@ class PesananViewModel : ViewModel() {
             .addOnFailureListener { e -> onError(e.message ?: "Gagal mengambil data user") }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Sisi mahasiswa: load riwayat pesanan milik user ini
-    // ─────────────────────────────────────────────────────────────
     fun loadOrders() {
         val currentUser = auth.currentUser ?: return
         if (ordersListener != null) return
@@ -280,7 +239,7 @@ class PesananViewModel : ViewModel() {
                 val needResolve = orderList.filter { it.namaWarung.isEmpty() }
 
                 if (needResolve.isEmpty()) {
-                    _orders.value          = orderList
+                    _orders.value = orderList
                     _isLoadingOrders.value = false
                     return@addSnapshotListener
                 }
@@ -311,7 +270,10 @@ class PesananViewModel : ViewModel() {
                             if (resolved == uniqueIds.size) {
                                 _orders.value = orderList.map { order ->
                                     if (order.namaWarung.isEmpty())
-                                        order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
+                                        order.copy(
+                                            namaWarung = warungNamesCache[order.warungId]
+                                                ?: "Warung"
+                                        )
                                     else order
                                 }
                                 _isLoadingOrders.value = false
@@ -321,12 +283,6 @@ class PesananViewModel : ViewModel() {
             }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Sisi warung: load pesanan masuk ke warung yang sedang login
-    // Data namaUser, building, roomNumber selalu diambil fresh dari
-    // koleksi users — bukan dari snapshot order — agar tetap sinkron
-    // walau mahasiswa mengubah profilnya.
-    // ─────────────────────────────────────────────────────────────
     fun loadWarungOrders() {
         val currentUser = auth.currentUser ?: return
         if (warungOrdersListener != null) return
@@ -348,36 +304,33 @@ class PesananViewModel : ViewModel() {
                     ?: emptyList()
 
                 if (orderList.isEmpty()) {
-                    _warungOrders.value          = emptyList()
+                    _warungOrders.value = emptyList()
                     _isLoadingWarungOrders.value = false
                     return@addSnapshotListener
                 }
 
-                // Ambil semua userId unik, lalu fetch data user terbaru
                 val uniqueUserIds = orderList.map { it.userId }.distinct()
                 var resolved = 0
 
                 for (uid in uniqueUserIds) {
-                    // Selalu fetch fresh — tidak pakai cache — agar perubahan profil langsung terlihat
                     firestore.collection("users").document(uid).get()
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 val doc = task.result
                                 userDataCache[uid] = Triple(
-                                    doc?.getString("name")       ?: "",
-                                    doc?.getString("building")   ?: "",
+                                    doc?.getString("name") ?: "",
+                                    doc?.getString("building") ?: "",
                                     doc?.getString("roomNumber") ?: ""
                                 )
                             }
                             resolved++
                             if (resolved == uniqueUserIds.size) {
-                                // Gabungkan data order dengan data user terbaru
                                 _warungOrders.value = orderList.map { order ->
                                     val userData = userDataCache[order.userId]
                                     if (userData != null) {
                                         order.copy(
-                                            namaUser   = userData.first,
-                                            building   = userData.second,
+                                            namaUser = userData.first,
+                                            building = userData.second,
                                             roomNumber = userData.third
                                         )
                                     } else order
@@ -389,22 +342,15 @@ class PesananViewModel : ViewModel() {
             }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Sisi warung: reset listener + cache lalu load ulang
-    // Dipanggil saat screen dibuka agar data user selalu fresh
-    // ─────────────────────────────────────────────────────────────
     fun refreshWarungOrders() {
         warungOrdersListener?.remove()
         warungOrdersListener = null
         userDataCache.clear()
-        _warungOrders.value          = emptyList()
+        _warungOrders.value = emptyList()
         _isLoadingWarungOrders.value = false
         loadWarungOrders()
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Sisi warung: update status pesanan
-    // ─────────────────────────────────────────────────────────────
     fun updateStatusPesanan(
         orderId: String,
         statusBaru: StatusPesanan,
@@ -425,36 +371,26 @@ class PesananViewModel : ViewModel() {
             }
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Reset state sementara (setelah pesanan berhasil dikirim)
-    // ─────────────────────────────────────────────────────────────
     fun resetPesananState() {
-        _itemPesanan.value  = emptyList()
-        _totalHarga.value   = 0L
-        _fotoQr.value       = ""
-        _namaWarung.value   = ""
-        currentWarungId     = ""
-        currentNamaUser     = ""
-        currentBuilding     = ""
-        currentRoomNumber   = ""
+        _itemPesanan.value = emptyList()
+        _totalHarga.value = 0L
+        _fotoQr.value = ""
+        _namaWarung.value = ""
+        currentWarungId = ""
+        currentNamaUser = ""
+        currentBuilding = ""
+        currentRoomNumber = ""
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Dipanggil saat logout mahasiswa: bersihkan listener + cache,
-    // lalu reload untuk user baru yang mungkin login berikutnya
-    // ─────────────────────────────────────────────────────────────
     fun clearAndReload() {
         ordersListener?.remove()
         ordersListener = null
         warungNamesCache.clear()
-        _orders.value          = emptyList()
+        _orders.value = emptyList()
         _isLoadingOrders.value = false
         loadOrders()
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Cleanup saat ViewModel di-destroy
-    // ─────────────────────────────────────────────────────────────
     override fun onCleared() {
         super.onCleared()
         ordersListener?.remove()

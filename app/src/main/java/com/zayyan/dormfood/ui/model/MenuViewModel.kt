@@ -59,7 +59,9 @@ class MenuViewModel : ViewModel() {
                                 ketersediaan = doc.getBoolean("ketersediaan") ?: true,
                                 tipe = doc.getString("tipe") ?: "Makanan"
                             )
-                        } catch (_: Exception) { null }
+                        } catch (_: Exception) {
+                            null
+                        }
                     }.sortedBy { it.namaMenu.lowercase() }
                     _menuList.value = menus
                 }
@@ -94,7 +96,7 @@ class MenuViewModel : ViewModel() {
                             fotoQr = warungDoc.getString("fotoQr") ?: ""
                         )
                         _warungDetail.value = detail
-                        warungDetailCache[userId] = detail  // ← simpan ke cache
+                        warungDetailCache[userId] = detail
 
                         firestore.collection("menus")
                             .whereEqualTo("warungId", userId)
@@ -110,10 +112,12 @@ class MenuViewModel : ViewModel() {
                                             ketersediaan = doc.getBoolean("ketersediaan") ?: true,
                                             tipe = doc.getString("tipe") ?: "Makanan"
                                         )
-                                    } catch (_: Exception) { null }
+                                    } catch (_: Exception) {
+                                        null
+                                    }
                                 }.sortedBy { it.namaMenu.lowercase() }
                                 _menuListByWarung.value = menus
-                                menuByWarungCache[userId] = menus  // ← simpan ke cache
+                                menuByWarungCache[userId] = menus
                                 _isLoadingDetail.value = false
                             }
                             .addOnFailureListener { _isLoadingDetail.value = false }
@@ -138,9 +142,15 @@ class MenuViewModel : ViewModel() {
         onError: (String) -> Unit
     ) {
         val currentUser = auth.currentUser
-        if (currentUser == null) { onError("User tidak terautentikasi"); return }
-        if (namaMenu.isBlank()) { onError("Nama menu tidak boleh kosong"); return }
-        if (harga <= 0) { onError("Harga harus lebih dari 0"); return }
+        if (currentUser == null) {
+            onError("User tidak terautentikasi"); return
+        }
+        if (namaMenu.isBlank()) {
+            onError("Nama menu tidak boleh kosong"); return
+        }
+        if (harga <= 0) {
+            onError("Harga harus lebih dari 0"); return
+        }
 
         _isLoading.value = true
         val menuData = hashMapOf(
@@ -153,7 +163,11 @@ class MenuViewModel : ViewModel() {
         )
         firestore.collection("menus").add(menuData)
             .addOnSuccessListener { _isLoading.value = false; onSuccess() }
-            .addOnFailureListener { _isLoading.value = false; onError(it.message ?: "Gagal menambahkan menu") }
+            .addOnFailureListener {
+                _isLoading.value = false; onError(
+                it.message ?: "Gagal menambahkan menu"
+            )
+            }
     }
 
     fun updateMenu(
@@ -165,9 +179,15 @@ class MenuViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (menuId.isBlank()) { onError("ID menu tidak valid"); return }
-        if (namaMenu.isBlank()) { onError("Nama menu tidak boleh kosong"); return }
-        if (harga <= 0) { onError("Harga harus lebih dari 0"); return }
+        if (menuId.isBlank()) {
+            onError("ID menu tidak valid"); return
+        }
+        if (namaMenu.isBlank()) {
+            onError("Nama menu tidak boleh kosong"); return
+        }
+        if (harga <= 0) {
+            onError("Harga harus lebih dari 0"); return
+        }
 
         _isLoading.value = true
         val updates = hashMapOf<String, Any>(
@@ -179,7 +199,11 @@ class MenuViewModel : ViewModel() {
         )
         firestore.collection("menus").document(menuId).update(updates)
             .addOnSuccessListener { _isLoading.value = false; onSuccess() }
-            .addOnFailureListener { _isLoading.value = false; onError(it.message ?: "Gagal mengupdate menu") }
+            .addOnFailureListener {
+                _isLoading.value = false; onError(
+                it.message ?: "Gagal mengupdate menu"
+            )
+            }
     }
 
     fun toggleKetersediaan(menuId: String, currentStatus: Boolean, onError: (String) -> Unit) {
@@ -189,11 +213,17 @@ class MenuViewModel : ViewModel() {
     }
 
     fun deleteMenu(menuId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        if (menuId.isBlank()) { onError("ID menu tidak valid"); return }
+        if (menuId.isBlank()) {
+            onError("ID menu tidak valid"); return
+        }
         _isLoading.value = true
         firestore.collection("menus").document(menuId).delete()
             .addOnSuccessListener { _isLoading.value = false; onSuccess() }
-            .addOnFailureListener { _isLoading.value = false; onError(it.message ?: "Gagal menghapus menu") }
+            .addOnFailureListener {
+                _isLoading.value = false; onError(
+                it.message ?: "Gagal menghapus menu"
+            )
+            }
     }
 
     fun clearErrorMessage() {

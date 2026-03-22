@@ -90,21 +90,26 @@ class AuthViewModel : ViewModel() {
                                 userName = name
                             )
                         } else {
-                            _authState.value = AuthState.Error("Data user tidak ditemukan di database")
+                            _authState.value =
+                                AuthState.Error("Data user tidak ditemukan di database")
                         }
                     }
                     .addOnFailureListener {
-                        _authState.value = AuthState.Error(it.message ?: "Gagal mengambil data user")
+                        _authState.value =
+                            AuthState.Error(it.message ?: "Gagal mengambil data user")
                     }
             }
             .addOnFailureListener { exception ->
                 val errorMessage = when {
                     exception.message?.contains("no user record") == true ->
                         "Email belum terdaftar. Silakan daftar terlebih dahulu."
+
                     exception.message?.contains("password is invalid") == true ->
                         "Password salah. Silakan coba lagi."
+
                     exception.message?.contains("badly formatted") == true ->
                         "Format email tidak valid."
+
                     else -> exception.message ?: "Login gagal. Periksa email dan password Anda."
                 }
                 _authState.value = AuthState.Error(errorMessage)

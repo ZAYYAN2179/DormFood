@@ -11,26 +11,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class WarungViewModel : ViewModel() {
-
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-
     private val _warungData = MutableStateFlow<WarungData?>(null)
     val warungData: StateFlow<WarungData?> = _warungData
-
     private val _warungProfile = MutableStateFlow<WarungProfile?>(null)
     val warungProfile: StateFlow<WarungProfile?> = _warungProfile
-
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
-
     private val _warungList = MutableStateFlow<List<WarungItem>>(emptyList())
     val warungList: StateFlow<List<WarungItem>> = _warungList
-
     private val _isLoadingList = MutableStateFlow(false)
     val isLoadingList: StateFlow<Boolean> = _isLoadingList
-
-    // ── State untuk pesan snackbar — null berarti tidak ada pesan ─
     private val _updateMessage = MutableStateFlow<String?>(null)
     val updateMessage: StateFlow<String?> = _updateMessage
 
@@ -42,7 +34,6 @@ class WarungViewModel : ViewModel() {
         _updateMessage.value = null
     }
 
-    // ── Dipanggil saat logout agar data tidak tersisa ────────────
     fun clearData() {
         _warungData.value = null
         _warungProfile.value = null
@@ -51,7 +42,6 @@ class WarungViewModel : ViewModel() {
     fun loadWarungData() {
         val currentUser = auth.currentUser ?: return
 
-        // Hanya skip kalau data sudah ada DAN milik user yang sama
         if (_warungData.value != null && _warungData.value?.uid == currentUser.uid) return
 
         _isLoading.value = true
@@ -202,7 +192,6 @@ class WarungViewModel : ViewModel() {
             }
     }
 
-    // ← tambah onSuccess agar bisa tahu kapan berhasil
     fun updatePhone(newPhone: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val currentUser = auth.currentUser ?: return
 
@@ -250,13 +239,14 @@ class WarungViewModel : ViewModel() {
                         .addOnSuccessListener {
                             _warungProfile.value = _warungProfile.value?.copy(fotoMenu = imageUrl)
                             _isLoading.value = false
-                            // ← beritahu UI lewat updateMessage
                             setUpdateMessage("Foto menu berhasil diupload")
                         }
                 }
+
                 override fun onError(requestId: String, error: ErrorInfo) {
                     _isLoading.value = false
                 }
+
                 override fun onReschedule(requestId: String, error: ErrorInfo) {}
             })
             .dispatch()
@@ -280,13 +270,14 @@ class WarungViewModel : ViewModel() {
                         .addOnSuccessListener {
                             _warungProfile.value = _warungProfile.value?.copy(fotoQr = imageUrl)
                             _isLoading.value = false
-                            // ← beritahu UI lewat updateMessage
                             setUpdateMessage("QR Pembayaran berhasil diupload")
                         }
                 }
+
                 override fun onError(requestId: String, error: ErrorInfo) {
                     _isLoading.value = false
                 }
+
                 override fun onReschedule(requestId: String, error: ErrorInfo) {}
             })
             .dispatch()

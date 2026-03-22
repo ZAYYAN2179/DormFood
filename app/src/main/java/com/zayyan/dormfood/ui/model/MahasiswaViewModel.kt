@@ -26,7 +26,6 @@ class MahasiswaViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // State untuk pesan snackbar — null berarti tidak ada pesan
     private val _updateMessage = MutableStateFlow<String?>(null)
     val updateMessage: StateFlow<String?> = _updateMessage
 
@@ -41,7 +40,6 @@ class MahasiswaViewModel : ViewModel() {
     fun fetchMahasiswaData() {
         val uid = auth.currentUser?.uid ?: return
 
-        // Cek apakah data sudah ada dan milik user yang sama
         if (_mahasiswaData.value != null && _mahasiswaData.value?.uid == uid) return
 
         _isLoading.value = true
