@@ -29,25 +29,20 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import com.zayyan.dormfood.R
 
-// ─── Colors ───────────────────────────────────────────────────────────────────
-private val StarColor    = Color(0xFFF5A623)
-private val CardBg       = Color(0xFFFFFFFF)
+private val StarColor = Color(0xFFF5A623)
+private val CardBg = Color(0xFFFFFFFF)
 private val AvatarColors = listOf(
     Color(0xFF1976D2), Color(0xFF388E3C), Color(0xFFF57C00),
     Color(0xFF7B1FA2), Color(0xFFD32F2F), Color(0xFF0097A7)
 )
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RatingUlasanWarungScreen(
     navController: NavHostController,
-    // warungId dari navigasi — bisa dari warung sendiri (via FirebaseAuth) atau
-    // dari mahasiswa yang tap "Lihat Ulasan" di MenuMahasiswaScreen
     warungId: String,
     ratingViewModel: RatingViewModel = viewModel()
 ) {
-    // Load reviews saat screen pertama dibuka atau warungId berubah
     LaunchedEffect(warungId) {
         if (warungId.isNotBlank()) {
             ratingViewModel.loadWarungReviews(warungId)
@@ -84,23 +79,21 @@ fun RatingUlasanWarungScreen(
         containerColor = Background
     ) { paddingValues ->
         RatingUlasanWarungContent(
-            paddingValues   = paddingValues,
+            paddingValues = paddingValues,
             ratingViewModel = ratingViewModel
         )
     }
 }
 
-// ─── Content ──────────────────────────────────────────────────────────────────
 @Composable
 fun RatingUlasanWarungContent(
     paddingValues: PaddingValues,
     ratingViewModel: RatingViewModel = viewModel()
 ) {
-    val reviews       by ratingViewModel.warungReviews.collectAsState()
+    val reviews by ratingViewModel.warungReviews.collectAsState()
     val averageRating by ratingViewModel.averageRating.collectAsState()
-    val isLoading     by ratingViewModel.isLoadingReviews.collectAsState()
+    val isLoading by ratingViewModel.isLoadingReviews.collectAsState()
 
-    // Hitung distribusi bintang (5 → 1)
     val distribusi = remember(reviews) {
         (5 downTo 1).map { bintang ->
             bintang to reviews.count { it.rating == bintang }
@@ -127,16 +120,14 @@ fun RatingUlasanWarungContent(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        // ── Ringkasan Rating ─────────────────────────────────────────────────
         item {
             RatingSummaryCard(
                 averageRating = averageRating,
-                totalReviews  = reviews.size,
-                distribusi    = distribusi
+                totalReviews = reviews.size,
+                distribusi = distribusi
             )
         }
 
-        // ── Header list ulasan ───────────────────────────────────────────────
         if (reviews.isNotEmpty()) {
             item {
                 Text(
@@ -151,7 +142,6 @@ fun RatingUlasanWarungContent(
                 ReviewCard(review = review)
             }
         } else {
-            // ── Empty state ──────────────────────────────────────────────────
             item {
                 Box(
                     modifier = Modifier
@@ -183,7 +173,6 @@ fun RatingUlasanWarungContent(
     }
 }
 
-// ─── Kartu Ringkasan Rating ───────────────────────────────────────────────────
 @Composable
 private fun RatingSummaryCard(
     averageRating: Double,
@@ -202,7 +191,6 @@ private fun RatingSummaryCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // ── Angka rata-rata ──────────────────────────────────────────
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.width(90.dp)
@@ -215,8 +203,8 @@ private fun RatingSummaryCard(
                         color = Color(0xFF1A0A00)
                     )
                     StarRow(
-                        rating  = averageRating.toInt(),
-                        size    = 16.dp,
+                        rating = averageRating.toInt(),
+                        size = 16.dp,
                         spacing = 2.dp
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -235,7 +223,6 @@ private fun RatingSummaryCard(
                 )
                 Spacer(modifier = Modifier.width(20.dp))
 
-                // ── Bar distribusi bintang ───────────────────────────────────
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -260,7 +247,6 @@ private fun RatingSummaryCard(
                                 tint = StarColor,
                                 modifier = Modifier.size(12.dp)
                             )
-                            // Progress bar
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -291,10 +277,8 @@ private fun RatingSummaryCard(
     }
 }
 
-// ─── Kartu satu review ───────────────────────────────────────────────────────
 @Composable
 private fun ReviewCard(review: ReviewItem) {
-    // Warna avatar unik per user berdasarkan hash nama
     val avatarColor = AvatarColors[
         (review.namaUser.hashCode() and Int.MAX_VALUE) % AvatarColors.size
     ]
@@ -318,12 +302,10 @@ private fun ReviewCard(review: ReviewItem) {
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // ── Header: avatar + nama + tanggal ─────────────────────────────
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Avatar inisial
                 Box(
                     modifier = Modifier
                         .size(42.dp)
@@ -353,7 +335,6 @@ private fun ReviewCard(review: ReviewItem) {
                     )
                 }
 
-                // Bintang rating di kanan
                 StarRow(rating = review.rating, size = 14.dp, spacing = 1.dp)
             }
 
@@ -361,7 +342,6 @@ private fun ReviewCard(review: ReviewItem) {
             HorizontalDivider(color = Color(0xFFF5F5F5))
             Spacer(modifier = Modifier.height(10.dp))
 
-            // ── Teks ulasan ──────────────────────────────────────────────────
             if (review.ulasan.isNotBlank()) {
                 Text(
                     text = review.ulasan,
@@ -381,7 +361,6 @@ private fun ReviewCard(review: ReviewItem) {
     }
 }
 
-// ─── Reusable: baris bintang ──────────────────────────────────────────────────
 @Composable
 private fun StarRow(
     rating: Int,

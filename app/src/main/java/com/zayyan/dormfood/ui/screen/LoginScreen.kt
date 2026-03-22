@@ -79,6 +79,7 @@ fun LoginScreen(
                 }
                 viewModel.resetAuthState()
             }
+
             else -> {}
         }
     }
@@ -125,7 +126,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Loading dan Error State
         if (authState is AuthState.Loading) {
             CircularProgressIndicator(color = DormRed)
             Spacer(modifier = Modifier.height(16.dp))

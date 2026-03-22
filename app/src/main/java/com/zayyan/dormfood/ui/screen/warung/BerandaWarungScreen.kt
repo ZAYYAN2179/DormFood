@@ -107,20 +107,16 @@ fun BerandaWarungContent(
     val orders by pesananViewModel.warungOrders.collectAsState()
     val isLoadingOrders by pesananViewModel.isLoadingWarungOrders.collectAsState()
 
-    // Hanya pesanan selesai untuk history
     val selesaiOrders = orders.filter { it.statusPesanan == StatusPesanan.SELESAI.label }
 
-    // Total pemasukan dari semua pesanan selesai
     val totalPemasukan = selesaiOrders.sumOf { it.totalHarga }
 
-    // Total item menu yang dipesan (dari semua pesanan selesai)
     val totalPesanan = selesaiOrders.size
 
     var layananAntarState by remember(warungProfile?.layananAntar) {
         mutableStateOf(warungProfile?.layananAntar ?: false)
     }
 
-    // Daftar bulan unik dari pesanan selesai untuk filter
     val bulanList = remember(selesaiOrders) {
         val sdf = SimpleDateFormat("MMMM yyyy", Locale.forLanguageTag("id-ID"))
         listOf("Semua Bulan") + selesaiOrders
@@ -132,7 +128,6 @@ fun BerandaWarungContent(
     var selectedBulan by remember { mutableStateOf("Semua Bulan") }
     var showBulanDropdown by remember { mutableStateOf(false) }
 
-    // Filter pesanan selesai berdasarkan bulan
     val filteredSelesai = remember(selesaiOrders, selectedBulan) {
         if (selectedBulan == "Semua Bulan") {
             selesaiOrders
@@ -156,7 +151,6 @@ fun BerandaWarungContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
-        // ── Stats Card ───────────────────────────────────────────
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -165,7 +159,6 @@ fun BerandaWarungContent(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
-                    // Total Pemasukan
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -198,7 +191,6 @@ fun BerandaWarungContent(
                     HorizontalDivider(color = Color(0xFFF0F0F0))
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Total Pesanan
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -230,7 +222,6 @@ fun BerandaWarungContent(
             }
         }
 
-        // ── Status Delivery Toggle ───────────────────────────────
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -277,7 +268,6 @@ fun BerandaWarungContent(
             }
         }
 
-        // ── Action Buttons ───────────────────────────────────────
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
@@ -327,7 +317,6 @@ fun BerandaWarungContent(
             }
         }
 
-        // ── History Pesanan Header + Filter ─────────────────────
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -341,7 +330,6 @@ fun BerandaWarungContent(
                     color = Color.Black
                 )
 
-                // Dropdown filter bulan
                 Box {
                     OutlinedButton(
                         onClick = { showBulanDropdown = true },
@@ -399,7 +387,6 @@ fun BerandaWarungContent(
             }
         }
 
-        // ── Loading / Empty / List ───────────────────────────────
         if (isLoadingOrders) {
             item {
                 Box(
@@ -469,7 +456,6 @@ fun HistoryPesananCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Header: nama user + gedung + status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -512,7 +498,6 @@ fun HistoryPesananCard(
             HorizontalDivider(color = Color(0xFFF5F5F5))
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Item-item pesanan
             order.items.forEach { item ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -537,7 +522,6 @@ fun HistoryPesananCard(
             HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 1.5.dp)
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Total harga
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

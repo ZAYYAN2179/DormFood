@@ -46,7 +46,6 @@ fun UserRoleScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Logo
             Box(
                 modifier = Modifier
                     .size(150.dp)
@@ -79,7 +78,6 @@ fun UserRoleScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // ===== Button Mahasiswa =====
             Button(
                 onClick = {
                     navController.navigate(Screen.LoginScreen.route)
@@ -102,7 +100,6 @@ fun UserRoleScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== Button Warung =====
             OutlinedButton(
                 onClick = {
                     navController.navigate(Screen.LoginScreen.route)

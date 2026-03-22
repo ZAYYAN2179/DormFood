@@ -56,10 +56,8 @@ fun ProfilWarung(
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val isLoading by warungViewModel.isLoading.collectAsState()
 
-    // ← pindah ke sini agar bisa dioper ke Scaffold
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // ← observe updateMessage dari ViewModel, tampilkan snackbar setiap ada pesan baru
     val updateMessage by warungViewModel.updateMessage.collectAsState()
     LaunchedEffect(updateMessage) {
         updateMessage?.let { message ->
@@ -82,7 +80,6 @@ fun ProfilWarung(
                 currentRoute = currentRoute
             )
         },
-        // ← snackbarHost di dalam Scaffold agar muncul di posisi yang benar
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
@@ -114,8 +111,6 @@ fun ProfilWarungContent(
     var showEditAlamatDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // ← launcher tidak perlu lagi set successMessage manual,
-    //    karena ViewModel sudah setUpdateMessage() setelah upload selesai
     val menuLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -315,7 +310,6 @@ fun ProfilWarungContent(
                     newName = newName,
                     onSuccess = {
                         showEditNameDialog = false
-                        // ← gunakan setUpdateMessage, bukan showSuccessSnackbar
                         warungViewModel.setUpdateMessage("Nama warung berhasil diperbarui")
                     },
                     onError = { error ->
@@ -361,7 +355,6 @@ fun ProfilWarungContent(
             onConfirm = { newPhone ->
                 warungViewModel.updatePhone(
                     newPhone = newPhone,
-                    // ← sekarang ada onSuccess
                     onSuccess = {
                         showEditPhoneDialog = false
                         warungViewModel.setUpdateMessage("Nomor telepon berhasil diperbarui")
