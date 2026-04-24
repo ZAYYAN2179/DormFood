@@ -9,7 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -84,6 +86,7 @@ fun MenuWarungContent(
 
     val snackbarHostState = remember { SnackbarHostState() }
     var successMessage by remember { mutableStateOf<String?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
@@ -113,15 +116,19 @@ fun MenuWarungContent(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it }
+            )
             TabSelector(
                 selectedTab = selectedTab,
                 tabs = tabs,
                 onTabSelected = { selectedTab = it }
             )
-
             MenuList(
                 menuList = menuList,
                 selectedCategory = tabs[selectedTab],
+                searchQuery = searchQuery,
                 viewModel = viewModel,
                 onEditClick = { item ->
                     selectedMenuItem = item
@@ -306,16 +313,20 @@ fun TabButton(
 fun MenuList(
     menuList: List<MenuItem>,
     selectedCategory: String,
+    searchQuery: String,
     viewModel: MenuViewModel,
     onEditClick: (MenuItem) -> Unit,
     onDeleteClick: (MenuItem) -> Unit
 ) {
-    val filteredItems = remember(menuList, selectedCategory) {
-        if (selectedCategory == "Semua") {
-            menuList
-        } else {
-            menuList.filter { it.tipe == selectedCategory }
-        }
+    val filteredItems = remember(menuList, selectedCategory, searchQuery) {
+        menuList
+            .filter { item ->
+                selectedCategory == "Semua" || item.tipe == selectedCategory
+            }
+            .filter { item ->
+                searchQuery.isBlank() ||
+                        item.namaMenu.contains(searchQuery, ignoreCase = true)
+            }
     }
 
     val groupedItems = remember(filteredItems) {
@@ -711,4 +722,45 @@ fun EditMenuDialog(
             }
         }
     }
+}
+
+@Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        placeholder = { Text("Cari nama menu...") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Cari",
+                tint = Color.Gray
+            )
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Hapus",
+                        tint = Color.Gray
+                    )
+                }
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = DormRed,
+            unfocusedBorderColor = Color(0xFFE8E8E8),
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        )
+    )
 }
