@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
-import com.zayyan.dormfood.ui.viewmodel.ReviewItem
+import com.zayyan.dormfood.ui.model.ReviewItem
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import java.text.SimpleDateFormat

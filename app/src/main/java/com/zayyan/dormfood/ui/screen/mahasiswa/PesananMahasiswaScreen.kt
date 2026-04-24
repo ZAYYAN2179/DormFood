@@ -23,8 +23,8 @@ import androidx.navigation.NavHostController
 import com.google.firebase.Timestamp
 import com.zayyan.dormfood.ui.component.BottomBarMahasiswa
 import com.zayyan.dormfood.ui.component.TopAppBar
-import com.zayyan.dormfood.ui.viewmodel.ItemPesanan
-import com.zayyan.dormfood.ui.viewmodel.OrderItem
+import com.zayyan.dormfood.ui.model.ItemPesanan
+import com.zayyan.dormfood.ui.model.OrderItem
 import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
 import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
 import com.zayyan.dormfood.ui.navigation.Screen

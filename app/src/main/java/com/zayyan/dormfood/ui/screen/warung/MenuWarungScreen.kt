@@ -25,7 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.zayyan.dormfood.ui.component.BottomBarWarung
 import com.zayyan.dormfood.ui.component.TopAppBar
-import com.zayyan.dormfood.ui.viewmodel.MenuItem
+import com.zayyan.dormfood.ui.model.MenuItem
 import com.zayyan.dormfood.ui.viewmodel.MenuViewModel
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed

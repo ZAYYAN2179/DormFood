@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.zayyan.dormfood.ui.viewmodel.ItemPesanan
+import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background

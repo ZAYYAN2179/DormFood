@@ -27,7 +27,7 @@ import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.zayyan.dormfood.ui.component.BottomBarMahasiswa
 import com.zayyan.dormfood.ui.component.TopAppBar
-import com.zayyan.dormfood.ui.viewmodel.WarungItem
+import com.zayyan.dormfood.ui.model.WarungItem
 import com.zayyan.dormfood.ui.viewmodel.WarungViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog

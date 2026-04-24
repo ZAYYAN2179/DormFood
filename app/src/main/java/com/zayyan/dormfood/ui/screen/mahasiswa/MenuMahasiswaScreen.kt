@@ -26,11 +26,11 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
-import com.zayyan.dormfood.ui.viewmodel.ItemPesanan
+import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.viewmodel.MahasiswaViewModel
 import com.zayyan.dormfood.ui.viewmodel.MenuViewModel
-import com.zayyan.dormfood.ui.viewmodel.MenuWarungDetail
-import com.zayyan.dormfood.ui.viewmodel.MenuItem
+import com.zayyan.dormfood.ui.model.MenuWarungDetail
+import com.zayyan.dormfood.ui.model.MenuItem
 import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
 import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
