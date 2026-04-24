@@ -24,7 +24,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.zayyan.dormfood.ui.theme.DormRed
 import com.zayyan.dormfood.R
-import com.zayyan.dormfood.ui.model.AuthViewModel
+import com.zayyan.dormfood.ui.viewmodel.AuthViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 
 @Composable

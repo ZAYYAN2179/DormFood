@@ -24,8 +24,8 @@ import androidx.navigation.NavHostController
 import com.zayyan.dormfood.R
 import com.zayyan.dormfood.ui.component.BottomBarMahasiswa
 import com.zayyan.dormfood.ui.component.TopAppBar
-import com.zayyan.dormfood.ui.model.AuthViewModel
-import com.zayyan.dormfood.ui.model.MahasiswaViewModel
+import com.zayyan.dormfood.ui.viewmodel.AuthViewModel
+import com.zayyan.dormfood.ui.viewmodel.MahasiswaViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.AlertDialog
 import com.zayyan.dormfood.ui.screen.warung.EditTextDialog

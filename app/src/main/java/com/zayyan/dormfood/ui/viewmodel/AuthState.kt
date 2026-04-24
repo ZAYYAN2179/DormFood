@@ -1,4 +1,4 @@
-package com.zayyan.dormfood.ui.model
+package com.zayyan.dormfood.ui.viewmodel
 
 sealed class AuthState {
     object Idle : AuthState()

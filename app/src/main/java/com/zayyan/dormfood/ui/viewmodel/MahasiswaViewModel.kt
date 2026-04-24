@@ -1,19 +1,11 @@
-package com.zayyan.dormfood.ui.model
+package com.zayyan.dormfood.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
-data class MahasiswaData(
-    val uid: String = "",
-    val name: String = "",
-    val email: String = "",
-    val building: String = "",
-    val roomNumber: String = "",
-    val role: String = "mahasiswa"
-)
+import com.zayyan.dormfood.ui.model.MahasiswaData
 
 class MahasiswaViewModel : ViewModel() {
 

@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.zayyan.dormfood.ui.model.AuthViewModel
+import com.zayyan.dormfood.ui.viewmodel.AuthViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 
 @Composable

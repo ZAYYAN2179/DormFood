@@ -20,8 +20,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.zayyan.dormfood.R
-import com.zayyan.dormfood.ui.model.RatingViewModel
-import com.zayyan.dormfood.ui.model.SubmitReviewState
+import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
+import com.zayyan.dormfood.ui.viewmodel.SubmitReviewState
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 

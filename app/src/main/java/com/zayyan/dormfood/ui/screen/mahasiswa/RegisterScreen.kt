@@ -21,8 +21,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.zayyan.dormfood.ui.model.AuthState
-import com.zayyan.dormfood.ui.model.AuthViewModel
+import com.zayyan.dormfood.ui.viewmodel.AuthState
+import com.zayyan.dormfood.ui.viewmodel.AuthViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed

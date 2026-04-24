@@ -1,11 +1,10 @@
-package com.zayyan.dormfood.ui.model
+package com.zayyan.dormfood.ui.viewmodel
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -13,35 +12,9 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
-data class ItemPesanan(
-    val namaMenu: String,
-    val harga: Int,
-    val quantity: Int
-)
-
-data class OrderItem(
-    val orderId: String = "",
-    val userId: String = "",
-    val warungId: String = "",
-    val namaWarung: String = "",
-    val namaUser: String = "",
-    val building: String = "",
-    val roomNumber: String = "",
-    val items: List<ItemPesanan> = emptyList(),
-    val totalHarga: Long = 0,
-    val statusPesanan: String = "",
-    val buktiPembayaranUrl: String = "",
-    val createdAt: Timestamp? = null
-)
-
-@Suppress("unused")
-enum class StatusPesanan(val label: String) {
-    MENUNGGU_KONFIRMASI("Menunggu Konfirmasi"),
-    DIBUAT("Dibuat"),
-    DIANTAR("Diantar"),
-    SELESAI("Selesai")
-}
+import com.zayyan.dormfood.ui.model.ItemPesanan
+import com.zayyan.dormfood.ui.model.OrderItem
+import com.zayyan.dormfood.ui.model.StatusPesanan
 
 class PesananViewModel : ViewModel() {
     private var currentNamaUser: String = ""

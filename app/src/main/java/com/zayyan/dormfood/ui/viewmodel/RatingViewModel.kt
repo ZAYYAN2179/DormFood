@@ -1,33 +1,14 @@
-package com.zayyan.dormfood.ui.model
+package com.zayyan.dormfood.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
-data class ReviewItem(
-    val reviewId: String = "",
-    val orderId: String = "",
-    val userId: String = "",
-    val namaUser: String = "",
-    val warungId: String = "",
-    val namaWarung: String = "",
-    val rating: Int = 0,
-    val ulasan: String = "",
-    val createdAt: Timestamp? = null
-)
-
-sealed class SubmitReviewState {
-    object Idle : SubmitReviewState()
-    object Loading : SubmitReviewState()
-    object Success : SubmitReviewState()
-    data class Error(val message: String) : SubmitReviewState()
-    object AlreadyReviewed : SubmitReviewState()
-}
+import com.zayyan.dormfood.ui.model.ReviewItem
+import com.zayyan.dormfood.ui.model.SubmitReviewState
 
 class RatingViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()

@@ -32,8 +32,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.zayyan.dormfood.ui.component.BottomBarWarung
 import com.zayyan.dormfood.ui.component.TopAppBar
-import com.zayyan.dormfood.ui.model.AuthViewModel
-import com.zayyan.dormfood.ui.model.WarungViewModel
+import com.zayyan.dormfood.ui.viewmodel.AuthViewModel
+import com.zayyan.dormfood.ui.viewmodel.WarungViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed

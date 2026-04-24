@@ -1,4 +1,4 @@
-package com.zayyan.dormfood.ui.model
+package com.zayyan.dormfood.ui.viewmodel
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
@@ -9,6 +9,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.zayyan.dormfood.ui.model.WarungData
+import com.zayyan.dormfood.ui.model.WarungItem
+import com.zayyan.dormfood.ui.model.WarungProfile
 
 class WarungViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
@@ -298,28 +301,3 @@ class WarungViewModel : ViewModel() {
             }
     }
 }
-
-data class WarungData(
-    val uid: String = "",
-    val name: String = "",
-    val email: String = "",
-    val phone: String = "",
-    val role: String = ""
-)
-
-data class WarungProfile(
-    val userId: String = "",
-    val layananAntar: Boolean = false,
-    val alamatWarung: String = "",
-    val fotoMenu: String = "",
-    val fotoQr: String = ""
-)
-
-data class WarungItem(
-    val userId: String = "",
-    val namaWarung: String = "",
-    val alamatWarung: String = "",
-    val phone: String = "",
-    val fotoMenu: String = "",
-    val layananAntar: Boolean = false
-)

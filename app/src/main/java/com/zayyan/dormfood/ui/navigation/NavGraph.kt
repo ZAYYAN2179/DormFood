@@ -8,11 +8,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.zayyan.dormfood.ui.model.MahasiswaViewModel
-import com.zayyan.dormfood.ui.model.MenuViewModel
-import com.zayyan.dormfood.ui.model.PesananViewModel
-import com.zayyan.dormfood.ui.model.RatingViewModel
-import com.zayyan.dormfood.ui.model.WarungViewModel
+import com.zayyan.dormfood.ui.viewmodel.MahasiswaViewModel
+import com.zayyan.dormfood.ui.viewmodel.MenuViewModel
+import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
+import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
+import com.zayyan.dormfood.ui.viewmodel.WarungViewModel
 import com.zayyan.dormfood.ui.screen.LandingPage
 import com.zayyan.dormfood.ui.screen.LoginScreen
 import com.zayyan.dormfood.ui.screen.SplashScreen

@@ -1,10 +1,12 @@
-package com.zayyan.dormfood.ui.model
+package com.zayyan.dormfood.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.zayyan.dormfood.ui.model.MenuItem
+import com.zayyan.dormfood.ui.model.MenuWarungDetail
 
 class MenuViewModel : ViewModel() {
 
@@ -230,20 +232,3 @@ class MenuViewModel : ViewModel() {
         _errorMessage.value = null
     }
 }
-
-data class MenuItem(
-    val menuId: String = "",
-    val warungId: String = "",
-    val namaMenu: String = "",
-    val harga: Int = 0,
-    val ketersediaan: Boolean = true,
-    val tipe: String = "Makanan"
-)
-
-data class MenuWarungDetail(
-    val namaWarung: String = "",
-    val alamatWarung: String = "",
-    val phone: String = "",
-    val fotoMenu: String = "",
-    val fotoQr: String = ""
-)
