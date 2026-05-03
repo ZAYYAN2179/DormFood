@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -192,7 +193,7 @@ fun MenuMahasiswaContent(
                         ) {
                             if (detail.fotoMenu.isNotEmpty()) {
                                 Card(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier.fillMaxSize().testTag("previewMenu"),
                                     shape = RoundedCornerShape(
                                         topStart = 16.dp,
                                         bottomStart = 16.dp
@@ -269,7 +270,7 @@ fun MenuMahasiswaContent(
                                 colors = ButtonDefaults.buttonColors(containerColor = DormRed),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                modifier = Modifier.height(34.dp)
+                                modifier = Modifier.height(34.dp).testTag("btnUlasan")
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Star,
@@ -284,6 +285,7 @@ fun MenuMahasiswaContent(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .testTag("btnWhatsapp")
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(Color(0xFF4CAF50))
                                         .clickable {
@@ -545,7 +547,7 @@ fun MenuItemRow(
             ) {
                 FilledIconButton(
                     onClick = onRemove,
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(30.dp).testTag("btnKurang"),
                     enabled = quantity > 0,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = if (quantity > 0) DormRed else Color.Gray.copy(alpha = 0.2f),
@@ -565,11 +567,11 @@ fun MenuItemRow(
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(min = 22.dp)
+                    modifier = Modifier.widthIn(min = 22.dp).testTag("textQuantity")
                 )
                 FilledIconButton(
                     onClick = onAdd,
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(30.dp) .testTag("btnTambah"),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = DormRed
                     )

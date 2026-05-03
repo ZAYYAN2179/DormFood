@@ -2,6 +2,7 @@ package com.zayyan.dormfood.ui.screen.mahasiswa
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,7 +31,6 @@ import com.zayyan.dormfood.ui.viewmodel.MahasiswaViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.screen.warung.AlertDialog
 import com.zayyan.dormfood.ui.screen.warung.EditTextDialog
-import com.zayyan.dormfood.ui.screen.warung.InfoCard
 import com.zayyan.dormfood.ui.screen.warung.SectionTitle
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
@@ -156,7 +157,10 @@ fun ProfilMahasiswaContent(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        IconButton(onClick = { showEditNameDialog = true }) {
+                        IconButton(
+                            onClick = { showEditNameDialog = true },
+                            modifier = Modifier.testTag("editNama")
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit Nama",
@@ -175,18 +179,22 @@ fun ProfilMahasiswaContent(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            InfoCard(
+            MahasiswaInfoCard(
                 icon = Icons.Outlined.Home,
                 title = "Gedung",
                 value = mahasiswaData?.building?.takeIf { it.isNotEmpty() } ?: "Belum diisi",
-                onEditClick = { showEditBuildingDialog = true }
+                onEditClick = { showEditBuildingDialog = true },
+                testTag = "editGedung"
             )
+
             Spacer(modifier = Modifier.height(12.dp))
-            InfoCard(
+
+            MahasiswaInfoCard(
                 icon = ImageVector.vectorResource(id = R.drawable.nomorkamar),
                 title = "Nomor Kamar",
                 value = mahasiswaData?.roomNumber?.takeIf { it.isNotEmpty() } ?: "Belum diisi",
-                onEditClick = { showEditRoomDialog = true }
+                onEditClick = { showEditRoomDialog = true },
+                testTag = "editKamar"
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -195,7 +203,8 @@ fun ProfilMahasiswaContent(
                 onClick = { showLogoutDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(50.dp)
+                    .testTag("btnLogout"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = DormRed),
                 border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
@@ -308,5 +317,70 @@ fun ProfilMahasiswaContent(
                 )
             }
         )
+    }
+}
+
+@Composable
+fun MahasiswaInfoCard(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    onEditClick: () -> Unit,
+    testTag: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = DormRed.copy(alpha = 0.1f),
+                modifier = Modifier.size(44.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = DormRed,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = value,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier.testTag(testTag)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit",
+                    tint = DormRed
+                )
+            }
+        }
     }
 }
