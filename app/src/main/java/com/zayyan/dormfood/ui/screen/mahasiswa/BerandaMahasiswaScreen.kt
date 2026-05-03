@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -144,7 +145,7 @@ fun BerandaMahasiswaContent(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("searchWarung"),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -164,19 +165,22 @@ fun BerandaMahasiswaContent(
                     FilterChipItem(
                         label = "Semua",
                         isSelected = activeFilter == FilterStatus.SEMUA,
-                        onClick = { activeFilter = FilterStatus.SEMUA }
+                        onClick = { activeFilter = FilterStatus.SEMUA },
+                        testTag = "filterSemua"
                     )
                     FilterChipItem(
                         label = "Buka",
                         isSelected = activeFilter == FilterStatus.BUKA,
                         selectedColor = Color(0xFF16A34A),
-                        onClick = { activeFilter = FilterStatus.BUKA }
+                        onClick = { activeFilter = FilterStatus.BUKA },
+                        testTag = "filterBuka"
                     )
                     FilterChipItem(
                         label = "Tutup",
                         isSelected = activeFilter == FilterStatus.TUTUP,
                         selectedColor = Color(0xFFE53935),
-                        onClick = { activeFilter = FilterStatus.TUTUP }
+                        onClick = { activeFilter = FilterStatus.TUTUP },
+                        testTag = "filterTutup"
                     )
                 }
             }
@@ -233,7 +237,8 @@ fun FilterChipItem(
     label: String,
     isSelected: Boolean,
     selectedColor: Color = DormRed,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    testTag: String = ""
 ) {
     Box(
         modifier = Modifier
@@ -244,6 +249,7 @@ fun FilterChipItem(
             )
             .clickable { onClick() }
             .padding(horizontal = 20.dp, vertical = 8.dp)
+            .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag) else Modifier)
     ) {
         Text(
             text = label,
@@ -267,6 +273,7 @@ fun WarungCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("warungCard")
             .clickable(enabled = isOpen) { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
@@ -368,6 +375,7 @@ fun WarungCard(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(Color(0xFF25D366))
+                                .testTag("tombolWhatsapp")
                                 .clickable {
                                     val formatted = warung.phone.trim().let {
                                         if (it.startsWith("0")) "+62" + it.drop(1) else it

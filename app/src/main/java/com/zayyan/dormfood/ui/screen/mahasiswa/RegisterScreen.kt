@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -90,6 +91,7 @@ fun RegisterScreen(
             label = "Nama",
             value = name,
             onValueChange = { name = it },
+            testTag = "inputNama",
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Next
             ),
@@ -102,6 +104,7 @@ fun RegisterScreen(
             label = "Gedung",
             value = building,
             onValueChange = { building = it },
+            testTag = "inputGedung",
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Next
             ),
@@ -114,6 +117,7 @@ fun RegisterScreen(
             label = "Nomor kamar",
             value = roomNumber,
             onValueChange = { roomNumber = it },
+            testTag = "inputNomorKamar",
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next
@@ -127,6 +131,7 @@ fun RegisterScreen(
             label = "Email",
             value = email,
             onValueChange = { email = it },
+            testTag = "inputEmailRegister",
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
@@ -140,6 +145,7 @@ fun RegisterScreen(
             label = "Kata Sandi",
             value = password,
             onValueChange = { password = it },
+            testTag = "inputPasswordRegister",
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Next
             ),
@@ -152,6 +158,7 @@ fun RegisterScreen(
             label = "Konfirmasi Kata Sandi",
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
+            testTag = "inputKonfirmasiPassword",
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Done
             ),
@@ -177,7 +184,8 @@ fun RegisterScreen(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .height(52.dp)
+                .testTag("tombolDaftar"),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = DormRed
@@ -190,6 +198,7 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Row(
+            modifier = Modifier.testTag("sudahPunyaAkun"),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "Sudah punya akun? ")
@@ -212,6 +221,7 @@ private fun RegisterField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
+    testTag: String = "",
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
@@ -224,7 +234,7 @@ private fun RegisterField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag(testTag),
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
         keyboardOptions = keyboardOptions,
@@ -238,6 +248,7 @@ private fun RegisterPasswordField(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
+    testTag: String = "",
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
@@ -250,7 +261,7 @@ private fun RegisterPasswordField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag(testTag),
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
