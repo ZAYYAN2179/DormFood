@@ -145,7 +145,9 @@ fun BerandaMahasiswaContent(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().testTag("searchWarung"),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("searchWarung"),
                     shape = RoundedCornerShape(14.dp),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -220,6 +222,7 @@ fun BerandaMahasiswaContent(
                 items(filteredWarungs) { warung ->
                     WarungCard(
                         warung = warung,
+                        navController = navController,
                         onClick = {
                             navController.navigate(
                                 Screen.MenuMahasiswaScreen.createRoute(warung.userId)
@@ -263,12 +266,13 @@ fun FilterChipItem(
 @Composable
 fun WarungCard(
     warung: WarungItem,
+    navController: NavHostController,
     onClick: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var showImagePreview by remember { mutableStateOf(false) }
-
     val isOpen = warung.layananAntar
+    val hasLocation = warung.latitude != 0.0 && warung.longitude != 0.0
 
     Card(
         modifier = Modifier
@@ -403,6 +407,36 @@ fun WarungCard(
                                     color = Color.White
                                 )
                             }
+                        }
+                    }
+                }
+
+                if (hasLocation) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF1565C0))
+                            .clickable {
+                                navController.navigate(
+                                    Screen.PetaMahasiswaScreen.createRoute(warung.userId)
+                                )
+                            }
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.LocationOn,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Lihat Titik Lokasi Warung",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
+                            )
                         }
                     }
                 }

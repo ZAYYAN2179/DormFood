@@ -21,6 +21,7 @@ import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.MenuMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.PembayaranMahasiswaScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.PesananMahasiswa
+import com.zayyan.dormfood.ui.screen.mahasiswa.PetaMahasiswaScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.ProfilMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.RatingUlasanMahasiswaScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
@@ -159,6 +160,16 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             PetaWarungScreen(
                 navController = navController,
                 warungViewModel = warungViewModel
+            )
+        }
+        composable(
+            route = Screen.PetaMahasiswaScreen.route,
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            PetaMahasiswaScreen(
+                navController = navController,
+                userId = userId
             )
         }
     }
