@@ -39,6 +39,7 @@ import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.res.vectorResource
 import coil.compose.AsyncImage
 import com.zayyan.dormfood.R
@@ -51,6 +52,12 @@ fun ProfilWarung(
 ) {
     LaunchedEffect(Unit) {
         warungViewModel.loadWarungData()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            warungViewModel.clearUpdateMessage()
+        }
     }
 
     val currentRoute = navController.currentBackStackEntry?.destination?.route

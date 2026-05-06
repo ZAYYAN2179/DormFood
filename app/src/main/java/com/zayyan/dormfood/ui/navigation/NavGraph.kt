@@ -156,7 +156,10 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
             PrediksiStokMenuWarungScreen(navController)
         }
         composable(route = Screen.PetaWarungScreen.route) {
-            PetaWarungScreen(navController)
+            PetaWarungScreen(
+                navController = navController,
+                warungViewModel = warungViewModel
+            )
         }
     }
 }

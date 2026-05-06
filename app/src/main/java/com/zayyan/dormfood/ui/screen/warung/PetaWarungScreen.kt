@@ -42,14 +42,23 @@ fun PetaWarungScreen(
     navController: NavHostController,
     warungViewModel: WarungViewModel = viewModel()
 ) {
+    LaunchedEffect(Unit) {
+        warungViewModel.loadWarungData()
+    }
+
     val context = LocalContext.current
     val warungProfile by warungViewModel.warungProfile.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Koordinat yang dipilih user — pakai lokasi tersimpan jika ada
-    val initialLat = warungProfile?.latitude?.takeIf { it != 0.0 } ?: -6.9175
-    val initialLon = warungProfile?.longitude?.takeIf { it != 0.0 } ?: 107.6191
-    var selectedPoint by remember { mutableStateOf(GeoPoint(initialLat, initialLon)) }
+    var selectedPoint by remember { mutableStateOf(GeoPoint(-6.9175, 107.6191)) }
+
+    LaunchedEffect(warungProfile) {
+        val lat = warungProfile?.latitude?.takeIf { it != 0.0 }
+        val lon = warungProfile?.longitude?.takeIf { it != 0.0 }
+        if (lat != null && lon != null) {
+            selectedPoint = GeoPoint(lat, lon)
+        }
+    }
     var isSaving by remember { mutableStateOf(false) }
 
     // Inisialisasi OSMDroid user-agent
@@ -246,7 +255,6 @@ fun PetaWarungScreen(
     }
 }
 
-// ── Helper: update/tambah marker di peta ──────────────────────────────────────
 private fun updateMarker(mapView: MapView, point: GeoPoint) {
     mapView.overlays.removeAll { it is Marker }
     val marker = Marker(mapView).apply {
@@ -258,7 +266,6 @@ private fun updateMarker(mapView: MapView, point: GeoPoint) {
     mapView.invalidate()
 }
 
-// ── Helper: ambil GPS saat ini ────────────────────────────────────────────────
 private fun getCurrentLocation(context: Context, onResult: (Double, Double) -> Unit) {
     val fusedClient = LocationServices.getFusedLocationProviderClient(context)
     val cancelToken = CancellationTokenSource()
