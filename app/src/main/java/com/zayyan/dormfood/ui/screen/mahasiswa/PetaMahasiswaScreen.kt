@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.google.firebase.firestore.FirebaseFirestore
 import com.zayyan.dormfood.ui.theme.DormRed
@@ -39,17 +40,14 @@ fun PetaMahasiswaScreen(
     var isLoading by remember { mutableStateOf(true) }
     var hasLocation by remember { mutableStateOf(false) }
 
-    // Load data warung dari Firestore berdasarkan userId
     LaunchedEffect(userId) {
         Configuration.getInstance().userAgentValue = context.packageName
 
-        // Ambil nama warung dari collection users
         firestore.collection("users").document(userId).get()
             .addOnSuccessListener { userDoc ->
                 namaWarung = userDoc.getString("name") ?: "Lokasi Warung"
             }
 
-        // Ambil koordinat dari collection warungs
         firestore.collection("warungs").document(userId).get()
             .addOnSuccessListener { warungDoc ->
                 val lat = warungDoc.getDouble("latitude") ?: 0.0
@@ -130,7 +128,6 @@ fun PetaMahasiswaScreen(
                 }
 
                 else -> {
-                    // Tampilkan peta
                     AndroidView(
                         modifier = Modifier.fillMaxSize(),
                         factory = { ctx ->
@@ -154,7 +151,6 @@ fun PetaMahasiswaScreen(
                         }
                     )
 
-                    // Info card bawah
                     Card(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -196,6 +192,56 @@ fun PetaMahasiswaScreen(
                                         color = Color.Gray
                                     )
                                 }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Button(
+                                onClick = {
+                                    val lat = warungLocation?.latitude ?: return@Button
+                                    val lon = warungLocation?.longitude ?: return@Button
+                                    val uri = "geo:$lat,$lon?q=$lat,$lon(${
+                                        namaWarung.replace(
+                                            " ",
+                                            "+"
+                                        )
+                                    })".toUri()
+                                    val intent = android.content.Intent(
+                                        android.content.Intent.ACTION_VIEW,
+                                        uri
+                                    ).apply {
+                                        setPackage("com.google.android.apps.maps")
+                                    }
+                                    if (intent.resolveActivity(context.packageManager) != null) {
+                                        context.startActivity(intent)
+                                    } else {
+                                        val browserUri =
+                                            "https://www.google.com/maps/search/?api=1&query=$lat,$lon".toUri()
+                                        context.startActivity(
+                                            android.content.Intent(
+                                                android.content.Intent.ACTION_VIEW,
+                                                browserUri
+                                            )
+                                        )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(44.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = DormRed)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.LocationOn,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Buka di Google Maps",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                         }
                     }
