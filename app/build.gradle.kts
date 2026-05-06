@@ -83,6 +83,10 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.coil.compose)
 
+    //Map
+    implementation(libs.osmdroid.android)
+    implementation(libs.play.services.location)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

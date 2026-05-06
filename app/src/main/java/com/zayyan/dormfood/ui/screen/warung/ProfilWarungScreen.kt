@@ -243,6 +243,81 @@ fun ProfilWarungContent(
                 onEditClick = { showEditAlamatDialog = true }
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val hasLocation = (warungProfile?.latitude ?: 0.0) != 0.0
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        navController.navigate(Screen.PetaWarungScreen.route)
+                    },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Surface(
+                        shape = CircleShape,
+                        color = DormRed.copy(alpha = 0.1f),
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = DormRed,
+                                modifier = Modifier.size(20.dp)
+                            )
+
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        Text(
+                            text = "Titik Lokasi Peta",
+                            fontSize = 13.sp,
+                            color = Color.Gray
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = if (hasLocation)
+                                "%.5f, %.5f".format(
+                                    warungProfile?.latitude,
+                                    warungProfile?.longitude
+                                )
+                            else
+                                "Belum diatur",
+
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Atur Lokasi",
+                        tint = DormRed,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedButton(

@@ -88,7 +88,9 @@ class WarungViewModel : ViewModel() {
                         layananAntar = doc.getBoolean("layananAntar") ?: false,
                         alamatWarung = doc.getString("alamatWarung") ?: "",
                         fotoMenu = doc.getString("fotoMenu") ?: "",
-                        fotoQr = doc.getString("fotoQr") ?: ""
+                        fotoQr = doc.getString("fotoQr") ?: "",
+                        latitude = doc.getDouble("latitude") ?: 0.0,
+                        longitude = doc.getDouble("longitude") ?: 0.0
                     )
                     _warungProfile.value = data
                 } else {
@@ -298,6 +300,34 @@ class WarungViewModel : ViewModel() {
             }
             .addOnFailureListener {
                 onError(it.message ?: "Gagal update alamat")
+            }
+    }
+
+    fun updateWarungLocation(
+        latitude: Double,
+        longitude: Double,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val currentUser = auth.currentUser ?: return
+
+        firestore.collection("warungs")
+            .document(currentUser.uid)
+            .update(
+                mapOf(
+                    "latitude" to latitude,
+                    "longitude" to longitude
+                )
+            )
+            .addOnSuccessListener {
+                _warungProfile.value = _warungProfile.value?.copy(
+                    latitude = latitude,
+                    longitude = longitude
+                )
+                onSuccess()
+            }
+            .addOnFailureListener {
+                onError(it.message ?: "Gagal menyimpan lokasi")
             }
     }
 }
