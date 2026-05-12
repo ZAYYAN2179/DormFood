@@ -10,6 +10,7 @@ import com.zayyan.dormfood.ui.model.WarungItem
 import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswaContent
 import com.zayyan.dormfood.ui.viewmodel.WarungViewModel
 import io.mockk.every
+import io.mockk.justRun
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Before
@@ -30,9 +31,10 @@ class BerandaMahasiswaTest {
     fun setup() {
         composeTestRule.setContent {
 
-            navController = rememberNavController()
+            navController = mockk(relaxed = true)
 
             warungViewModel = mockk()
+            justRun { navController.navigate(any<String>()) }
 
             every { warungViewModel.warungList } returns MutableStateFlow(
                 listOf(
@@ -42,7 +44,9 @@ class BerandaMahasiswaTest {
                         alamatWarung = "Jl. Test",
                         phone = "08123456789",
                         fotoMenu = "",
-                        layananAntar = true
+                        layananAntar = true,
+                        latitude = -6.9175,
+                        longitude = 107.6191
                     )
                 )
             )
@@ -107,6 +111,23 @@ class BerandaMahasiswaTest {
         }
 
         composeTestRule.onAllNodesWithTag("tombolWhatsapp")
+            .onFirst()
+            .assertIsDisplayed()
+            .performClick()
+    }
+
+    @Test
+    fun beranda_tombolLihatLokasiBisaDiklik() {
+
+        composeTestRule.waitUntil {
+            composeTestRule
+                .onAllNodesWithTag("lihatLokasiWarung")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule
+            .onAllNodesWithTag("lihatLokasiWarung")
             .onFirst()
             .assertIsDisplayed()
             .performClick()

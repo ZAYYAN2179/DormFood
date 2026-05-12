@@ -416,6 +416,7 @@ fun WarungCard(
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color(0xFF1565C0))
+                            .testTag("lihatLokasiWarung")
                             .clickable {
                                 navController.navigate(
                                     Screen.PetaMahasiswaScreen.createRoute(warung.userId)
