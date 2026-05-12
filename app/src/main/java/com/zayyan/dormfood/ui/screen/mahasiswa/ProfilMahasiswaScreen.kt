@@ -45,6 +45,12 @@ fun ProfilMahasiswa(
         mahasiswaViewModel.fetchMahasiswaData()
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            mahasiswaViewModel.clearUpdateMessage()
+        }
+    }
+
     val currentRoute = navController.currentBackStackEntry?.destination?.route
     val isLoading by mahasiswaViewModel.isLoading.collectAsState()
 

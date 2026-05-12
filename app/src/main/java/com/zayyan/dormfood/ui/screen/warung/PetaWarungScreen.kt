@@ -2,7 +2,10 @@ package com.zayyan.dormfood.ui.screen.warung
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.provider.Settings
 import android.view.MotionEvent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,6 +39,12 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Overlay
 
+private fun isLocationEnabled(context: Context): Boolean {
+    val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    return lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            || lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PetaWarungScreen(
@@ -51,6 +60,9 @@ fun PetaWarungScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var selectedPoint by remember { mutableStateOf(GeoPoint(-6.9175, 107.6191)) }
+    var isSaving by remember { mutableStateOf(false) }
+
+    var showEnableLocationDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(warungProfile) {
         val lat = warungProfile?.latitude?.takeIf { it != 0.0 }
@@ -59,24 +71,112 @@ fun PetaWarungScreen(
             selectedPoint = GeoPoint(lat, lon)
         }
     }
-    var isSaving by remember { mutableStateOf(false) }
 
-    // Inisialisasi OSMDroid user-agent
     LaunchedEffect(Unit) {
         Configuration.getInstance().userAgentValue = context.packageName
     }
 
-    // Permission launcher
+    val locationSettingsLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (isLocationEnabled(context)) {
+            getCurrentLocation(context) { lat, lon ->
+                selectedPoint = GeoPoint(lat, lon)
+            }
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
                 || permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (granted) {
-            getCurrentLocation(context) { lat, lon ->
-                selectedPoint = GeoPoint(lat, lon)
+            if (isLocationEnabled(context)) {
+                getCurrentLocation(context) { lat, lon ->
+                    selectedPoint = GeoPoint(lat, lon)
+                }
+            } else {
+                showEnableLocationDialog = true
             }
         }
+    }
+
+    fun handleMyLocationClick() {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        when {
+            !hasPermission -> {
+                permissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            }
+            !isLocationEnabled(context) -> {
+                showEnableLocationDialog = true
+            }
+            else -> {
+                getCurrentLocation(context) { lat, lon ->
+                    selectedPoint = GeoPoint(lat, lon)
+                }
+            }
+        }
+    }
+
+    if (showEnableLocationDialog) {
+        AlertDialog(
+            onDismissRequest = { showEnableLocationDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = DormRed,
+                    modifier = Modifier.size(32.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Aktifkan Lokasi",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Text(
+                    text = "Layanan lokasi perangkat Anda sedang nonaktif. Aktifkan lokasi agar kami dapat mendeteksi posisi warung Anda secara akurat.",
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    lineHeight = 20.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showEnableLocationDialog = false
+                        locationSettingsLauncher.launch(
+                            Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = DormRed),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Buka Pengaturan")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showEnableLocationDialog = false },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Nanti Saja", color = Color.Gray)
+                }
+            },
+            shape = RoundedCornerShape(20.dp)
+        )
     }
 
     Scaffold(
@@ -104,7 +204,6 @@ fun PetaWarungScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // ── Peta OSM ──────────────────────────────────────────────
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
@@ -113,15 +212,12 @@ fun PetaWarungScreen(
                         setMultiTouchControls(true)
                         controller.setZoom(17.0)
                         controller.setCenter(selectedPoint)
-
-                        // Overlay: tap untuk memindahkan marker
                         overlays.add(object : Overlay() {
                             override fun onSingleTapConfirmed(
                                 e: MotionEvent,
                                 mapView: MapView
                             ): Boolean {
-                                val projection = mapView.projection
-                                val tappedPoint = projection.fromPixels(
+                                val tappedPoint = mapView.projection.fromPixels(
                                     e.x.toInt(), e.y.toInt()
                                 ) as GeoPoint
                                 selectedPoint = tappedPoint
@@ -129,19 +225,15 @@ fun PetaWarungScreen(
                                 return true
                             }
                         })
-
-                        // Marker awal
                         updateMarker(this, selectedPoint)
                     }
                 },
                 update = { mapView ->
-                    // Saat selectedPoint berubah (misal dari GPS), update peta
                     updateMarker(mapView, selectedPoint)
                     mapView.controller.animateTo(selectedPoint)
                 }
             )
 
-            // ── Panel bawah ───────────────────────────────────────────
             Card(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -154,7 +246,6 @@ fun PetaWarungScreen(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Koordinat terpilih
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.LocationOn,
@@ -181,26 +272,8 @@ fun PetaWarungScreen(
                     )
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        // Tombol lokasi saat ini
                         OutlinedButton(
-                            onClick = {
-                                val hasPermission = ContextCompat.checkSelfPermission(
-                                    context, Manifest.permission.ACCESS_FINE_LOCATION
-                                ) == PackageManager.PERMISSION_GRANTED
-
-                                if (hasPermission) {
-                                    getCurrentLocation(context) { lat, lon ->
-                                        selectedPoint = GeoPoint(lat, lon)
-                                    }
-                                } else {
-                                    permissionLauncher.launch(
-                                        arrayOf(
-                                            Manifest.permission.ACCESS_FINE_LOCATION,
-                                            Manifest.permission.ACCESS_COARSE_LOCATION
-                                        )
-                                    )
-                                }
-                            },
+                            onClick = { handleMyLocationClick() },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = DormRed),
@@ -211,7 +284,6 @@ fun PetaWarungScreen(
                             Text("Lokasi Saya", fontSize = 13.sp)
                         }
 
-                        // Tombol simpan
                         Button(
                             onClick = {
                                 isSaving = true
@@ -220,16 +292,12 @@ fun PetaWarungScreen(
                                     longitude = selectedPoint.longitude,
                                     onSuccess = {
                                         isSaving = false
-                                        warungViewModel.setUpdateMessage(
-                                            "Titik lokasi berhasil disimpan"
-                                        )
+                                        warungViewModel.setUpdateMessage("Titik lokasi berhasil disimpan")
                                         navController.popBackStack()
                                     },
                                     onError = { error ->
                                         isSaving = false
-                                        warungViewModel.setUpdateMessage(
-                                            "Gagal menyimpan: $error"
-                                        )
+                                        warungViewModel.setUpdateMessage("Gagal menyimpan: $error")
                                     }
                                 )
                             },
@@ -276,7 +344,5 @@ private fun getCurrentLocation(context: Context, onResult: (Double, Double) -> U
         ).addOnSuccessListener { location ->
             location?.let { onResult(it.latitude, it.longitude) }
         }
-    } catch (_: SecurityException) {
-        // Permission belum diberikan — tangani di caller
-    }
+    } catch (_: SecurityException) {}
 }
