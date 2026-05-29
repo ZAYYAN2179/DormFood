@@ -18,6 +18,7 @@ coil = "2.6.0"
 mockk = "1.13.10"
 osmdroid = "6.1.20"
 playServicesLocation = "21.3.0"
+composeMaterialIcons = "1.7.8"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -45,6 +46,7 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "composeMaterialIcons" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

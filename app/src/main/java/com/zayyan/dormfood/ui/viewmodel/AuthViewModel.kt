@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.google.firebase.auth.FirebaseAuthException
 
 class AuthViewModel : ViewModel() {
 
@@ -65,54 +66,77 @@ class AuthViewModel : ViewModel() {
     }
 
     fun login(email: String, password: String) {
+
         if (email.isBlank() || password.isBlank()) {
-            _authState.value = AuthState.Error("Email dan password harus diisi")
+            _authState.value =
+                AuthState.Error("Email dan kata sandi harus diisi")
             return
         }
 
         _authState.value = AuthState.Loading
 
         auth.signInWithEmailAndPassword(email, password)
+
             .addOnSuccessListener { result ->
-                val uid = result.user?.uid ?: return@addOnSuccessListener
+
+                val uid = result.user?.uid
+                    ?: return@addOnSuccessListener
 
                 firestore.collection("users")
                     .document(uid)
                     .get()
                     .addOnSuccessListener { document ->
                         if (document.exists()) {
-                            val role = document.getString("role") ?: "mahasiswa"
-                            val name = document.getString("name") ?: ""
+                            val role =
+                                document.getString("role")
+                                    ?: "mahasiswa"
 
-                            _authState.value = AuthState.LoginSuccess(
-                                message = "Login berhasil",
-                                role = role,
-                                userName = name
-                            )
+                            val name =
+                                document.getString("name")
+                                    ?: ""
+
+                            _authState.value =
+                                AuthState.LoginSuccess(
+                                    message = "Login berhasil",
+                                    role = role,
+                                    userName = name
+                                )
                         } else {
                             _authState.value =
-                                AuthState.Error("Data user tidak ditemukan di database")
+                                AuthState.Error(
+                                    "Data user tidak ditemukan"
+                                )
                         }
                     }
                     .addOnFailureListener {
                         _authState.value =
-                            AuthState.Error(it.message ?: "Gagal mengambil data user")
+                            AuthState.Error(
+                                "Gagal mengambil data user"
+                            )
                     }
             }
             .addOnFailureListener { exception ->
-                val errorMessage = when {
-                    exception.message?.contains("no user record") == true ->
-                        "Email belum terdaftar. Silakan daftar terlebih dahulu."
+                val message =
+                    if (exception is FirebaseAuthException) {
+                        when (exception.errorCode) {
+                            "ERROR_USER_NOT_FOUND" ->
+                                "Email tidak terdaftar"
 
-                    exception.message?.contains("password is invalid") == true ->
-                        "Password salah. Silakan coba lagi."
+                            "ERROR_WRONG_PASSWORD" ->
+                                "Kata sandi salah"
 
-                    exception.message?.contains("badly formatted") == true ->
-                        "Format email tidak valid."
+                            "ERROR_INVALID_CREDENTIAL" ->
+                                "Email atau kata sandi salah"
 
-                    else -> exception.message ?: "Login gagal. Periksa email dan password Anda."
-                }
-                _authState.value = AuthState.Error(errorMessage)
+                            else ->
+                                "Login gagal"
+                        }
+                    } else {
+
+                        "Login gagal"
+                    }
+                _authState.value =
+                    AuthState.Error(message)
             }
     }
 
