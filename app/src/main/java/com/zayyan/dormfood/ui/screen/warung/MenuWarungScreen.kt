@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -146,6 +147,7 @@ fun MenuWarungContent(
             containerColor = DormRed,
             contentColor = Color.White,
             modifier = Modifier
+                .testTag("btnTambahMenu")
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
         ) {
@@ -414,7 +416,7 @@ fun MenuItemCard(
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().testTag("menuCard"),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         ),
@@ -454,6 +456,7 @@ fun MenuItemCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Switch(
+                    modifier = Modifier.testTag("switchMenu"),
                     checked = switchChecked,
                     onCheckedChange = {
                         onToggleAvailability()
@@ -467,7 +470,10 @@ fun MenuItemCard(
                 )
 
                 Box {
-                    IconButton(onClick = { showMenu = true }) {
+                    IconButton(
+                        modifier = Modifier.testTag("btnMoreMenu"),
+                        onClick = { showMenu = true }
+                    ) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More options",
@@ -534,7 +540,7 @@ fun AddMenuDialog(
                     value = namaMenu,
                     onValueChange = { namaMenu = it },
                     label = { Text("Nama Menu") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("inputNamaMenu"),
                     singleLine = true
                 )
 
@@ -546,7 +552,7 @@ fun AddMenuDialog(
                         }
                     },
                     label = { Text("Harga") },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().testTag("inputHargaMenu"),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     prefix = { Text("Rp ") },
                     singleLine = true
@@ -586,6 +592,7 @@ fun AddMenuDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
+                        modifier = Modifier.testTag("btnSimpanMenu"),
                         onClick = {
                             val hargaInt = harga.toIntOrNull() ?: 0
                             onConfirm(namaMenu, hargaInt, selectedTipe)
@@ -753,6 +760,7 @@ fun SearchBar(
         },
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("searchMenu")
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
