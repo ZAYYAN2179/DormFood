@@ -54,6 +54,7 @@ import com.zayyan.dormfood.ui.theme.DormRed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.text.input.VisualTransformation
@@ -67,9 +68,14 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-
+    var showForgotDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+    var resetMessage by remember { mutableStateOf("") }
     val authState by viewModel.authState.collectAsState()
     val focusManager = LocalFocusManager.current
+    var resetSuccess by remember {
+        mutableStateOf(false)
+    }
 
     LaunchedEffect(authState) {
         when (authState) {
@@ -159,7 +165,9 @@ fun LoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            modifier = Modifier.fillMaxWidth().testTag("inputEmail"),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("inputEmail"),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
@@ -237,10 +245,11 @@ fun LoginScreen(
 
         TextButton(
             onClick = {
-                // TODO: Implement forgot password
-                navController.navigate(Screen.LandingPage.route)
+                showForgotDialog = true
             },
-            modifier = Modifier.align(Alignment.End).testTag("btnForgotPassword")
+            modifier = Modifier
+                .align(Alignment.End)
+                .testTag("btnForgotPassword")
         ) {
             Text(
                 text = "Lupa Kata Sandi?",
@@ -284,5 +293,81 @@ fun LoginScreen(
                 }
             )
         }
+    }
+    if (showForgotDialog) {
+
+        AlertDialog(
+            onDismissRequest = {
+                showForgotDialog = false
+            },
+            title = {
+                Text("Lupa Kata Sandi")
+            },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = resetEmail,
+                        onValueChange = {
+                            resetEmail = it
+                        },
+                        label = {
+                            Text("Email")
+                        },
+                        singleLine = true
+                    )
+                    if (resetMessage.isNotEmpty()) {
+                        Spacer(
+                            modifier = Modifier.height(8.dp)
+                        )
+                        Text(
+                            text = resetMessage,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                if (resetSuccess) {
+                    TextButton(
+                        onClick = {
+                            showForgotDialog = false
+                            resetEmail = ""
+                            resetMessage = ""
+                            resetSuccess = false
+                        }
+                    ) {
+                        Text("Selesai")
+                    }
+                } else {
+                    TextButton(
+                        onClick = {
+                            viewModel.resetPassword(resetEmail) {
+                                resetMessage = it
+                                if (
+                                    it == "Link reset kata sandi telah dikirim ke email Anda"
+                                ) {
+                                    resetSuccess = true
+                                }
+                            }
+                        }
+                    ) {
+                        Text("Kirim")
+                    }
+                }
+            },
+            dismissButton = {
+                if (!resetSuccess) {
+                    TextButton(
+                        onClick = {
+                            showForgotDialog = false
+                            resetEmail = ""
+                            resetMessage = ""
+                        }
+                    ) {
+                        Text("Batal")
+                    }
+                }
+            }
+        )
     }
 }

@@ -195,6 +195,59 @@ class AuthViewModel : ViewModel() {
             }
     }
 
+    fun resetPassword(
+        email: String,
+        onResult: (String) -> Unit
+    ) {
+
+        if (email.isBlank()) {
+            onResult("Email harus diisi")
+            return
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            onResult("Format email tidak valid")
+            return
+        }
+
+        firestore.collection("users")
+            .whereEqualTo("email", email)
+            .get()
+
+            .addOnSuccessListener { documents ->
+
+                if (documents.isEmpty) {
+
+                    onResult("Email tidak terdaftar")
+                    return@addOnSuccessListener
+                }
+
+
+                auth.sendPasswordResetEmail(email)
+
+                    .addOnSuccessListener {
+
+                        onResult(
+                            "Link reset kata sandi telah dikirim ke email Anda"
+                        )
+                    }
+
+                    .addOnFailureListener {
+
+                        onResult(
+                            "Gagal mengirim email reset kata sandi"
+                        )
+                    }
+            }
+
+            .addOnFailureListener {
+
+                onResult(
+                    "Gagal memeriksa email"
+                )
+            }
+    }
+
     fun resetAuthState() {
         _authState.value = AuthState.Idle
     }
