@@ -27,6 +27,12 @@ import com.zayyan.dormfood.ui.viewmodel.AuthViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun RegisterScreen(
@@ -116,14 +122,20 @@ fun RegisterScreen(
         RegisterField(
             label = "Nomor kamar",
             value = roomNumber,
-            onValueChange = { roomNumber = it },
+            onValueChange = {
+                if (it.all { char -> char.isDigit() }) {
+                    roomNumber = it
+                }
+            },
             testTag = "inputNomorKamar",
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Next
             ),
             keyboardActions = KeyboardActions(
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                onNext = {
+                    focusManager.moveFocus(FocusDirection.Down)
+                }
             )
         )
 
@@ -252,21 +264,62 @@ private fun RegisterPasswordField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default
 ) {
+
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
+
     Text(
         text = label,
         modifier = Modifier.fillMaxWidth(),
         fontWeight = FontWeight.Medium
     )
+
     Spacer(modifier = Modifier.height(8.dp))
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth().testTag(testTag),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(testTag),
+
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
-        visualTransformation = PasswordVisualTransformation(),
+
+        visualTransformation =
+            if (passwordVisible) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+
+        trailingIcon = {
+
+            IconButton(
+                onClick = {
+                    passwordVisible = !passwordVisible
+                }
+            ) {
+                Icon(
+                    imageVector =
+                        if (passwordVisible)
+                            Icons.Default.Visibility
+                        else
+                            Icons.Default.VisibilityOff,
+
+                    contentDescription =
+                        if (passwordVisible)
+                            "Sembunyikan Password"
+                        else
+                            "Lihat Password"
+                )
+            }
+        },
+
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions
     )
+
     Spacer(modifier = Modifier.height(16.dp))
 }

@@ -6,6 +6,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.google.firebase.auth.FirebaseAuthException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
 class AuthViewModel : ViewModel() {
 
@@ -23,15 +26,32 @@ class AuthViewModel : ViewModel() {
         password: String,
         confirmPassword: String
     ) {
-        if (name.isBlank() || building.isBlank() || roomNumber.isBlank() ||
-            email.isBlank() || password.isBlank()
+        if (
+            name.isBlank() ||
+            building.isBlank() ||
+            roomNumber.isBlank() ||
+            email.isBlank() ||
+            password.isBlank() ||
+            confirmPassword.isBlank()
         ) {
             _authState.value = AuthState.Error("Semua field harus diisi")
             return
         }
 
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            _authState.value =
+                AuthState.Error("Format email tidak valid")
+            return
+        }
+
+        if (password.length < 6) {
+            _authState.value =
+                AuthState.Error("Kata sandi minimal 6 karakter")
+            return
+        }
+
         if (password != confirmPassword) {
-            _authState.value = AuthState.Error("Password tidak sama")
+            _authState.value = AuthState.Error("Konfirmasi kata sandi tidak sesuai")
             return
         }
 
@@ -60,8 +80,24 @@ class AuthViewModel : ViewModel() {
                         _authState.value = AuthState.Error(it.message ?: "Gagal menyimpan data")
                     }
             }
-            .addOnFailureListener {
-                _authState.value = AuthState.Error(it.message ?: "Registrasi gagal")
+            .addOnFailureListener { exception ->
+
+                val message = when (exception) {
+
+                    is FirebaseAuthUserCollisionException ->
+                        "Email telah terdaftar"
+
+                    is FirebaseAuthWeakPasswordException ->
+                        "Kata sandi minimal 6 karakter"
+
+                    is FirebaseAuthInvalidCredentialsException ->
+                        "Format email tidak valid"
+
+                    else ->
+                        "Registrasi gagal"
+                }
+
+                _authState.value = AuthState.Error(message)
             }
     }
 
