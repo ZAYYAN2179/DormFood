@@ -299,7 +299,7 @@ fun BerandaWarungContent(
                 }
 
                 Button(
-                    onClick = { /* TODO: navigasi ke prediksi stok */ },
+                    onClick = { navController.navigate(Screen.PrediksiStokMenuWarungScreen.route) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

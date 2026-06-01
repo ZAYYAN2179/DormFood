@@ -87,6 +87,7 @@ dependencies {
     //Map
     implementation(libs.osmdroid.android)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.material3)
 
     // Testing
     testImplementation(libs.junit)
