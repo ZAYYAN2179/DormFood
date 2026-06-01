@@ -1,6 +1,9 @@
 package com.zayyan.dormfood.ui.viewmodel
 
 import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
@@ -28,6 +31,12 @@ class WarungViewModel : ViewModel() {
     val isLoadingList: StateFlow<Boolean> = _isLoadingList
     private val _updateMessage = MutableStateFlow<String?>(null)
     val updateMessage: StateFlow<String?> = _updateMessage
+    private var warungListeners = mutableListOf<() -> Unit>()
+
+    var savedScrollIndex by mutableIntStateOf(0)
+        private set
+    var savedScrollOffset by mutableIntStateOf(0)
+        private set
 
     fun setUpdateMessage(message: String) {
         _updateMessage.value = message
@@ -40,6 +49,11 @@ class WarungViewModel : ViewModel() {
     fun clearData() {
         _warungData.value = null
         _warungProfile.value = null
+    }
+
+    fun saveScrollPosition(index: Int, offset: Int) {
+        savedScrollIndex = index
+        savedScrollOffset = offset
     }
 
     fun loadWarungData() {
@@ -103,67 +117,69 @@ class WarungViewModel : ViewModel() {
     }
 
     fun loadAllWarungs() {
-        if (_warungList.value.isNotEmpty()) return
+        warungListeners.forEach { it() }
+        warungListeners.clear()
+
+        if (_warungList.value.isEmpty()) {
+            _isLoadingList.value = true
+        }
+
         _isLoadingList.value = true
 
-        firestore.collection("users")
+        val usersListener = firestore.collection("users")
             .whereEqualTo("role", "warung")
-            .get()
-            .addOnSuccessListener { users ->
-                val result = mutableListOf<WarungItem>()
-                val total = users.size()
-
-                if (total == 0) {
-                    _warungList.value = emptyList()
+            .addSnapshotListener { users, error ->
+                if (error != null || users == null) {
                     _isLoadingList.value = false
-                    return@addOnSuccessListener
+                    return@addSnapshotListener
                 }
 
-                var loaded = 0
+                if (users.isEmpty) {
+                    _warungList.value = emptyList()
+                    _isLoadingList.value = false
+                    return@addSnapshotListener
+                }
+
                 for (userDoc in users) {
                     val userId = userDoc.getString("uid") ?: userDoc.id
                     val nama = userDoc.getString("name") ?: "Warung"
                     val phone = userDoc.getString("phone") ?: ""
 
-                    firestore.collection("warungs")
+                    val warungListener = firestore.collection("warungs")
                         .document(userId)
-                        .get()
-                        .addOnSuccessListener { warungDoc ->
-                            val alamat = warungDoc.getString("alamatWarung") ?: ""
-                            val fotoMenu = warungDoc.getString("fotoMenu") ?: ""
-                            val layananAntar = warungDoc.getBoolean("layananAntar") ?: false
-                            val latitude = warungDoc.getDouble("latitude") ?: 0.0
-                            val longitude = warungDoc.getDouble("longitude") ?: 0.0
-                            result.add(
-                                WarungItem(
-                                    userId = userId,
-                                    namaWarung = nama,
-                                    alamatWarung = alamat,
-                                    phone = phone,
-                                    fotoMenu = fotoMenu,
-                                    layananAntar = layananAntar,
-                                    latitude = latitude,
-                                    longitude = longitude
-                                )
+                        .addSnapshotListener { warungDoc, warungError ->
+                            if (warungError != null || warungDoc == null) return@addSnapshotListener
+
+                            val item = WarungItem(
+                                userId = userId,
+                                namaWarung = nama,
+                                alamatWarung = warungDoc.getString("alamatWarung") ?: "",
+                                phone = phone,
+                                fotoMenu = warungDoc.getString("fotoMenu") ?: "",
+                                layananAntar = warungDoc.getBoolean("layananAntar") ?: false,
+                                latitude = warungDoc.getDouble("latitude") ?: 0.0,
+                                longitude = warungDoc.getDouble("longitude") ?: 0.0
                             )
-                            loaded++
-                            if (loaded == total) {
-                                _warungList.value = result.toList()
-                                _isLoadingList.value = false
-                            }
+
+                            val current = _warungList.value.toMutableList()
+                            val index = current.indexOfFirst { it.userId == userId }
+                            if (index >= 0) current[index] = item else current.add(item)
+                            _warungList.value = current.toList()
+
+                            _isLoadingList.value = false
                         }
-                        .addOnFailureListener {
-                            loaded++
-                            if (loaded == total) {
-                                _warungList.value = result.toList()
-                                _isLoadingList.value = false
-                            }
-                        }
+
+                    warungListeners.add { warungListener.remove() }
                 }
             }
-            .addOnFailureListener {
-                _isLoadingList.value = false
-            }
+
+        warungListeners.add { usersListener.remove() }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        warungListeners.forEach { it() }
+        warungListeners.clear()
     }
 
     private fun createWarungProfile() {

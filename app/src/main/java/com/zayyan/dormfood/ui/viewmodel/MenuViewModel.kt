@@ -13,8 +13,7 @@ class MenuViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
-    private val warungDetailCache = mutableMapOf<String, MenuWarungDetail>()
-    private val menuByWarungCache = mutableMapOf<String, List<MenuItem>>()
+    private val detailListeners = mutableListOf<() -> Unit>()
 
     private val _menuList = MutableStateFlow<List<MenuItem>>(emptyList())
     val menuList: StateFlow<List<MenuItem>> = _menuList
@@ -72,67 +71,55 @@ class MenuViewModel : ViewModel() {
     }
 
     fun loadWarungDetail(userId: String) {
-        val cachedDetail = warungDetailCache[userId]
-        val cachedMenu = menuByWarungCache[userId]
-
-        if (cachedDetail != null && cachedMenu != null) {
-            _warungDetail.value = cachedDetail
-            _menuListByWarung.value = cachedMenu
-            return
-        }
-
+        detailListeners.forEach { it() }
+        detailListeners.clear()
         _isLoadingDetail.value = true
 
-        firestore.collection("users").document(userId).get()
-            .addOnSuccessListener { userDoc ->
+        firestore.collection("users").document(userId)
+            .addSnapshotListener { userDoc, error ->
+                if (error != null || userDoc == null) return@addSnapshotListener
                 val nama = userDoc.getString("name") ?: ""
                 val phone = userDoc.getString("phone") ?: ""
 
-                firestore.collection("warungs").document(userId).get()
-                    .addOnSuccessListener { warungDoc ->
-                        val detail = MenuWarungDetail(
+                firestore.collection("warungs").document(userId)
+                    .addSnapshotListener { warungDoc, wError ->
+                        if (wError != null || warungDoc == null) return@addSnapshotListener
+                        _warungDetail.value = MenuWarungDetail(
                             namaWarung = nama,
                             alamatWarung = warungDoc.getString("alamatWarung") ?: "",
                             phone = phone,
                             fotoMenu = warungDoc.getString("fotoMenu") ?: "",
                             fotoQr = warungDoc.getString("fotoQr") ?: ""
                         )
-                        _warungDetail.value = detail
-                        warungDetailCache[userId] = detail
+                        _isLoadingDetail.value = false
+                    }.also { reg -> detailListeners.add { reg.remove() } }
 
-                        firestore.collection("menus")
-                            .whereEqualTo("warungId", userId)
-                            .get()
-                            .addOnSuccessListener { menuSnapshot ->
-                                val menus = menuSnapshot.documents.mapNotNull { doc ->
-                                    try {
-                                        MenuItem(
-                                            menuId = doc.id,
-                                            warungId = doc.getString("warungId") ?: "",
-                                            namaMenu = doc.getString("namaMenu") ?: "",
-                                            harga = doc.getLong("harga")?.toInt() ?: 0,
-                                            ketersediaan = doc.getBoolean("ketersediaan") ?: true,
-                                            tipe = doc.getString("tipe") ?: "Makanan"
-                                        )
-                                    } catch (_: Exception) {
-                                        null
-                                    }
-                                }.sortedBy { it.namaMenu.lowercase() }
-                                _menuListByWarung.value = menus
-                                menuByWarungCache[userId] = menus
-                                _isLoadingDetail.value = false
-                            }
-                            .addOnFailureListener { _isLoadingDetail.value = false }
-                    }
-                    .addOnFailureListener { _isLoadingDetail.value = false }
-            }
-            .addOnFailureListener { _isLoadingDetail.value = false }
+            }.also { reg -> detailListeners.add { reg.remove() } }
+
+        firestore.collection("menus")
+            .whereEqualTo("warungId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) return@addSnapshotListener
+                val menus = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        MenuItem(
+                            menuId = doc.id,
+                            warungId = doc.getString("warungId") ?: "",
+                            namaMenu = doc.getString("namaMenu") ?: "",
+                            harga = doc.getLong("harga")?.toInt() ?: 0,
+                            ketersediaan = doc.getBoolean("ketersediaan") ?: true,
+                            tipe = doc.getString("tipe") ?: "Makanan"
+                        )
+                    } catch (_: Exception) { null }
+                }.sortedBy { it.namaMenu.lowercase() }
+                _menuListByWarung.value = menus
+            }.also { reg -> detailListeners.add { reg.remove() } }
     }
 
     override fun onCleared() {
         super.onCleared()
-        warungDetailCache.clear()
-        menuByWarungCache.clear()
+        detailListeners.forEach { it() }
+        detailListeners.clear()
     }
 
     fun addMenu(

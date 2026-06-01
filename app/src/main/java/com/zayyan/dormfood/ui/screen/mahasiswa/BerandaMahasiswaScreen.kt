@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
@@ -81,6 +82,19 @@ fun BerandaMahasiswaContent(
     var searchQuery by remember { mutableStateOf("") }
     var activeFilter by remember { mutableStateOf(FilterStatus.SEMUA) }
 
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = warungViewModel.savedScrollIndex,
+        initialFirstVisibleItemScrollOffset = warungViewModel.savedScrollOffset
+    )
+
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.collect { (index, offset) ->
+            warungViewModel.saveScrollPosition(index = index, offset = offset)
+        }
+    }
+
     val filteredWarungs = remember(warungs, searchQuery, activeFilter) {
         warungs
             .filter { warung ->
@@ -113,6 +127,7 @@ fun BerandaMahasiswaContent(
         }
     } else {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),

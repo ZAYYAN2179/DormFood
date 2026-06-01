@@ -104,6 +104,7 @@ fun BerandaWarungContent(
     navController: NavHostController
 ) {
     val warungProfile by warungViewModel.warungProfile.collectAsState()
+    val warungData by warungViewModel.warungData.collectAsState()
     val orders by pesananViewModel.warungOrders.collectAsState()
     val isLoadingOrders by pesananViewModel.isLoadingWarungOrders.collectAsState()
 
@@ -271,14 +272,16 @@ fun BerandaWarungContent(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
-                    onClick = { navController.navigate(Screen.RatingUlasanWarungScreen.route) },
+                    onClick = {
+                        warungData?.uid?.let { uid ->
+                            navController.navigate(Screen.RatingUlasanWarungScreen.createRoute(uid))
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = DormRed
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = DormRed)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Star,
