@@ -326,7 +326,7 @@ fun OrderCard(
                                         )
                                     ) {
                                         Text(
-                                            text = "✓ Sudah Diulas",
+                                            text = "✓ Ulasan Terkirim",
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Medium
                                         )

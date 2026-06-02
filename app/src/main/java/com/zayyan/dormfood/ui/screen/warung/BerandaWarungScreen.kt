@@ -299,7 +299,7 @@ fun BerandaWarungContent(
                 }
 
                 Button(
-                    onClick = { navController.navigate(Screen.PrediksiStokMenuWarungScreen.route) },
+                    onClick = { navController.navigate(Screen.AnalisisPenjualanWarungScreen.route) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
@@ -311,7 +311,7 @@ fun BerandaWarungContent(
                     Text(text = "📊", fontSize = 16.sp)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Prediksi Stok Menu",
+                        text = "Analisis Penjualan",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White

@@ -25,11 +25,11 @@ import com.zayyan.dormfood.ui.screen.mahasiswa.PetaMahasiswaScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.ProfilMahasiswa
 import com.zayyan.dormfood.ui.screen.mahasiswa.RatingUlasanMahasiswaScreen
 import com.zayyan.dormfood.ui.screen.mahasiswa.RegisterScreen
+import com.zayyan.dormfood.ui.screen.warung.AnalisisPenjualanWarungScreen
 import com.zayyan.dormfood.ui.screen.warung.BerandaWarung
 import com.zayyan.dormfood.ui.screen.warung.MenuWarung
 import com.zayyan.dormfood.ui.screen.warung.PesananWarung
 import com.zayyan.dormfood.ui.screen.warung.PetaWarungScreen
-import com.zayyan.dormfood.ui.screen.warung.PrediksiStokMenuWarungScreen
 import com.zayyan.dormfood.ui.screen.warung.ProfilWarung
 import com.zayyan.dormfood.ui.screen.warung.RatingUlasanWarungScreen
 import java.net.URLDecoder
@@ -153,8 +153,8 @@ fun SetupNavGraph(navController: NavHostController = rememberNavController()) {
                 ratingViewModel = ratingViewModel
             )
         }
-        composable(route = Screen.PrediksiStokMenuWarungScreen.route) {
-            PrediksiStokMenuWarungScreen(navController)
+        composable(route = Screen.AnalisisPenjualanWarungScreen.route) {
+            AnalisisPenjualanWarungScreen(navController)
         }
         composable(route = Screen.PetaWarungScreen.route) {
             PetaWarungScreen(
