@@ -19,10 +19,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.TrendingDown
-import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.RemoveShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.zayyan.dormfood.ui.model.RingkasanPenjulan
 import com.zayyan.dormfood.ui.model.StatusPesanan
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
@@ -196,14 +197,7 @@ fun AnalisisPenjualanWarungContent(
         }
 
         item {
-            SectionCard {
-                Text("Ringkasan Penjualan", fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(12.dp))
-                Text("📦 Total Pesanan : ${ringkasan.totalPesanan}")
-                Text("🍽️ Total Menu : ${ringkasan.totalMenu}")
-                Text("🔥 Menu Pernah Terjual : ${ringkasan.menuTerjual}")
-                Text("🚫 Menu Belum Terjual : ${ringkasan.menuBelumTerjual}")
-            }
+            RingkasanCard(ringkasan = ringkasan)
         }
 
         item {
@@ -229,7 +223,7 @@ fun AnalisisPenjualanWarungContent(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    "Cetak Rekap $periodeLabel",
+                    "Cetak Laporan Penjualan $periodeLabel",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
@@ -239,12 +233,12 @@ fun AnalisisPenjualanWarungContent(
 
         item {
             SectionLabel(
-                title = "Insight",
+                title = "Analisis",
                 icon = {
                     Icon(
-                        Icons.Default.AutoGraph,
+                        Icons.Default.Lightbulb,
                         null,
-                        tint = Color(0xFF1565C0),
+                        tint = Color(0xFFF9A825),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -254,7 +248,7 @@ fun AnalisisPenjualanWarungContent(
         item {
             SectionCard {
                 insights.forEach {
-                    Text("• $it")
+                    Text("• $it", fontSize = 13.sp, lineHeight = 20.sp)
                     Spacer(Modifier.height(6.dp))
                 }
             }
@@ -296,7 +290,7 @@ fun AnalisisPenjualanWarungContent(
                 title = "Menu Belum Pernah Dipesan",
                 icon = {
                     Icon(
-                        Icons.AutoMirrored.Filled.TrendingDown,
+                        Icons.Default.RemoveShoppingCart,
                         null,
                         tint = Color(0xFFC62828),
                         modifier = Modifier.size(18.dp)
@@ -310,12 +304,10 @@ fun AnalisisPenjualanWarungContent(
                 if (menuKurangLaris.isEmpty()) {
                     EmptyText("Semua menu pernah terjual")
                 } else {
-                    menuKurangLaris.forEachIndexed { index, (nama, qty) ->
-                        MenuKurangLarisRow(
+                    menuKurangLaris.forEachIndexed { index, (nama, _) ->
+                        MenuBelumDipesanRow(
                             rank = index + 1,
                             namaMenu = nama,
-                            qty = qty,
-                            belumPernah = qty == 0,
                             showDivider = index < menuKurangLaris.lastIndex
                         )
                     }
@@ -324,6 +316,111 @@ fun AnalisisPenjualanWarungContent(
         }
 
         item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+
+@Composable
+fun RingkasanCard(ringkasan: RingkasanPenjulan) {
+    Card(
+        modifier  = Modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(16.dp),
+        colors    = CardDefaults.cardColors(containerColor = CardBg),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                "Ringkasan Penjualan",
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                color = Color(0xFF212121)
+            )
+            Spacer(Modifier.height(14.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                RingkasanItem(
+                    modifier = Modifier.weight(1f),
+                    label    = "Total Pesanan",
+                    value    = ringkasan.totalPesanan.toString(),
+                    bgColor  = Color(0xFFFFF3E0),
+                    valueColor = Color(0xFFE65100)
+                )
+                RingkasanItem(
+                    modifier = Modifier.weight(1f),
+                    label    = "Total Menu",
+                    value    = ringkasan.totalMenu.toString(),
+                    bgColor  = Color(0xFFE8F5E9),
+                    valueColor = Color(0xFF2E7D32)
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                RingkasanItem(
+                    modifier = Modifier.weight(1f),
+                    label = "Menu Terjual",
+                    value = ringkasan.menuTerjual.toString(),
+                    subtitle = "${ringkasan.menuTerjual} dari ${ringkasan.totalMenu} menu",
+                    bgColor = Color(0xFFE3F2FD),
+                    valueColor = Color(0xFF1565C0)
+                )
+
+                RingkasanItem(
+                    modifier = Modifier.weight(1f),
+                    label = "Belum Terjual",
+                    value = ringkasan.menuBelumTerjual.toString(),
+                    subtitle = "${ringkasan.menuBelumTerjual} dari ${ringkasan.totalMenu} menu",
+                    bgColor = Color(0xFFFFEBEE),
+                    valueColor = Color(0xFFC62828)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RingkasanItem(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    subtitle: String = "",
+    bgColor: Color,
+    valueColor: Color
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .padding(horizontal = 14.dp, vertical = 12.dp)
+    ) {
+        Column {
+            Text(
+                value,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 22.sp,
+                color = valueColor
+            )
+
+            Text(
+                label,
+                fontSize = 11.sp,
+                color = Color(0xFF757575),
+                fontWeight = FontWeight.Medium
+            )
+
+            if (subtitle.isNotBlank()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    subtitle,
+                    fontSize = 10.sp,
+                    color = Color(0xFF9E9E9E)
+                )
+            }
+        }
     }
 }
 
@@ -389,12 +486,13 @@ private fun MenuRankRow(
     }
 }
 
+/**
+ * Row untuk menu belum pernah dipesan — hanya tampilkan nama, tanpa label "belum pernah dipesan".
+ */
 @Composable
-private fun MenuKurangLarisRow(
+private fun MenuBelumDipesanRow(
     rank: Int,
     namaMenu: String,
-    qty: Int,
-    belumPernah: Boolean,
     showDivider: Boolean
 ) {
     Column {
@@ -409,27 +507,18 @@ private fun MenuKurangLarisRow(
                 "$rank.",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Gray,
+                color = Color(0xFFC62828),
                 modifier = Modifier.width(24.dp)
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(namaMenu, fontWeight = FontWeight.Medium, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    if (belumPernah) "Belum pernah dipesan" else "$qty terjual",
-                    fontSize = 12.sp,
-                    color = if (belumPernah) Color(0xFFC62828) else Color.Gray
-                )
-            }
-            if (belumPernah) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(Color(0xFFFFEBEE))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) {
-                    Text("0 pesanan", fontSize = 11.sp, color = Color(0xFFC62828), fontWeight = FontWeight.Medium)
-                }
-            }
+            Text(
+                namaMenu,
+                modifier = Modifier.weight(1f),
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = Color(0xFF212121)
+            )
         }
         if (showDivider) HorizontalDivider(color = Color(0xFFEEEEEE), thickness = 0.5.dp)
     }
