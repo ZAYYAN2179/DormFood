@@ -70,6 +70,7 @@ fun PesananMahasiswaContent(
     val orders by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
 
+
     val aktif = orders.filter {
         it.statusPesanan.lowercase() in listOf(
             "menunggu konfirmasi", "dibuat", "diantar"
@@ -174,7 +175,7 @@ fun OrderCard(
     formatRupiah: (Long) -> String,
     showReviewButton: Boolean,
     navController: NavHostController,
-    ratingViewModel: RatingViewModel
+    ratingViewModel: RatingViewModel,
 ) {
     var expanded by remember { mutableStateOf(true) }
 
@@ -363,12 +364,14 @@ fun OrderCard(
                             }
 
                             Button(
-                                onClick = { },
+                                onClick = {
+                                    navController.navigate(
+                                        Screen.MenuMahasiswaScreen.createRoute(userId = order.warungId)
+                                    )
+                                },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = DormRed
-                                )
+                                colors = ButtonDefaults.buttonColors(containerColor = DormRed)
                             ) {
                                 Text(
                                     text = "Pesan Lagi",
