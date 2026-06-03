@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.StateFlow
 import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.model.OrderItem
 import com.zayyan.dormfood.ui.model.StatusPesanan
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 
 class PesananViewModel : ViewModel() {
     private var currentNamaUser: String = ""
@@ -46,6 +48,10 @@ class PesananViewModel : ViewModel() {
     private val _updateStatusResult = MutableStateFlow<String?>(null)
     private var warungOrdersListener: ListenerRegistration? = null
     private val userDataCache = mutableMapOf<String, Triple<String, String, String>>()
+    private val _statusChangeEvent = MutableSharedFlow<Pair<String, String>>(extraBufferCapacity = 5)
+    val statusChangeEvent: SharedFlow<Pair<String, String>> = _statusChangeEvent
+
+    private val previousOrderStatuses = mutableMapOf<String, String>()
 
     init {
         if (auth.currentUser != null) {
@@ -212,6 +218,13 @@ class PesananViewModel : ViewModel() {
                 val needResolve = orderList.filter { it.namaWarung.isEmpty() }
 
                 if (needResolve.isEmpty()) {
+                    orderList.forEach { order ->
+                        val prevStatus = previousOrderStatuses[order.orderId]
+                        if (prevStatus != null && prevStatus != order.statusPesanan) {
+                            _statusChangeEvent.tryEmit(Pair(order.namaWarung, order.statusPesanan))
+                        }
+                        previousOrderStatuses[order.orderId] = order.statusPesanan
+                    }
                     _orders.value = orderList
                     _isLoadingOrders.value = false
                     return@addSnapshotListener
@@ -241,14 +254,19 @@ class PesananViewModel : ViewModel() {
                                 else "Warung"
                             resolved++
                             if (resolved == uniqueIds.size) {
-                                _orders.value = orderList.map { order ->
+                                val resolvedList = orderList.map { order ->
                                     if (order.namaWarung.isEmpty())
-                                        order.copy(
-                                            namaWarung = warungNamesCache[order.warungId]
-                                                ?: "Warung"
-                                        )
+                                        order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
                                     else order
                                 }
+                                resolvedList.forEach { order ->
+                                    val prevStatus = previousOrderStatuses[order.orderId]
+                                    if (prevStatus != null && prevStatus != order.statusPesanan) {
+                                        _statusChangeEvent.tryEmit(Pair(order.namaWarung, order.statusPesanan))
+                                    }
+                                    previousOrderStatuses[order.orderId] = order.statusPesanan
+                                }
+                                _orders.value = resolvedList
                                 _isLoadingOrders.value = false
                             }
                         }
@@ -359,6 +377,7 @@ class PesananViewModel : ViewModel() {
         ordersListener?.remove()
         ordersListener = null
         warungNamesCache.clear()
+        previousOrderStatuses.clear()
         _orders.value = emptyList()
         _isLoadingOrders.value = false
         loadOrders()

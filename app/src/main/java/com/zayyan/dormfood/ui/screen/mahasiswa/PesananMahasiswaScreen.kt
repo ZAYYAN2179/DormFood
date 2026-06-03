@@ -33,6 +33,11 @@ import com.zayyan.dormfood.ui.theme.DormRed
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 
 @Composable
 fun PesananMahasiswa(
@@ -40,6 +45,7 @@ fun PesananMahasiswa(
     pesananViewModel: PesananViewModel = viewModel()
 ) {
     val currentRoute = navController.currentBackStackEntry?.destination?.route
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = { TopAppBar(title = "Dorm Food") },
@@ -49,12 +55,14 @@ fun PesananMahasiswa(
                 currentRoute = currentRoute
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = Background
     ) { paddingValues ->
         PesananMahasiswaContent(
             paddingValues = paddingValues,
             pesananViewModel = pesananViewModel,
-            navController = navController
+            navController = navController,
+            snackbarHostState = snackbarHostState
         )
     }
 }
@@ -63,12 +71,22 @@ fun PesananMahasiswa(
 fun PesananMahasiswaContent(
     paddingValues: PaddingValues,
     pesananViewModel: PesananViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    snackbarHostState: SnackbarHostState
 ) {
     val ratingViewModel: RatingViewModel = viewModel()
 
     val orders by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
+
+    LaunchedEffect(Unit) {
+        pesananViewModel.statusChangeEvent.collect { (namaWarung, statusBaru) ->
+            snackbarHostState.showSnackbar(
+                message = "📦 $namaWarung: Status pesanan berubah ke \"$statusBaru\"",
+                duration = SnackbarDuration.Long
+            )
+        }
+    }
 
 
     val aktif = orders.filter {
