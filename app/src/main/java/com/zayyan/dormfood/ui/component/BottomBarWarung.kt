@@ -52,7 +52,10 @@ fun BottomBarWarung(
             label = "Beranda",
             selected = currentRoute == Screen.BerandaWarungScreen.route,
             onClick = {
-                navController.navigate(Screen.BerandaWarungScreen.route)
+                navController.navigate(Screen.BerandaWarungScreen.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             modifier = Modifier.weight(1f)
         )
@@ -62,7 +65,10 @@ fun BottomBarWarung(
             label = "Menu",
             selected = currentRoute == Screen.MenuWarungScreen.route,
             onClick = {
-                navController.navigate(Screen.MenuWarungScreen.route)
+                navController.navigate(Screen.MenuWarungScreen.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             modifier = Modifier.weight(1f)
         )
@@ -72,7 +78,10 @@ fun BottomBarWarung(
             label = "Pesanan",
             selected = currentRoute == Screen.PesananWarungScreen.route,
             onClick = {
-                navController.navigate(Screen.PesananWarungScreen.route)
+                navController.navigate(Screen.PesananWarungScreen.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             modifier = Modifier.weight(1f)
         )
@@ -82,7 +91,10 @@ fun BottomBarWarung(
             label = "Profil",
             selected = currentRoute == Screen.ProfilWarungScreen.route,
             onClick = {
-                navController.navigate(Screen.ProfilWarungScreen.route)
+                navController.navigate(Screen.ProfilWarungScreen.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             modifier = Modifier.weight(1f)
         )

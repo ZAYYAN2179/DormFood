@@ -39,13 +39,15 @@ fun BottomBarMahasiswa(
             .background(Color.White),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         BottomBarItem(
             icon = Icons.Default.Home,
             label = "Beranda",
             selected = currentRoute == Screen.BerandaMahasiswaScreen.route,
             onClick = {
-                navController.navigate(Screen.BerandaMahasiswaScreen.route)
+                navController.navigate(Screen.BerandaMahasiswaScreen.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             modifier = Modifier.weight(1f)
         )
@@ -55,7 +57,10 @@ fun BottomBarMahasiswa(
             label = "Pesanan",
             selected = currentRoute == Screen.PesananMahasiswaScreen.route,
             onClick = {
-                navController.navigate(Screen.PesananMahasiswaScreen.route)
+                navController.navigate(Screen.PesananMahasiswaScreen.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             modifier = Modifier.weight(1f)
         )
@@ -65,7 +70,10 @@ fun BottomBarMahasiswa(
             label = "Profil",
             selected = currentRoute == Screen.ProfilMahasiswaScreen.route,
             onClick = {
-                navController.navigate(Screen.ProfilMahasiswaScreen.route)
+                navController.navigate(Screen.ProfilMahasiswaScreen.route) {
+                    popUpTo(0) { inclusive = true }
+                    launchSingleTop = true
+                }
             },
             modifier = Modifier.weight(1f)
         )

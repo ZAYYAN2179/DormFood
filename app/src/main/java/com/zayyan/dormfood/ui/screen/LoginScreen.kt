@@ -83,7 +83,7 @@ fun LoginScreen(
                 val loginState = authState as AuthState.LoginSuccess
                 val destination = when (loginState.role) {
                     "mahasiswa" -> Screen.BerandaMahasiswaScreen.route
-                    "warung" -> Screen.ProfilWarungScreen.route
+                    "warung" -> Screen.BerandaWarungScreen.route
                     else -> Screen.BerandaMahasiswaScreen.route
                 }
                 pesananViewModel.clearAndReload()
