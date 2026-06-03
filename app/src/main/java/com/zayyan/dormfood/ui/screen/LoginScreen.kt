@@ -1,8 +1,11 @@
 package com.zayyan.dormfood.ui.screen
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -52,12 +56,21 @@ import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.core.net.toUri
 
 @Composable
 fun LoginScreen(
@@ -73,6 +86,8 @@ fun LoginScreen(
     var resetMessage by remember { mutableStateOf("") }
     val authState by viewModel.authState.collectAsState()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    var isResetting by remember { mutableStateOf(false) }
     var resetSuccess by remember {
         mutableStateOf(false)
     }
@@ -293,81 +308,207 @@ fun LoginScreen(
                 }
             )
         }
-    }
-    if (showForgotDialog) {
+        Spacer(modifier = Modifier.height(24.dp))
 
-        AlertDialog(
-            onDismissRequest = {
-                showForgotDialog = false
-            },
-            title = {
-                Text("Lupa Kata Sandi")
-            },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = resetEmail,
-                        onValueChange = {
-                            resetEmail = it
-                        },
-                        label = {
-                            Text("Email")
-                        },
-                        singleLine = true
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        "https://forms.gle/j177JuqZPjy7qxsw7".toUri()
                     )
-                    if (resetMessage.isNotEmpty()) {
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
-                        Text(
-                            text = resetMessage,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    context.startActivity(intent)
                 }
-            },
-            confirmButton = {
-                if (resetSuccess) {
-                    TextButton(
-                        onClick = {
-                            showForgotDialog = false
-                            resetEmail = ""
-                            resetMessage = ""
-                            resetSuccess = false
-                        }
+                .testTag("btnDaftarWarung"),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Transparent
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                DormRed.copy(alpha = 0.08f),
+                                DormRed.copy(alpha = 0.03f)
+                            ),
+                            start = Offset(0f, 0f),
+                            end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                DormRed.copy(alpha = 0.4f),
+                                DormRed.copy(alpha = 0.1f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Text("Selesai")
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(
+                                    brush = Brush.radialGradient(
+                                        colors = listOf(
+                                            DormRed.copy(alpha = 0.2f),
+                                            DormRed.copy(alpha = 0.05f)
+                                        )
+                                    ),
+                                    shape = CircleShape
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = DormRed.copy(alpha = 0.3f),
+                                    shape = CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Storefront,
+                                contentDescription = "Warung",
+                                tint = DormRed,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Text(
+                                text = "Daftar sebagai mitra warung",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DormRed
+                            )
+                        }
                     }
-                } else {
-                    TextButton(
-                        onClick = {
-                            viewModel.resetPassword(resetEmail) {
-                                resetMessage = it
-                                if (
-                                    it == "Link reset kata sandi telah dikirim ke email Anda"
-                                ) {
-                                    resetSuccess = true
-                                }
-                            }
-                        }
+
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                color = DormRed,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("Kirim")
-                    }
-                }
-            },
-            dismissButton = {
-                if (!resetSuccess) {
-                    TextButton(
-                        onClick = {
-                            showForgotDialog = false
-                            resetEmail = ""
-                            resetMessage = ""
-                        }
-                    ) {
-                        Text("Batal")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = "Buka link",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
             }
-        )
+        }
+        if (showForgotDialog) {
+
+            AlertDialog(
+                onDismissRequest = {
+                    showForgotDialog = false
+                },
+                title = {
+                    Text("Lupa Kata Sandi")
+                },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = resetEmail,
+                            onValueChange = {
+                                resetEmail = it
+                            },
+                            label = {
+                                Text("Email")
+                            },
+                            singleLine = true
+                        )
+                        if (resetMessage.isNotEmpty()) {
+                            Spacer(
+                                modifier = Modifier.height(8.dp)
+                            )
+                            Text(
+                                text = resetMessage,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    if (resetSuccess) {
+                        TextButton(
+                            onClick = {
+                                showForgotDialog = false
+                                resetEmail = ""
+                                resetMessage = ""
+                                resetSuccess = false
+                                isResetting = false
+                            }
+                        ) {
+                            Text("Selesai")
+                        }
+                    } else {
+                        TextButton(
+                            onClick = {
+                                if (!isResetting) {
+                                    isResetting = true
+                                    resetMessage = ""
+                                    viewModel.resetPassword(resetEmail) {
+                                        resetMessage = it
+                                        isResetting = false
+                                        if (it == "Link reset kata sandi telah dikirim ke email Anda") {
+                                            resetSuccess = true
+                                        }
+                                    }
+                                }
+                            },
+                            enabled = !isResetting
+                        ) {
+                            if (isResetting) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = DormRed
+                                )
+                            } else {
+                                Text("Kirim")
+                            }
+                        }
+                    }
+                },
+                dismissButton = {
+                    if (!resetSuccess) {
+                        TextButton(
+                            onClick = {
+                                showForgotDialog = false
+                                resetEmail = ""
+                                resetMessage = ""
+                                isResetting = false
+                            }
+                        ) {
+                            Text("Batal")
+                        }
+                    }
+                }
+            )
+        }
     }
 }
