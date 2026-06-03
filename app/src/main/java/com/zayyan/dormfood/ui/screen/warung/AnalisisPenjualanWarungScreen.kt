@@ -22,7 +22,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -54,11 +58,12 @@ import androidx.navigation.NavHostController
 import com.zayyan.dormfood.ui.model.StatusPesanan
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
+import com.zayyan.dormfood.ui.utils.RekapPdfHelper
 import com.zayyan.dormfood.ui.viewmodel.AnalisisPenjualanViewModel
 import com.zayyan.dormfood.ui.viewmodel.MenuViewModel
 import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
 
-private val CardBg   = Color.White
+private val CardBg = Color.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,12 +77,15 @@ fun AnalisisPenjualanWarungScreen(
         pesananViewModel.refreshWarungOrders()
     }
 
+    val context = LocalContext.current
+    var selectedPeriode by remember { mutableStateOf(AnalisisPenjualanViewModel.Periode.SEMUA) }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Prediksi Stok Menu",
+                        "Analisis Penjualan",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = Color.White
@@ -105,7 +113,10 @@ fun AnalisisPenjualanWarungScreen(
             paddingValues = padding,
             pesananViewModel = pesananViewModel,
             analisisPenjualanViewModel = analisisPenjualanViewModel,
-            menuViewModel = menuViewModel
+            menuViewModel = menuViewModel,
+            selectedPeriode = selectedPeriode,
+            onPeriodeChange = { selectedPeriode = it },
+            context = context
         )
     }
 }
@@ -115,13 +126,14 @@ fun AnalisisPenjualanWarungContent(
     paddingValues: PaddingValues,
     pesananViewModel: PesananViewModel,
     analisisPenjualanViewModel: AnalisisPenjualanViewModel,
-    menuViewModel: MenuViewModel
+    menuViewModel: MenuViewModel,
+    selectedPeriode: AnalisisPenjualanViewModel.Periode,
+    onPeriodeChange: (AnalisisPenjualanViewModel.Periode) -> Unit,
+    context: android.content.Context
 ) {
     val warungOrders by pesananViewModel.warungOrders.collectAsState()
     val isLoading    by pesananViewModel.isLoadingWarungOrders.collectAsState()
     val allMenus     by menuViewModel.menuList.collectAsState()
-
-    var selectedPeriode by remember { mutableStateOf(AnalisisPenjualanViewModel.Periode.SEMUA) }
 
     val completedOrders = remember(warungOrders) {
         warungOrders.filter { it.statusPesanan == StatusPesanan.SELESAI.label }
@@ -139,24 +151,18 @@ fun AnalisisPenjualanWarungContent(
         analisisPenjualanViewModel.getMenuKurangLaris(filteredOrders, allMenus)
     }
 
-    val ringkasan = remember(
-        filteredOrders,
-        allMenus
-    ) {
-        analisisPenjualanViewModel.getRingkasanPrediksi(
-            filteredOrders,
-            allMenus
-        )
+    val ringkasan = remember(filteredOrders, allMenus) {
+        analisisPenjualanViewModel.getRingkasanPrediksi(filteredOrders, allMenus)
     }
 
-    val insights = remember(
-        filteredOrders,
-        allMenus
-    ) {
-        analisisPenjualanViewModel.getInsight(
-            filteredOrders,
-            allMenus
-        )
+    val insights = remember(filteredOrders, allMenus) {
+        analisisPenjualanViewModel.getInsight(filteredOrders, allMenus)
+    }
+
+    val periodeLabel = when (selectedPeriode) {
+        AnalisisPenjualanViewModel.Periode.HARI_7  -> "7 Hari Terakhir"
+        AnalisisPenjualanViewModel.Periode.HARI_30 -> "30 Hari Terakhir"
+        AnalisisPenjualanViewModel.Periode.SEMUA   -> "Semua Waktu"
     }
 
     LazyColumn(
@@ -171,7 +177,7 @@ fun AnalisisPenjualanWarungContent(
         item {
             PeriodeFilterRow(
                 selected = selectedPeriode,
-                onSelect = { selectedPeriode = it }
+                onSelect = { onPeriodeChange(it) }
             )
         }
 
@@ -190,16 +196,9 @@ fun AnalisisPenjualanWarungContent(
         }
 
         item {
-
             SectionCard {
-
-                Text(
-                    "Ringkasan Penjualan",
-                    fontWeight = FontWeight.Bold
-                )
-
+                Text("Ringkasan Penjualan", fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(12.dp))
-
                 Text("📦 Total Pesanan : ${ringkasan.totalPesanan}")
                 Text("🍽️ Total Menu : ${ringkasan.totalMenu}")
                 Text("🔥 Menu Pernah Terjual : ${ringkasan.menuTerjual}")
@@ -208,7 +207,37 @@ fun AnalisisPenjualanWarungContent(
         }
 
         item {
+            Button(
+                onClick = {
+                    RekapPdfHelper.cetakRekap(
+                        context = context,
+                        orders = filteredOrders,
+                        periodeLabel = periodeLabel
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DormRed)
+            ) {
+                Icon(
+                    Icons.Default.Print,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Cetak Rekap $periodeLabel",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+        }
 
+        item {
             SectionLabel(
                 title = "Insight",
                 icon = {
@@ -223,16 +252,10 @@ fun AnalisisPenjualanWarungContent(
         }
 
         item {
-
             SectionCard {
-
                 insights.forEach {
-
                     Text("• $it")
-
-                    Spacer(
-                        Modifier.height(6.dp)
-                    )
+                    Spacer(Modifier.height(6.dp))
                 }
             }
         }
@@ -240,9 +263,17 @@ fun AnalisisPenjualanWarungContent(
         item {
             SectionLabel(
                 title = "Menu Terlaris",
-                icon = { Icon(Icons.Default.Star, null, tint = Color(0xFFF57F17), modifier = Modifier.size(18.dp)) }
+                icon = {
+                    Icon(
+                        Icons.Default.Star,
+                        null,
+                        tint = Color(0xFFF57F17),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
         }
+
         item {
             SectionCard {
                 if (topMenus.isEmpty()) {
@@ -263,9 +294,17 @@ fun AnalisisPenjualanWarungContent(
         item {
             SectionLabel(
                 title = "Menu Belum Pernah Dipesan",
-                icon = { Icon(Icons.AutoMirrored.Filled.TrendingDown, null, tint = Color(0xFFC62828), modifier = Modifier.size(18.dp)) }
+                icon = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.TrendingDown,
+                        null,
+                        tint = Color(0xFFC62828),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             )
         }
+
         item {
             SectionCard {
                 if (menuKurangLaris.isEmpty()) {
@@ -397,14 +436,16 @@ private fun MenuKurangLarisRow(
 }
 
 @Composable
-private fun EmptyCard() {
+fun EmptyCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape    = RoundedCornerShape(14.dp),
         colors   = CardDefaults.cardColors(containerColor = CardBg)
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(Icons.Default.BarChart, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.LightGray)
@@ -416,7 +457,7 @@ private fun EmptyCard() {
 }
 
 @Composable
-private fun PeriodeFilterRow(
+fun PeriodeFilterRow(
     selected: AnalisisPenjualanViewModel.Periode,
     onSelect: (AnalisisPenjualanViewModel.Periode) -> Unit
 ) {
@@ -449,6 +490,6 @@ private fun PeriodeFilterRow(
 }
 
 @Composable
-private fun EmptyText(text: String) {
+fun EmptyText(text: String) {
     Text(text, fontSize = 13.sp, color = Color.Gray, modifier = Modifier.padding(vertical = 4.dp))
 }
