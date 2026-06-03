@@ -26,6 +26,11 @@ class PesananViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private val _itemPesanan = MutableStateFlow<List<ItemPesanan>>(emptyList())
     val itemPesanan: StateFlow<List<ItemPesanan>> = _itemPesanan
+    private val _subtotal = MutableStateFlow(0L)
+
+    private val _ongkir = MutableStateFlow(0L)
+    val ongkir: StateFlow<Long> = _ongkir
+
     private val _totalHarga = MutableStateFlow(0L)
     val totalHarga: StateFlow<Long> = _totalHarga
     private val _fotoQr = MutableStateFlow("")
@@ -94,6 +99,8 @@ class PesananViewModel : ViewModel() {
                 building = doc.getString("building") ?: "",
                 roomNumber = doc.getString("roomNumber") ?: "",
                 items = items,
+                subtotal = doc.getLong("subtotal") ?: 0,
+                ongkir = doc.getLong("ongkir") ?: 0,
                 totalHarga = doc.getLong("totalHarga") ?: 0,
                 statusPesanan = normalizeStatus(doc.getString("statusPesanan") ?: ""),
                 buktiPembayaranUrl = doc.getString("buktiPembayaranUrl") ?: "",
@@ -106,7 +113,8 @@ class PesananViewModel : ViewModel() {
 
     fun buatPesanan(
         items: List<ItemPesanan>,
-        total: Long,
+        subtotal: Long,
+        ongkir: Long,
         fotoQr: String,
         namaWarung: String,
         warungId: String,
@@ -115,7 +123,9 @@ class PesananViewModel : ViewModel() {
         roomNumber: String = ""
     ) {
         _itemPesanan.value = items
-        _totalHarga.value = total
+        _subtotal.value = subtotal
+        _ongkir.value = ongkir
+        _totalHarga.value = subtotal + ongkir
         _fotoQr.value = fotoQr
         _namaWarung.value = namaWarung
         currentWarungId = warungId
@@ -187,6 +197,8 @@ class PesananViewModel : ViewModel() {
                     "building" to building,
                     "roomNumber" to roomNumber,
                     "items" to itemsMap,
+                    "subtotal" to _subtotal.value,
+                    "ongkir" to _ongkir.value,
                     "totalHarga" to _totalHarga.value,
                     "statusPesanan" to StatusPesanan.MENUNGGU_KONFIRMASI.label,
                     "buktiPembayaranUrl" to buktiPembayaranUrl,
@@ -390,6 +402,8 @@ class PesananViewModel : ViewModel() {
 
     fun resetPesananState() {
         _itemPesanan.value = emptyList()
+        _subtotal.value = 0L
+        _ongkir.value = 0L
         _totalHarga.value = 0L
         _fotoQr.value = ""
         _namaWarung.value = ""

@@ -112,6 +112,7 @@ fun PembayaranMahasiswaScreenContent(
     pesananViewModel: PesananViewModel
 ) {
     val itemPesanan by pesananViewModel.itemPesanan.collectAsState()
+    val ongkir by pesananViewModel.ongkir.collectAsState()
     val totalHarga by pesananViewModel.totalHarga.collectAsState()
     val fotoQr by pesananViewModel.fotoQr.collectAsState()
     val namaWarung by pesananViewModel.namaWarung.collectAsState()
@@ -187,26 +188,58 @@ fun PembayaranMahasiswaScreenContent(
                         }
                     }
                     HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 10.dp),
-                        color = Color(0xFFE0E0E0),
-                        thickness = 1.5.dp
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color(0xFFE0E0E0)
                     )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text(
-                            text = "Total",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = formatRupiah(totalHarga),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DormRed
-                        )
+
+                        if (ongkir > 0) {
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Biaya Pengantaran",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                Text(
+                                    text = formatRupiah(ongkir),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = DormRed
+                                )
+                            }
+
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 4.dp),
+                                color = Color(0xFFE0E0E0),
+                                thickness = 1.5.dp
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Total Bayar",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = formatRupiah(totalHarga),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DormRed
+                            )
+                        }
                     }
                 }
             }

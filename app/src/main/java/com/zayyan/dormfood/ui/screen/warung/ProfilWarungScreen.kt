@@ -39,8 +39,10 @@ import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.KeyboardType
 import coil.compose.AsyncImage
 import com.zayyan.dormfood.R
 
@@ -117,6 +119,9 @@ fun ProfilWarungContent(
     var showEditPhoneDialog by remember { mutableStateOf(false) }
     var showEditAlamatDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showEditOngkirDialog by remember {
+        mutableStateOf(false)
+    }
 
     val menuLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -248,6 +253,20 @@ fun ProfilWarungContent(
                 title = "Alamat Warung",
                 value = warungProfile?.alamatWarung?.takeIf { it.isNotEmpty() } ?: "Belum diisi",
                 onEditClick = { showEditAlamatDialog = true }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            InfoCard(
+                icon = Icons.Default.LocalShipping,
+                title = "Biaya Pengantaran",
+                value = if (warungProfile?.ongkirAktif == true)
+                    "Rp ${warungProfile?.ongkir}"
+                else
+                    "Tidak Aktif",
+                onEditClick = {
+                    showEditOngkirDialog = true
+                }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -425,6 +444,35 @@ fun ProfilWarungContent(
         )
     }
 
+    if (showEditOngkirDialog) {
+        EditOngkirDialog(
+            initialEnabled = warungProfile?.ongkirAktif ?: false,
+            initialOngkir = warungProfile?.ongkir ?: 0,
+            onDismiss = {
+                showEditOngkirDialog = false
+            },
+            onConfirm = { aktif, nominal ->
+
+                warungViewModel.updateOngkir(
+                    ongkirAktif = aktif,
+                    ongkir = nominal,
+                    onSuccess = {
+                        showEditOngkirDialog = false
+
+                        warungViewModel.setUpdateMessage(
+                            "Biaya pengantaran berhasil diperbarui"
+                        )
+                    },
+                    onError = { error ->
+                        warungViewModel.setUpdateMessage(
+                            "Gagal memperbarui: $error"
+                        )
+                    }
+                )
+            }
+        )
+    }
+
     if (showEditPhoneDialog) {
         EditTextDialog(
             title = "Edit Nomor Telepon",
@@ -432,7 +480,7 @@ fun ProfilWarungContent(
             initialValue = warungData?.phone ?: "",
             placeholder = "Contoh: 081234567890",
             icon = Icons.Default.Phone,
-            keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone,
+            keyboardType = KeyboardType.Phone,
             onDismiss = { showEditPhoneDialog = false },
             onConfirm = { newPhone ->
                 warungViewModel.updatePhone(
@@ -480,7 +528,7 @@ fun EditTextDialog(
     initialValue: String,
     placeholder: String,
     icon: ImageVector,
-    keyboardType: androidx.compose.ui.text.input.KeyboardType = androidx.compose.ui.text.input.KeyboardType.Text,
+    keyboardType: KeyboardType = KeyboardType.Text,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
@@ -517,7 +565,7 @@ fun EditTextDialog(
                     placeholder = { Text(placeholder, color = Color.Gray) },
                     singleLine = true,
                     isError = isError,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardOptions = KeyboardOptions(
                         keyboardType = keyboardType
                     ),
                     shape = RoundedCornerShape(12.dp),
@@ -753,6 +801,167 @@ fun ImagePreviewDialog(
             }
         }
     }
+}
+
+@Composable
+fun EditOngkirDialog(
+    initialEnabled: Boolean,
+    initialOngkir: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Boolean, Int) -> Unit
+) {
+    var ongkirAktif by remember {
+        mutableStateOf(initialEnabled)
+    }
+
+    var nominal by remember {
+        mutableStateOf(
+            if (initialOngkir == 0)
+                ""
+            else
+                initialOngkir.toString()
+        )
+    }
+
+    var isError by remember {
+        mutableStateOf(false)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+
+        icon = {
+            Icon(
+                imageVector = Icons.Default.LocalShipping,
+                contentDescription = null,
+                tint = DormRed
+            )
+        },
+
+        title = {
+            Text(
+                "Biaya Pengantaran",
+                fontWeight = FontWeight.Bold
+            )
+        },
+
+        text = {
+            Column {
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Aktifkan Ongkir",
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Switch(
+                        checked = ongkirAktif,
+                        onCheckedChange = {
+                            ongkirAktif = it
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = DormRed,
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = Color(0xFFBDBDBD)
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = nominal,
+                    onValueChange = {
+                        nominal = it.filter { c ->
+                            c.isDigit()
+                        }
+
+                        isError = false
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = ongkirAktif,
+                    label = {
+                        Text("Nominal Ongkir")
+                    },
+                    placeholder = {
+                        Text(
+                            "Contoh: 3000",
+                            color = Color.Gray
+                        )
+                    },
+                    prefix = {
+                        Text("Rp ")
+                    },
+                    singleLine = true,
+                    isError = isError,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = DormRed,
+                        focusedLabelColor = DormRed
+                    )
+                )
+
+                if (isError) {
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "Nominal ongkir wajib diisi",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        },
+
+        confirmButton = {
+            Button(
+                onClick = {
+
+                    if (ongkirAktif) {
+
+                        val nilai = nominal.toIntOrNull()
+
+                        if (nilai == null || nilai <= 0) {
+                            isError = true
+                            return@Button
+                        }
+
+                        onConfirm(
+                            true,
+                            nilai
+                        )
+                    } else {
+
+                        onConfirm(
+                            false,
+                            0
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = DormRed
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Simpan")
+            }
+        },
+
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("Batal", color = Color.Gray)
+            }
+        },
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 
 @Composable

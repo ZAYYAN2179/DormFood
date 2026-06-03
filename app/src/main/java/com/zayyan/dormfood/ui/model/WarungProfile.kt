@@ -3,6 +3,8 @@ package com.zayyan.dormfood.ui.model
 data class WarungProfile(
     val userId: String = "",
     val layananAntar: Boolean = false,
+    val ongkirAktif: Boolean = false,
+    val ongkir: Int = 0,
     val alamatWarung: String = "",
     val fotoMenu: String = "",
     val fotoQr: String = "",

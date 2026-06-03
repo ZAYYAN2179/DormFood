@@ -5,5 +5,8 @@ data class MenuWarungDetail(
     val alamatWarung: String = "",
     val phone: String = "",
     val fotoMenu: String = "",
-    val fotoQr: String = ""
+    val fotoQr: String = "",
+    val layananAntar: Boolean = false,
+    val ongkirAktif: Boolean = false,
+    val ongkir: Int = 0
 )

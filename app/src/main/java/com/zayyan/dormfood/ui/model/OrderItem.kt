@@ -12,6 +12,8 @@ data class OrderItem(
     val roomNumber: String = "",
     val items: List<ItemPesanan> = emptyList(),
     val totalHarga: Long = 0,
+    val subtotal: Long = 0,
+    val ongkir: Long = 0,
     val statusPesanan: String = "",
     val buktiPembayaranUrl: String = "",
     val createdAt: Timestamp? = null

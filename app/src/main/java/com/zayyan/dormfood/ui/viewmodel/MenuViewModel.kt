@@ -89,7 +89,10 @@ class MenuViewModel : ViewModel() {
                             alamatWarung = warungDoc.getString("alamatWarung") ?: "",
                             phone = phone,
                             fotoMenu = warungDoc.getString("fotoMenu") ?: "",
-                            fotoQr = warungDoc.getString("fotoQr") ?: ""
+                            fotoQr = warungDoc.getString("fotoQr") ?: "",
+                            layananAntar = warungDoc.getBoolean("layananAntar") ?: false,
+                            ongkirAktif = warungDoc.getBoolean("ongkirAktif") ?: false,
+                            ongkir = (warungDoc.getLong("ongkir") ?: 0).toInt()
                         )
                         _isLoadingDetail.value = false
                     }.also { reg -> detailListeners.add { reg.remove() } }

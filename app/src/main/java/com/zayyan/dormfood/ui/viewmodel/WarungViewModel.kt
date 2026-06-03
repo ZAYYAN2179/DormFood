@@ -100,6 +100,8 @@ class WarungViewModel : ViewModel() {
                     val data = WarungProfile(
                         userId = doc.getString("userId") ?: "",
                         layananAntar = doc.getBoolean("layananAntar") ?: false,
+                        ongkirAktif = doc.getBoolean("ongkirAktif") ?: false,
+                        ongkir = (doc.getLong("ongkir") ?: 0).toInt(),
                         alamatWarung = doc.getString("alamatWarung") ?: "",
                         fotoMenu = doc.getString("fotoMenu") ?: "",
                         fotoQr = doc.getString("fotoQr") ?: "",
@@ -189,6 +191,8 @@ class WarungViewModel : ViewModel() {
         val data = hashMapOf(
             "userId" to currentUser.uid,
             "layananAntar" to false,
+            "ongkirAktif" to false,
+            "ongkir" to 0,
             "alamatWarung" to namaWarung,
             "fotoMenu" to "",
             "fotoQr" to ""
@@ -243,6 +247,37 @@ class WarungViewModel : ViewModel() {
             }
             .addOnFailureListener {
                 onError(it.message ?: "Gagal update status delivery")
+            }
+    }
+
+    fun updateOngkir(
+        ongkirAktif: Boolean,
+        ongkir: Int,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val currentUser = auth.currentUser ?: return
+
+        firestore.collection("warungs")
+            .document(currentUser.uid)
+            .update(
+                mapOf(
+                    "ongkirAktif" to ongkirAktif,
+                    "ongkir" to ongkir
+                )
+            )
+            .addOnSuccessListener {
+
+                _warungProfile.value =
+                    _warungProfile.value?.copy(
+                        ongkirAktif = ongkirAktif,
+                        ongkir = ongkir
+                    )
+
+                onSuccess()
+            }
+            .addOnFailureListener {
+                onError(it.message ?: "Gagal update ongkir")
             }
     }
 

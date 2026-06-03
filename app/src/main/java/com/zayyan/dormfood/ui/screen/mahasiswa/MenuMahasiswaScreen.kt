@@ -145,16 +145,33 @@ fun MenuMahasiswaContent(
     val quantities = remember { mutableStateMapOf<String, Int>() }
     val context = androidx.compose.ui.platform.LocalContext.current
 
+    val totalHarga = menuList.sumOf { menu ->
+        val qty = quantities[menu.namaMenu] ?: 0
+        if (qty > 0) {
+            menu.harga.toLong() * qty
+        } else {
+            0L
+        }
+    }
+
+    val subtotal = totalHarga
+
+    val ongkir = if (
+        detail.layananAntar &&
+        detail.ongkirAktif
+    ) {
+        detail.ongkir.toLong()
+    } else {
+        0L
+    }
+
+    val totalBayar = subtotal + ongkir
+
     val makanan = menuList.filter { it.tipe.contains("makanan", ignoreCase = true) }
     val minuman = menuList.filter { it.tipe.contains("minuman", ignoreCase = true) }
     val lainnya = menuList.filter {
         !it.tipe.contains("makanan", ignoreCase = true) &&
                 !it.tipe.contains("minuman", ignoreCase = true)
-    }
-
-    val totalHarga = menuList.sumOf { menu ->
-        val qty = quantities[menu.namaMenu] ?: 0
-        if (qty > 0) menu.harga.toLong() * qty else 0L
     }
 
     val formatRupiah = { amount: Long ->
@@ -317,6 +334,17 @@ fun MenuMahasiswaContent(
                                     }
                                 }
                             }
+                            if (detail.layananAntar) {
+                                Text(
+                                    text = if (detail.ongkirAktif)
+                                        "🚚 Biaya Antar ${formatRupiah(detail.ongkir.toLong())}"
+                                    else
+                                        "🚚 Gratis Ongkir",
+                                    color = Color(0xFF16A34A),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
                 }
@@ -394,12 +422,27 @@ fun MenuMahasiswaContent(
                 ) {
                     Column {
                         Text(
-                            text = "Total Pesanan",
+                            text = "Subtotal",
                             fontSize = 11.sp,
-                            color = Color.White.copy(alpha = 0.6f)
+                            color = Color.White.copy(alpha = 0.7f)
                         )
+
                         Text(
-                            text = formatRupiah(totalHarga),
+                            text = formatRupiah(subtotal),
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+
+                        if (ongkir > 0) {
+                            Text(
+                                text = "Ongkir: ${formatRupiah(ongkir)}",
+                                fontSize = 12.sp,
+                                color = Color.White
+                            )
+                        }
+
+                        Text(
+                            text = "Total: ${formatRupiah(totalBayar)}",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -418,7 +461,8 @@ fun MenuMahasiswaContent(
                                 }
                             pesananViewModel.buatPesanan(
                                 items = items,
-                                total = totalHarga,
+                                subtotal = subtotal,
+                                ongkir = ongkir,
                                 fotoQr = detail.fotoQr,
                                 namaWarung = detail.namaWarung,
                                 warungId = userId,
