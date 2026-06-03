@@ -1,7 +1,6 @@
 package com.zayyan.dormfood.ui.screen.warung
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,6 +35,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -486,9 +488,6 @@ private fun MenuRankRow(
     }
 }
 
-/**
- * Row untuk menu belum pernah dipesan — hanya tampilkan nama, tanpa label "belum pernah dipesan".
- */
 @Composable
 private fun MenuBelumDipesanRow(
     rank: Int,
@@ -551,27 +550,32 @@ fun PeriodeFilterRow(
     onSelect: (AnalisisPenjualanViewModel.Periode) -> Unit
 ) {
     val options = listOf(
-        AnalisisPenjualanViewModel.Periode.HARI_7  to "7 Hari",
+        AnalisisPenjualanViewModel.Periode.HARI_7 to "7 Hari",
         AnalisisPenjualanViewModel.Periode.HARI_30 to "30 Hari",
-        AnalisisPenjualanViewModel.Periode.SEMUA   to "Semua"
+        AnalisisPenjualanViewModel.Periode.SEMUA to "Semua"
     )
 
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { (periode, label) ->
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(options) { (periode, label) ->
             val isActive = selected == periode
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(if (isActive) DormRed else Color(0xFFF5F5F5))
-                    .clickable { onSelect(periode) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center
+
+            Surface(
+                onClick = { onSelect(periode) },
+                shape = RoundedCornerShape(20.dp),
+                color = if (isActive) DormRed else Color.White,
+                shadowElevation = if (isActive) 0.dp else 1.dp
             ) {
                 Text(
                     text = label,
                     fontSize = 13.sp,
                     fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isActive) Color.White else Color(0xFF616161)
+                    color = if (isActive) Color.White else Color.DarkGray,
+                    modifier = Modifier.padding(
+                        horizontal = 18.dp,
+                        vertical = 8.dp
+                    )
                 )
             }
         }

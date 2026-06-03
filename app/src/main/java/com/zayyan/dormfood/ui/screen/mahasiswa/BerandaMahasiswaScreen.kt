@@ -258,22 +258,27 @@ fun FilterChipItem(
     onClick: () -> Unit,
     testTag: String = ""
 ) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                if (isSelected) selectedColor
-                else Color(0xFFE8E8E8)
-            )
-            .clickable { onClick() }
-            .padding(horizontal = 20.dp, vertical = 8.dp)
-            .then(if (testTag.isNotEmpty()) Modifier.testTag(testTag) else Modifier)
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) selectedColor else Color.White,
+        shadowElevation = if (isSelected) 0.dp else 1.dp,
+        modifier = if (testTag.isNotEmpty())
+            Modifier.testTag(testTag)
+        else Modifier
     ) {
         Text(
             text = label,
-            color = if (isSelected) Color.White else Color.Black,
-            fontSize = 14.sp,
-            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+            color = if (isSelected) Color.White else Color.DarkGray,
+            fontSize = 13.sp,
+            fontWeight = if (isSelected)
+                FontWeight.Bold
+            else
+                FontWeight.Normal,
+            modifier = Modifier.padding(
+                horizontal = 18.dp,
+                vertical = 8.dp
+            )
         )
     }
 }
