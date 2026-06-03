@@ -48,14 +48,19 @@ class PesananViewModel : ViewModel() {
     private val _updateStatusResult = MutableStateFlow<String?>(null)
     private var warungOrdersListener: ListenerRegistration? = null
     private val userDataCache = mutableMapOf<String, Triple<String, String, String>>()
-    private val _statusChangeEvent = MutableSharedFlow<Pair<String, String>>(extraBufferCapacity = 5)
+    private val _statusChangeEvent =
+        MutableSharedFlow<Pair<String, String>>(extraBufferCapacity = 5)
     val statusChangeEvent: SharedFlow<Pair<String, String>> = _statusChangeEvent
+    private val previousWarungOrderIds = mutableSetOf<String>()
+    private val _newOrderEvent = MutableSharedFlow<OrderItem>(extraBufferCapacity = 5)
+    val newOrderEvent: SharedFlow<OrderItem> = _newOrderEvent
 
     private val previousOrderStatuses = mutableMapOf<String, String>()
 
     init {
         if (auth.currentUser != null) {
             loadOrders()
+            loadWarungOrders()
         }
     }
 
@@ -256,13 +261,21 @@ class PesananViewModel : ViewModel() {
                             if (resolved == uniqueIds.size) {
                                 val resolvedList = orderList.map { order ->
                                     if (order.namaWarung.isEmpty())
-                                        order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
+                                        order.copy(
+                                            namaWarung = warungNamesCache[order.warungId]
+                                                ?: "Warung"
+                                        )
                                     else order
                                 }
                                 resolvedList.forEach { order ->
                                     val prevStatus = previousOrderStatuses[order.orderId]
                                     if (prevStatus != null && prevStatus != order.statusPesanan) {
-                                        _statusChangeEvent.tryEmit(Pair(order.namaWarung, order.statusPesanan))
+                                        _statusChangeEvent.tryEmit(
+                                            Pair(
+                                                order.namaWarung,
+                                                order.statusPesanan
+                                            )
+                                        )
                                     }
                                     previousOrderStatuses[order.orderId] = order.statusPesanan
                                 }
@@ -295,6 +308,7 @@ class PesananViewModel : ViewModel() {
                     ?: emptyList()
 
                 if (orderList.isEmpty()) {
+                    previousWarungOrderIds.clear()
                     _warungOrders.value = emptyList()
                     _isLoadingWarungOrders.value = false
                     return@addSnapshotListener
@@ -316,7 +330,7 @@ class PesananViewModel : ViewModel() {
                             }
                             resolved++
                             if (resolved == uniqueUserIds.size) {
-                                _warungOrders.value = orderList.map { order ->
+                                val resolvedList = orderList.map { order ->
                                     val userData = userDataCache[order.userId]
                                     if (userData != null) {
                                         order.copy(
@@ -326,6 +340,18 @@ class PesananViewModel : ViewModel() {
                                         )
                                     } else order
                                 }
+
+                                if (previousWarungOrderIds.isNotEmpty()) {
+                                    resolvedList.forEach { order ->
+                                        if (!previousWarungOrderIds.contains(order.orderId)) {
+                                            _newOrderEvent.tryEmit(order)
+                                        }
+                                    }
+                                }
+                                previousWarungOrderIds.clear()
+                                previousWarungOrderIds.addAll(resolvedList.map { it.orderId })
+
+                                _warungOrders.value = resolvedList
                                 _isLoadingWarungOrders.value = false
                             }
                         }

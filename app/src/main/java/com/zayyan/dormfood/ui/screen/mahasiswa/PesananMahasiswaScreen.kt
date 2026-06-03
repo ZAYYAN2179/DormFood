@@ -3,15 +3,44 @@ package com.zayyan.dormfood.ui.screen.mahasiswa
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,19 +54,14 @@ import com.zayyan.dormfood.ui.component.BottomBarMahasiswa
 import com.zayyan.dormfood.ui.component.TopAppBar
 import com.zayyan.dormfood.ui.model.ItemPesanan
 import com.zayyan.dormfood.ui.model.OrderItem
-import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
-import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
+import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
+import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
-import java.util.*
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.LaunchedEffect
+import java.util.Locale
 
 @Composable
 fun PesananMahasiswa(
@@ -45,7 +69,6 @@ fun PesananMahasiswa(
     pesananViewModel: PesananViewModel = viewModel()
 ) {
     val currentRoute = navController.currentBackStackEntry?.destination?.route
-    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = { TopAppBar(title = "Dorm Food") },
@@ -55,14 +78,12 @@ fun PesananMahasiswa(
                 currentRoute = currentRoute
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         containerColor = Background
     ) { paddingValues ->
         PesananMahasiswaContent(
             paddingValues = paddingValues,
             pesananViewModel = pesananViewModel,
             navController = navController,
-            snackbarHostState = snackbarHostState
         )
     }
 }
@@ -72,21 +93,11 @@ fun PesananMahasiswaContent(
     paddingValues: PaddingValues,
     pesananViewModel: PesananViewModel,
     navController: NavHostController,
-    snackbarHostState: SnackbarHostState
 ) {
     val ratingViewModel: RatingViewModel = viewModel()
 
     val orders by pesananViewModel.orders.collectAsState()
     val isLoading by pesananViewModel.isLoadingOrders.collectAsState()
-
-    LaunchedEffect(Unit) {
-        pesananViewModel.statusChangeEvent.collect { (namaWarung, statusBaru) ->
-            snackbarHostState.showSnackbar(
-                message = "📦 $namaWarung: Status pesanan berubah ke \"$statusBaru\"",
-                duration = SnackbarDuration.Long
-            )
-        }
-    }
 
 
     val aktif = orders.filter {
