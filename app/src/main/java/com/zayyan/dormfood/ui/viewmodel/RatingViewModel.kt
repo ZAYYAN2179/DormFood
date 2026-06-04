@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.zayyan.dormfood.ui.model.ReviewItem
@@ -110,10 +111,11 @@ class RatingViewModel : ViewModel() {
 
         reviewsListener = firestore.collection("reviews")
             .whereEqualTo("warungId", warungId)
-            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
+                _isLoadingReviews.value = false
+
                 if (error != null) {
-                    _isLoadingReviews.value = false
                     return@addSnapshotListener
                 }
 
@@ -138,7 +140,6 @@ class RatingViewModel : ViewModel() {
                 _warungReviews.value = list
                 _averageRating.value = if (list.isEmpty()) 0.0
                 else list.sumOf { it.rating } / list.size.toDouble()
-                _isLoadingReviews.value = false
             }
     }
 

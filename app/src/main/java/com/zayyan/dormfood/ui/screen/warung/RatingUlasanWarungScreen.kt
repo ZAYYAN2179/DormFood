@@ -88,7 +88,7 @@ fun RatingUlasanWarungScreen(
 @Composable
 fun RatingUlasanWarungContent(
     paddingValues: PaddingValues,
-    ratingViewModel: RatingViewModel = viewModel()
+    ratingViewModel: RatingViewModel
 ) {
     val reviews by ratingViewModel.warungReviews.collectAsState()
     val averageRating by ratingViewModel.averageRating.collectAsState()
@@ -119,7 +119,6 @@ fun RatingUlasanWarungContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-
         item {
             RatingSummaryCard(
                 averageRating = averageRating,
@@ -137,7 +136,6 @@ fun RatingUlasanWarungContent(
                     color = Color.Black
                 )
             }
-
             items(reviews, key = { it.reviewId }) { review ->
                 ReviewCard(review = review)
             }
@@ -186,7 +184,6 @@ private fun RatingSummaryCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -301,7 +298,6 @@ private fun ReviewCard(review: ReviewItem) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
