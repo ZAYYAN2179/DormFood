@@ -5,5 +5,6 @@ enum class StatusPesanan(val label: String) {
     MENUNGGU_KONFIRMASI("Menunggu Konfirmasi"),
     DIBUAT("Dibuat"),
     DIANTAR("Diantar"),
-    SELESAI("Selesai")
+    SELESAI("Selesai"),
+    DIBATALKAN("Dibatalkan")
 }

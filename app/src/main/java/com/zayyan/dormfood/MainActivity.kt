@@ -56,6 +56,15 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        lifecycleScope.launch {
+            pesananViewModel.orderRejectedEvent.collect { namaWarung ->
+                NotificationHelper.showOrderRejectedNotification(
+                    context = this@MainActivity,
+                    namaWarung = namaWarung
+                )
+            }
+        }
+
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = true
             isAppearanceLightNavigationBars = true

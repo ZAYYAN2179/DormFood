@@ -59,6 +59,10 @@ class PesananViewModel : ViewModel() {
     private val previousWarungOrderIds = mutableSetOf<String>()
     private val _newOrderEvent = MutableSharedFlow<OrderItem>(extraBufferCapacity = 5)
     val newOrderEvent: SharedFlow<OrderItem> = _newOrderEvent
+    private var isFirstWarungLoad = true
+    private val _orderRejectedEvent = MutableSharedFlow<String>(extraBufferCapacity = 5)
+    val orderRejectedEvent: SharedFlow<String> = _orderRejectedEvent
+    private val previousOrderWarungNames = mutableMapOf<String, String>()
 
     private val previousOrderStatuses = mutableMapOf<String, String>()
 
@@ -241,7 +245,18 @@ class PesananViewModel : ViewModel() {
                             _statusChangeEvent.tryEmit(Pair(order.namaWarung, order.statusPesanan))
                         }
                         previousOrderStatuses[order.orderId] = order.statusPesanan
+                        previousOrderWarungNames[order.orderId] = order.namaWarung
                     }
+
+                    val currentIds = orderList.map { it.orderId }.toSet()
+                    previousOrderWarungNames.entries
+                        .filter { it.key !in currentIds }
+                        .forEach { (_, namaWarung) ->
+                            _orderRejectedEvent.tryEmit(namaWarung)
+                        }
+                    previousOrderWarungNames.keys.retainAll(currentIds)
+                    previousOrderStatuses.keys.retainAll(currentIds)
+
                     _orders.value = orderList
                     _isLoadingOrders.value = false
                     return@addSnapshotListener
@@ -253,11 +268,31 @@ class PesananViewModel : ViewModel() {
                     .filter { !warungNamesCache.containsKey(it) }
 
                 if (uniqueIds.isEmpty()) {
-                    _orders.value = orderList.map { order ->
+                    val resolvedList = orderList.map { order ->
                         if (order.namaWarung.isEmpty())
                             order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
                         else order
                     }
+
+                    resolvedList.forEach { order ->
+                        val prevStatus = previousOrderStatuses[order.orderId]
+                        if (prevStatus != null && prevStatus != order.statusPesanan) {
+                            _statusChangeEvent.tryEmit(Pair(order.namaWarung, order.statusPesanan))
+                        }
+                        previousOrderStatuses[order.orderId] = order.statusPesanan
+                        previousOrderWarungNames[order.orderId] = order.namaWarung
+                    }
+
+                    val currentIds = resolvedList.map { it.orderId }.toSet()
+                    previousOrderWarungNames.entries
+                        .filter { it.key !in currentIds }
+                        .forEach { (_, namaWarung) ->
+                            _orderRejectedEvent.tryEmit(namaWarung)
+                        }
+                    previousOrderWarungNames.keys.retainAll(currentIds)
+                    previousOrderStatuses.keys.retainAll(currentIds)
+
+                    _orders.value = resolvedList
                     _isLoadingOrders.value = false
                     return@addSnapshotListener
                 }
@@ -273,24 +308,28 @@ class PesananViewModel : ViewModel() {
                             if (resolved == uniqueIds.size) {
                                 val resolvedList = orderList.map { order ->
                                     if (order.namaWarung.isEmpty())
-                                        order.copy(
-                                            namaWarung = warungNamesCache[order.warungId]
-                                                ?: "Warung"
-                                        )
+                                        order.copy(namaWarung = warungNamesCache[order.warungId] ?: "Warung")
                                     else order
                                 }
+
                                 resolvedList.forEach { order ->
                                     val prevStatus = previousOrderStatuses[order.orderId]
                                     if (prevStatus != null && prevStatus != order.statusPesanan) {
-                                        _statusChangeEvent.tryEmit(
-                                            Pair(
-                                                order.namaWarung,
-                                                order.statusPesanan
-                                            )
-                                        )
+                                        _statusChangeEvent.tryEmit(Pair(order.namaWarung, order.statusPesanan))
                                     }
                                     previousOrderStatuses[order.orderId] = order.statusPesanan
+                                    previousOrderWarungNames[order.orderId] = order.namaWarung
                                 }
+
+                                val currentIds = resolvedList.map { it.orderId }.toSet()
+                                previousOrderWarungNames.entries
+                                    .filter { it.key !in currentIds }
+                                    .forEach { (_, namaWarung) ->
+                                        _orderRejectedEvent.tryEmit(namaWarung)
+                                    }
+                                previousOrderWarungNames.keys.retainAll(currentIds)
+                                previousOrderStatuses.keys.retainAll(currentIds)
+
                                 _orders.value = resolvedList
                                 _isLoadingOrders.value = false
                             }
@@ -353,16 +392,18 @@ class PesananViewModel : ViewModel() {
                                     } else order
                                 }
 
-                                if (previousWarungOrderIds.isNotEmpty()) {
+                                if (isFirstWarungLoad) {
+                                    isFirstWarungLoad = false
+                                } else {
                                     resolvedList.forEach { order ->
                                         if (!previousWarungOrderIds.contains(order.orderId)) {
                                             _newOrderEvent.tryEmit(order)
                                         }
                                     }
                                 }
+
                                 previousWarungOrderIds.clear()
                                 previousWarungOrderIds.addAll(resolvedList.map { it.orderId })
-
                                 _warungOrders.value = resolvedList
                                 _isLoadingWarungOrders.value = false
                             }
@@ -375,6 +416,7 @@ class PesananViewModel : ViewModel() {
         warungOrdersListener?.remove()
         warungOrdersListener = null
         userDataCache.clear()
+        isFirstWarungLoad = true
         _warungOrders.value = emptyList()
         _isLoadingWarungOrders.value = false
         loadWarungOrders()
@@ -418,6 +460,7 @@ class PesananViewModel : ViewModel() {
         ordersListener = null
         warungNamesCache.clear()
         previousOrderStatuses.clear()
+        previousOrderWarungNames.clear()
         _orders.value = emptyList()
         _isLoadingOrders.value = false
         loadOrders()
@@ -431,5 +474,19 @@ class PesananViewModel : ViewModel() {
         warungOrdersListener = null
         warungNamesCache.clear()
         userDataCache.clear()
+    }
+
+    fun batalkanDanHapusPesanan(
+        orderId: String,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        if (orderId.isBlank()) return
+
+        firestore.collection("orders")
+            .document(orderId)
+            .delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onError(e.message ?: "Gagal membatalkan pesanan") }
     }
 }

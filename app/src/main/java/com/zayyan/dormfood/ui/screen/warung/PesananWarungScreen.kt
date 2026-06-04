@@ -215,6 +215,9 @@ fun PesananWarungContent(
                         onLihatBukti = { url ->
                             buktiUrl = url
                             showBuktiDialog = true
+                        },
+                        onBatalkan = {
+                            pesananViewModel.batalkanDanHapusPesanan(order.orderId)
                         }
                     )
                 }
@@ -239,7 +242,8 @@ fun WarungOrderCard(
     order: OrderItem,
     formatRupiah: (Long) -> String,
     onStatusChange: (StatusPesanan) -> Unit,
-    onLihatBukti: (String) -> Unit
+    onLihatBukti: (String) -> Unit,
+    onBatalkan: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(true) }
     var showKonfirmasiDialog by remember { mutableStateOf(false) }
@@ -259,6 +263,7 @@ fun WarungOrderCard(
         StatusPesanan.DIANTAR.label -> listOf(StatusPesanan.SELESAI)
         else -> emptyList()
     }
+    var showBatalDialog by remember { mutableStateOf(false) }
 
     if (showKonfirmasiDialog && statusYakanDiubah != null) {
         AlertDialog(
@@ -295,6 +300,38 @@ fun WarungOrderCard(
                     }
                 ) {
                     Text("Batal", color = Color.Gray)
+                }
+            },
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
+
+    if (showBatalDialog) {
+        AlertDialog(
+            onDismissRequest = { showBatalDialog = false },
+            title = { Text("Batalkan Pesanan", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    text = "Apakah Anda yakin ingin membatalkan dan menghapus pesanan ini?",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onBatalkan()
+                        showBatalDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Ya, Batalkan", color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBatalDialog = false }) {
+                    Text("Tidak", color = Color.Gray)
                 }
             },
             shape = RoundedCornerShape(16.dp)
@@ -408,27 +445,41 @@ fun WarungOrderCard(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Row(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (order.buktiPembayaranUrl.isNotBlank()) {
-                            OutlinedButton(
-                                onClick = { onLihatBukti(order.buktiPembayaranUrl) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF1A0A00)
-                                ),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp, Color(0xFFBDBDBD)
-                                )
+                        val showBukti = order.buktiPembayaranUrl.isNotBlank()
+                        val showTolak = order.statusPesanan == StatusPesanan.MENUNGGU_KONFIRMASI.label
+
+                        if (showBukti || showTolak) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text(
-                                    text = "Bukti Bayar",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                if (showBukti) {
+                                    OutlinedButton(
+                                        onClick = { onLihatBukti(order.buktiPembayaranUrl) },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1A0A00)),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBDBDBD))
+                                    ) {
+                                        Text(text = "Bukti Bayar", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                    }
+                                }
+
+                                if (showTolak) {
+                                    OutlinedButton(
+                                        onClick = { showBatalDialog = true },
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFE53935)),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE53935))
+                                    ) {
+                                        Text(text = "Tolak", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                                    }
+                                }
                             }
                         }
 
@@ -440,19 +491,25 @@ fun WarungOrderCard(
                                 StatusPesanan.SELESAI -> Color(0xFF2E7D32)
                                 else -> DormRed
                             }
+                            val buttonLabel = when (nextStatus) {
+                                StatusPesanan.DIBUAT -> "Konfirmasi Pesanan"
+                                StatusPesanan.DIANTAR -> "Tandai Diantar"
+                                StatusPesanan.SELESAI -> "Tandai Selesai"
+                                else -> nextStatus.label
+                            }
                             Button(
                                 onClick = {
                                     statusYakanDiubah = nextStatus
                                     showKonfirmasiDialog = true
                                 },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
                             ) {
                                 Text(
-                                    text = nextStatus.label,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    text = buttonLabel,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
                                     color = Color.White
                                 )
                             }
