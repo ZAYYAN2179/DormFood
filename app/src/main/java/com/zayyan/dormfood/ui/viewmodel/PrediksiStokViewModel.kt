@@ -3,7 +3,7 @@ package com.zayyan.dormfood.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zayyan.dormfood.ui.model.PrediksiMenuResponse
-import com.zayyan.dormfood.ui.utils.PrediksiRepository
+import com.zayyan.dormfood.ui.repository.PrediksiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

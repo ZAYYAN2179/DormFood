@@ -1,4 +1,4 @@
-package com.zayyan.dormfood.ui.utils
+package com.zayyan.dormfood.ui.repository
 
 import com.zayyan.dormfood.ui.model.PrediksiMenuResponse
 import retrofit2.Retrofit
