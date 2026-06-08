@@ -284,7 +284,6 @@ fun ProfilMahasiswaContent(
             initialValue = mahasiswaData?.building ?: "",
             placeholder = "Contoh: 6",
             icon = Icons.Default.Home,
-            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
             onDismiss = { showEditBuildingDialog = false },
             onConfirm = { newBuilding ->
                 mahasiswaViewModel.updateBuilding(
