@@ -59,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.zayyan.dormfood.ui.model.RingkasanPenjulan
 import com.zayyan.dormfood.ui.model.StatusPesanan
+import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import com.zayyan.dormfood.ui.utils.RekapPdfHelper
@@ -119,7 +120,8 @@ fun AnalisisPenjualanWarungScreen(
             menuViewModel = menuViewModel,
             selectedPeriode = selectedPeriode,
             onPeriodeChange = { selectedPeriode = it },
-            context = context
+            context = context,
+            navController = navController
         )
     }
 }
@@ -132,7 +134,8 @@ fun AnalisisPenjualanWarungContent(
     menuViewModel: MenuViewModel,
     selectedPeriode: AnalisisPenjualanViewModel.Periode,
     onPeriodeChange: (AnalisisPenjualanViewModel.Periode) -> Unit,
-    context: android.content.Context
+    context: android.content.Context,
+    navController: NavHostController
 ) {
     val warungOrders by pesananViewModel.warungOrders.collectAsState()
     val isLoading    by pesananViewModel.isLoadingWarungOrders.collectAsState()
@@ -226,6 +229,31 @@ fun AnalisisPenjualanWarungContent(
                 Spacer(Modifier.width(8.dp))
                 Text(
                     "Cetak Laporan Penjualan $periodeLabel",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+            }
+        }
+
+        item {
+            Button(
+                onClick = { navController.navigate(Screen.PrediksiStokWarungScreen.route) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = DormRed)
+            ) {
+                Icon(
+                    Icons.Default.Print,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Prediksi Stok Menu",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
