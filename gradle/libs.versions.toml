@@ -20,6 +20,7 @@ osmdroid = "6.1.20"
 playServicesLocation = "21.3.0"
 composeMaterialIcons = "1.7.8"
 material3 = "1.4.0"
+retrofit = "2.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +51,9 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "composeMaterialIcons" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -90,6 +90,11 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.material3)
 
+    //Fitur Prediksi
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
