@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -36,16 +37,14 @@ fun PrediksiStokWarungScreen(
     navController: NavHostController,
     prediksiViewModel: PrediksiStokViewModel = viewModel()
 ) {
-    // Ambil warungId dari user yang sedang login
     val warungId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-    // Load prediksi saat pertama kali masuk
+    var showHelpDialog by remember { mutableStateOf(false) }
     LaunchedEffect(warungId) {
         if (warungId.isNotBlank()) {
             prediksiViewModel.loadPrediksi(warungId)
         }
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -67,7 +66,14 @@ fun PrediksiStokWarungScreen(
                     }
                 },
                 actions = {
-                    // Tombol refresh
+                    IconButton(onClick = { showHelpDialog = true }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.HelpOutline,
+                            contentDescription = "Bantuan",
+                            tint = Color.White
+                        )
+                    }
+
                     IconButton(onClick = {
                         if (warungId.isNotBlank()) {
                             prediksiViewModel.loadPrediksi(warungId)
@@ -94,9 +100,11 @@ fun PrediksiStokWarungScreen(
             prediksiViewModel = prediksiViewModel,
             warungId = warungId
         )
+        if (showHelpDialog) {
+            HelpDialog(onDismiss = { showHelpDialog = false })
+        }
     }
 }
-
 
 @Composable
 fun PrediksiStokWarungScreenContent(
@@ -105,14 +113,12 @@ fun PrediksiStokWarungScreenContent(
     warungId: String
 ) {
     val state by prediksiViewModel.prediksiState.collectAsState()
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
     ) {
         when (val currentState = state) {
-            // === IDLE: Belum load ===
             is PrediksiUiState.Idle -> {
                 EmptyStateView(
                     icon = Icons.Default.Analytics,
@@ -127,7 +133,6 @@ fun PrediksiStokWarungScreenContent(
                 )
             }
 
-            // === LOADING ===
             is PrediksiUiState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -145,7 +150,6 @@ fun PrediksiStokWarungScreenContent(
                 }
             }
 
-            // === SUCCESS ===
             is PrediksiUiState.Success -> {
                 PrediksiResultContent(
                     data = currentState.data,
@@ -153,7 +157,6 @@ fun PrediksiStokWarungScreenContent(
                 )
             }
 
-            // === ERROR ===
             is PrediksiUiState.Error -> {
                 EmptyStateView(
                     icon = Icons.Default.ErrorOutline,
@@ -171,11 +174,6 @@ fun PrediksiStokWarungScreenContent(
     }
 }
 
-
-// ============================================================
-// KONTEN UTAMA: List prediksi menu
-// ============================================================
-
 @Composable
 private fun PrediksiResultContent(
     data: PrediksiMenuResponse,
@@ -188,17 +186,12 @@ private fun PrediksiResultContent(
         contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Banner warning
         item {
             BannerDataWarning(warningLevel)
         }
-
-        // Summary card
         item {
             SummaryCard(data)
         }
-
-        // Judul section
         item {
             Text(
                 "Detail Per Menu",
@@ -207,23 +200,14 @@ private fun PrediksiResultContent(
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
-
-        // List menu prediksi
         items(data.hasil) { menu ->
             PrediksiMenuCard(menu)
         }
-
-        // Spacer bawah
         item {
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
-
-
-// ============================================================
-// SUMMARY CARD
-// ============================================================
 
 @Composable
 private fun SummaryCard(data: PrediksiMenuResponse) {
@@ -247,31 +231,30 @@ private fun SummaryCard(data: PrediksiMenuResponse) {
                     fontWeight = FontWeight.Bold
                 )
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 StatItem(
-                    value = "${data.menuSiapPrediksi}",
-                    label = "Siap",
+                    modifier = Modifier.weight(1f),
+                    valueNumber = "${data.menuSiapPrediksi}",
+                    label = "Pola Stabil",
                     color = Color(0xFF4CAF50)
                 )
                 StatItem(
-                    value = "${data.menuDataKurang}",
-                    label = "Estimasi",
+                    modifier = Modifier.weight(1f),
+                    valueNumber = "${data.menuDataKurang}",
+                    label = "Data Terbatas",
                     color = Color(0xFFFF9800)
                 )
                 StatItem(
-                    value = "${data.totalMenu}",
-                    label = "Total Menu",
+                    modifier = Modifier.weight(1f),
+                    valueNumber = "${data.totalMenu}",
+                    label = "Teranalisis",
                     color = Color(0xFF2196F3)
                 )
             }
-
-            // Dummy indicator
             if (data.isDummy) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Surface(
@@ -301,28 +284,55 @@ private fun SummaryCard(data: PrediksiMenuResponse) {
     }
 }
 
-
 @Composable
-private fun StatItem(value: String, label: String, color: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            value,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = color
-        )
-        Text(
-            label,
-            fontSize = 12.sp,
-            color = Color.Gray
-        )
+private fun StatItem(
+    modifier: Modifier = Modifier,
+    valueNumber: String,
+    label: String,
+    color: Color
+) {
+    val backgroundColor = color.copy(alpha = 0.08f)
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 4.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = valueNumber,
+                    fontWeight = FontWeight.Bold,
+                    color = color
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    text = "Menu",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = color,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.DarkGray,
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
+        }
     }
 }
-
-
-// ============================================================
-// CARD PER MENU
-// ============================================================
 
 @Composable
 private fun PrediksiMenuCard(menu: HasilPrediksi) {
@@ -331,14 +341,12 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
         "DATA_KURANG" -> Color(0xFFFF9800)
         else -> Color(0xFF9E9E9E)
     }
-
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Header: nama menu + status badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -356,8 +364,8 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                 ) {
                     Text(
                         when (menu.status) {
-                            "OK" -> "✅ Akurat"
-                            "DATA_KURANG" -> "⚠️ Estimasi"
+                            "OK" -> "✅ Pola Stabil"
+                            "DATA_KURANG" -> "⚠️ Data Terbatas"
                             else -> "❌ Belum tersedia"
                         },
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -367,13 +375,8 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                     )
                 }
             }
-
             Spacer(modifier = Modifier.height(12.dp))
-
             if (menu.prediksi != null) {
-                // === Prediksi tersedia ===
-
-                // Baris 1: Prediksi + Moving Average
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -391,7 +394,6 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                             color = statusColor
                         )
                     }
-
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             "Rata-rata 7 hari",
@@ -405,19 +407,19 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                         )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(12.dp))
-
-                // Baris 2: Progress bar visual perbandingan
                 if (menu.movingAverage7 != null && menu.movingAverage7 > 0) {
                     val maxVal = maxOf(menu.prediksi, menu.movingAverage7).toFloat()
-
-                    // Bar prediksi
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Besok", fontSize = 10.sp, color = Color.Gray, modifier = Modifier.width(50.dp))
+                        Text(
+                            "Besok",
+                            fontSize = 10.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.width(50.dp)
+                        )
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -428,7 +430,12 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .fillMaxWidth(fraction = (menu.prediksi / maxVal).coerceIn(0f, 1f))
+                                    .fillMaxWidth(
+                                        fraction = (menu.prediksi / maxVal).coerceIn(
+                                            0f,
+                                            1f
+                                        )
+                                    )
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(statusColor)
                             )
@@ -441,15 +448,17 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                             textAlign = TextAlign.End
                         )
                     }
-
                     Spacer(modifier = Modifier.height(4.dp))
-
-                    // Bar rata-rata
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Avg 7h", fontSize = 10.sp, color = Color.Gray, modifier = Modifier.width(50.dp))
+                        Text(
+                            "Avg 7h",
+                            fontSize = 10.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.width(50.dp)
+                        )
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -460,7 +469,12 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxHeight()
-                                    .fillMaxWidth(fraction = (menu.movingAverage7 / maxVal).coerceIn(0f, 1f))
+                                    .fillMaxWidth(
+                                        fraction = (menu.movingAverage7 / maxVal).coerceIn(
+                                            0f,
+                                            1f
+                                        )
+                                    )
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(Color(0xFF90CAF9))
                             )
@@ -474,10 +488,7 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                         )
                     }
                 }
-
                 Spacer(modifier = Modifier.height(8.dp))
-
-                // Baris 3: Info tambahan
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -494,7 +505,6 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
                     )
                 }
             } else {
-                // === Prediksi belum tersedia ===
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -522,11 +532,6 @@ private fun PrediksiMenuCard(menu: HasilPrediksi) {
         }
     }
 }
-
-
-// ============================================================
-// BANNER WARNING (sudah ada, ditambahkan di sini untuk lengkap)
-// ============================================================
 
 @Composable
 fun BannerDataWarning(warningLevel: WarningLevel) {
@@ -600,14 +605,10 @@ fun BannerDataWarning(warningLevel: WarningLevel) {
             }
         }
 
-        WarningLevel.NONE -> { /* Tidak tampilkan banner */ }
+        WarningLevel.NONE -> { /* Tidak tampilkan banner */
+        }
     }
 }
-
-
-// ============================================================
-// EMPTY STATE VIEW
-// ============================================================
 
 @Composable
 private fun EmptyStateView(
@@ -658,4 +659,142 @@ private fun EmptyStateView(
             }
         }
     }
+}
+
+@Composable
+fun HelpDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = DormRed,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Cara Kerja & Istilah",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            }
+        },
+        text = {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                item {
+                    Text(
+                        text = "Bagaimana Fitur Ini Bekerja?",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Sistem menggunakan model Machine Learning (Regresi Linear) untuk mempelajari riwayat penjualan menu Anda. Sistem menganalisis tren naik/turun penjualan serta pola hari dalam seminggu (misalnya fluktuasi akhir pekan) untuk memperkirakan kebutuhan stok besok.",
+                        fontSize = 12.sp,
+                        color = Color.DarkGray,
+                        lineHeight = 18.sp
+                    )
+                }
+
+                item {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        color = Color(0xFFEEEEEE)
+                    )
+                }
+                item {
+                    Text(
+                        text = "Penjelasan Istilah & Singkatan:",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = Color.Black
+                    )
+                }
+                item {
+                    Column {
+                        Text(
+                            text = "• Prediksi Besok",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = DormRed
+                        )
+                        Text(
+                            text = "Jumlah porsi menu yang diperkirakan akan terjual besok berdasarkan perhitungan model kecerdasan buatan.",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+                item {
+                    Column {
+                        Text(
+                            text = "• Avg 7h (Rata-rata 7 Hari)",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = Color(0xFF1E88E5)
+                        )
+                        Text(
+                            text = "Rata-rata penjualan menu tersebut khusus dalam 7 hari terakhir yang memiliki transaksi. Berguna untuk melihat tren penjualan jangka pendek.",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+                item {
+                    Column {
+                        Text(
+                            text = "• Rata-rata Harian",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = Color.DarkGray
+                        )
+                        Text(
+                            text = "Rata-rata penjualan menu per hari yang dihitung dari total seluruh hari data transaksi yang ditarik dari database Anda.",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+                item {
+                    Column {
+                        Text(
+                            text = "• Status Pola Stabil vs Data Terbatas",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = Color.DarkGray
+                        )
+                        Text(
+                            text = "Label 'Pola Stabil' (Hijau) diberikan jika data minimal 14 hari. Label 'Data Terbatas' (Oranye) diberikan jika data baru berkisar 7-13 hari sehingga tingkat akurasinya masih fluktuatif.",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = "Mengerti",
+                    color = DormRed,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = Color.White
+    )
 }
