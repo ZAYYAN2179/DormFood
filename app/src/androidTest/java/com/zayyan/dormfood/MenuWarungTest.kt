@@ -17,13 +17,8 @@ class MenuWarungTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-
-    // ===========================
-    // Search bar bisa input
-    // ===========================
     @Test
     fun searchMenu_bisaInput() {
-
         composeTestRule.setContent {
 
             DormFoodTheme(
@@ -36,24 +31,14 @@ class MenuWarungTest {
                 )
             }
         }
-
-
         composeTestRule
             .onNodeWithTag("searchMenu")
             .assertIsDisplayed()
             .performTextInput("Es Teh")
     }
-
-
-
-    // ===========================
-    // Tab kategori bisa klik
-    // ===========================
     @Test
     fun tabMenu_bisaDiklik(){
-
         composeTestRule.setContent {
-
             DormFoodTheme(
                 darkTheme = false,
                 dynamicColor = false
@@ -70,23 +55,13 @@ class MenuWarungTest {
                 )
             }
         }
-
-
         composeTestRule
             .onNodeWithText("Makanan")
             .performClick()
-
-
         composeTestRule
             .onNodeWithText("Minuman")
             .performClick()
     }
-
-
-
-    // ===========================
-    // Dialog tambah menu
-    // ===========================
     @Test
     fun tambahMenu_inputBerhasil(){
 
@@ -103,76 +78,44 @@ class MenuWarungTest {
                 )
             }
         }
-
-
         composeTestRule
             .onNodeWithTag("inputNamaMenu")
             .performTextInput("Ayam Geprek")
-
-
         composeTestRule
             .onNodeWithTag("inputHargaMenu")
             .performTextInput("15000")
-
-
         composeTestRule
             .onNodeWithText("Ayam Geprek")
             .assertExists()
-
-
         composeTestRule
             .onNodeWithText("15000")
             .assertExists()
 
     }
-
-
-
-    // ===========================
-    // Tombol simpan
-    // ===========================
     @Test
     fun tombolSimpan_bisaKlik(){
-
         composeTestRule.setContent {
-
             DormFoodTheme(
                 darkTheme = false,
                 dynamicColor = false
             ){
-
                 AddMenuDialog(
                     onDismiss = {},
                     onConfirm = {_,_,_->}
                 )
             }
         }
-
-
         composeTestRule
             .onNodeWithTag("inputNamaMenu")
             .performTextInput("Nasi Goreng")
-
-
         composeTestRule
             .onNodeWithTag("inputHargaMenu")
             .performTextInput("10000")
-
-
         composeTestRule
             .onNodeWithTag("btnSimpanMenu")
             .assertIsEnabled()
             .performClick()
-
     }
-
-
-
-
-    // ===========================
-    // Card menu tampil
-    // ===========================
-    @Test
     fun cardMenu_tampil(){
 
         composeTestRule.setContent {
@@ -196,25 +139,13 @@ class MenuWarungTest {
                 )
             }
         }
-
-
         composeTestRule
             .onNodeWithTag("menuCard")
             .assertIsDisplayed()
-
-
         composeTestRule
             .onNodeWithText("Es Teh")
             .assertIsDisplayed()
     }
-
-
-
-
-
-    // ===========================
-    // Switch tersedia klik
-    // ===========================
     @Test
     fun switchMenu_bisaKlik(){
 
@@ -239,21 +170,10 @@ class MenuWarungTest {
                 )
             }
         }
-
-
         composeTestRule
             .onNodeWithTag("switchMenu")
             .performClick()
-
     }
-
-
-
-
-
-    // ===========================
-    // Titik tiga klik
-    // ===========================
     @Test
     fun moreMenu_bisaKlik(){
 
@@ -279,18 +199,12 @@ class MenuWarungTest {
 
             }
         }
-
-
         composeTestRule
             .onNodeWithTag("btnMoreMenu")
             .performClick()
-
-
         composeTestRule
             .onNodeWithText("Edit")
             .assertIsDisplayed()
-
-
         composeTestRule
             .onNodeWithText("Hapus")
             .assertIsDisplayed()

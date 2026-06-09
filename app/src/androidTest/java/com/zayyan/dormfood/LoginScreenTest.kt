@@ -59,8 +59,8 @@ class LoginScreenTest {
         composeTestRule.onNodeWithText("Masuk").assertIsDisplayed()
         composeTestRule.onNodeWithText("Daftar").assertIsDisplayed()
         composeTestRule.onNodeWithText("Lupa Kata Sandi?").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Daftar sebagai mitra warung").assertIsDisplayed()
     }
-
     @Test
     fun loginScreen_inputEmailDanPassword() {
         composeTestRule.onNodeWithTag("inputEmail")
@@ -72,7 +72,6 @@ class LoginScreenTest {
         composeTestRule.onNodeWithTag("inputEmail")
             .assertTextContains("test@email.com")
     }
-
     @Test
     fun loginScreen_tombolMasukBisaDiklik() {
         composeTestRule.onNodeWithTag("inputEmail")
@@ -86,22 +85,71 @@ class LoginScreenTest {
 
         composeTestRule.waitForIdle()
     }
-
     @Test
     fun loginScreen_klikDaftarPindahKeRegister() {
         composeTestRule.onNodeWithText("Daftar").performClick()
         composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Daftar Akun").assertIsDisplayed()
     }
-
     @Test
-    fun loginScreen_klikLupaPasswordPindahKeLanding() {
+    fun loginScreen_klikLupaPasswordMembukaDIalog() {
         composeTestRule.onNodeWithTag("btnForgotPassword")
             .assertIsDisplayed()
             .performClick()
 
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithText("Landing Page")
+        composeTestRule.onNodeWithText("Lupa Kata Sandi").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Kirim").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Batal").assertIsDisplayed()
+    }
+    @Test
+    fun loginScreen_dialogLupaPassword_batalMenutupDialog() {
+        composeTestRule.onNodeWithTag("btnForgotPassword").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Batal").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Lupa Kata Sandi").assertDoesNotExist()
+    }
+    @Test
+    fun loginScreen_dialogLupaPassword_inputEmailTampil() {
+        composeTestRule.onNodeWithTag("btnForgotPassword").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag("inputResetEmail")
+            .assertIsDisplayed()
+            .performTextInput("reset@email.com")
+    }
+    @Test
+    fun loginScreen_toggleVisibilityPassword() {
+        composeTestRule.onNodeWithTag("inputPassword")
+            .performTextInput("password123")
+
+        composeTestRule.onNodeWithContentDescription("Lihat Password")
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithTag("togglePassword").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription("Sembunyikan Password")
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithTag("togglePassword").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription("Lihat Password")
+            .assertIsDisplayed()
+    }
+    @Test
+    fun loginScreen_tombolMasukNonaktifSaatLoading() {
+        composeTestRule.onNodeWithTag("tombolMasuk")
+            .assertIsEnabled()
+    }
+    @Test
+    fun loginScreen_kartuDaftarWarungTampil() {
+        composeTestRule.onNodeWithTag("btnDaftarWarung")
             .assertIsDisplayed()
     }
 }

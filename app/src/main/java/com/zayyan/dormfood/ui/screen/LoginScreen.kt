@@ -439,7 +439,8 @@ fun LoginScreen(
                             label = {
                                 Text("Email")
                             },
-                            singleLine = true
+                            singleLine = true,
+                            modifier = Modifier.testTag("inputResetEmail")
                         )
                         if (resetMessage.isNotEmpty()) {
                             Spacer(

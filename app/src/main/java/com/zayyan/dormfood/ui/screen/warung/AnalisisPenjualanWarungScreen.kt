@@ -525,7 +525,7 @@ private fun GrafikPendapatanContent(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Box(Modifier.size(12.dp, 3.dp).background(DormRed, RoundedCornerShape(2.dp)))
+                Box(Modifier.size(12.dp, 3.dp).background(Color(0xFFD32F2F), RoundedCornerShape(2.dp)))
                 Text("Pendapatan", fontSize = 11.sp, color = Color(0xFF757575))
             }
             Row(
