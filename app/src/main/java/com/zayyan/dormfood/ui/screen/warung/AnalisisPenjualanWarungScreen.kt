@@ -1,5 +1,11 @@
 package com.zayyan.dormfood.ui.screen.warung
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +74,8 @@ import com.zayyan.dormfood.ui.utils.RekapPdfHelper
 import com.zayyan.dormfood.ui.viewmodel.AnalisisPenjualanViewModel
 import com.zayyan.dormfood.ui.viewmodel.MenuViewModel
 import com.zayyan.dormfood.ui.viewmodel.PesananViewModel
+import androidx.core.graphics.toColorInt
+import com.zayyan.dormfood.ui.utils.DataStoreManager
 
 private val CardBg = Color.White
 
@@ -84,6 +93,10 @@ fun AnalisisPenjualanWarungScreen(
 
     val context = LocalContext.current
     var selectedPeriode by remember { mutableStateOf(AnalisisPenjualanViewModel.Periode.SEMUA) }
+
+    val showGrafik by DataStoreManager
+        .isShowGrafik(context)
+        .collectAsState(initial = false)
 
     Scaffold(
         topBar = {
@@ -122,7 +135,11 @@ fun AnalisisPenjualanWarungScreen(
             selectedPeriode = selectedPeriode,
             onPeriodeChange = { selectedPeriode = it },
             context = context,
-            navController = navController
+            navController = navController,
+            showGrafik = showGrafik,
+            onToggleGrafik = {
+                analisisPenjualanViewModel.toggleShowGrafik(context, showGrafik)
+            }
         )
     }
 }
@@ -136,7 +153,9 @@ fun AnalisisPenjualanWarungContent(
     selectedPeriode: AnalisisPenjualanViewModel.Periode,
     onPeriodeChange: (AnalisisPenjualanViewModel.Periode) -> Unit,
     context: android.content.Context,
-    navController: NavHostController
+    navController: NavHostController,
+    showGrafik: Boolean,
+    onToggleGrafik: () -> Unit
 ) {
     val warungOrders by pesananViewModel.warungOrders.collectAsState()
     val isLoading    by pesananViewModel.isLoadingWarungOrders.collectAsState()
@@ -172,6 +191,10 @@ fun AnalisisPenjualanWarungContent(
         AnalisisPenjualanViewModel.Periode.SEMUA   -> "Semua Waktu"
     }
 
+    val dataGrafik = remember(filteredOrders, selectedPeriode) {
+        analisisPenjualanViewModel.getDataGrafik(filteredOrders, selectedPeriode)
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -203,7 +226,12 @@ fun AnalisisPenjualanWarungContent(
         }
 
         item {
-            RingkasanCard(ringkasan = ringkasan)
+            RingkasanCard(
+                ringkasan = ringkasan,
+                dataGrafik = dataGrafik,
+                showGrafik = showGrafik,
+                onToggle = onToggleGrafik
+            )
         }
 
         item {
@@ -352,7 +380,12 @@ fun AnalisisPenjualanWarungContent(
 
 
 @Composable
-fun RingkasanCard(ringkasan: RingkasanPenjualan) {
+fun RingkasanCard(
+    ringkasan: RingkasanPenjualan,
+    dataGrafik: List<AnalisisPenjualanViewModel.DataPointGrafik>,
+    showGrafik: Boolean,
+    onToggle: () -> Unit
+) {
     Card(
         modifier  = Modifier.fillMaxWidth(),
         shape     = RoundedCornerShape(16.dp),
@@ -360,53 +393,236 @@ fun RingkasanCard(ringkasan: RingkasanPenjualan) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Ringkasan Penjualan",
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                color = Color(0xFF212121)
-            )
-            Spacer(Modifier.height(14.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                RingkasanItem(
-                    modifier = Modifier.weight(1f),
-                    label    = "Total Pesanan",
-                    value    = ringkasan.totalPesanan.toString(),
-                    bgColor  = Color(0xFFFFF3E0),
-                    valueColor = Color(0xFFE65100)
+                Text(
+                    if (showGrafik) "Grafik Pendapatan" else "Ringkasan Penjualan",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color(0xFF212121)
                 )
-                RingkasanItem(
-                    modifier = Modifier.weight(1f),
-                    label    = "Total Menu",
-                    value    = ringkasan.totalMenu.toString(),
-                    bgColor  = Color(0xFFE8F5E9),
-                    valueColor = Color(0xFF2E7D32)
+                Surface(
+                    onClick = { onToggle() },
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (showGrafik) DormRed else Color(0xFFFFECEC),
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.5.dp,
+                        color = DormRed
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (showGrafik)
+                                Icons.Default.BarChart
+                            else
+                                Icons.AutoMirrored.Filled.TrendingUp,
+                            contentDescription = if (showGrafik) "Lihat ringkasan" else "Lihat grafik",
+                            tint = if (showGrafik) Color.White else DormRed,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text(
+                            text = if (showGrafik) "Lihat Ringkasan" else "Lihat Grafik",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (showGrafik) Color.White else DormRed
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            AnimatedContent(
+                targetState = showGrafik,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(250)) togetherWith
+                            fadeOut(animationSpec = tween(250))
+                },
+                label = "RingkasanToggle"
+            ) { isGrafik ->
+                if (isGrafik) {
+                    GrafikPendapatanContent(dataGrafik = dataGrafik)
+                } else {
+                    RingkasanGridContent(ringkasan = ringkasan)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RingkasanGridContent(ringkasan: RingkasanPenjualan) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            RingkasanItem(
+                modifier   = Modifier.weight(1f),
+                label      = "Total Pesanan",
+                value      = ringkasan.totalPesanan.toString(),
+                bgColor    = Color(0xFFFFF3E0),
+                valueColor = Color(0xFFE65100)
+            )
+            RingkasanItem(
+                modifier   = Modifier.weight(1f),
+                label      = "Total Menu",
+                value      = ringkasan.totalMenu.toString(),
+                bgColor    = Color(0xFFE8F5E9),
+                valueColor = Color(0xFF2E7D32)
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            RingkasanItem(
+                modifier   = Modifier.weight(1f),
+                label      = "Menu Terjual",
+                value      = ringkasan.menuTerjual.toString(),
+                subtitle   = "${ringkasan.menuTerjual} dari ${ringkasan.totalMenu} menu",
+                bgColor    = Color(0xFFE3F2FD),
+                valueColor = Color(0xFF1565C0)
+            )
+            RingkasanItem(
+                modifier   = Modifier.weight(1f),
+                label      = "Belum Terjual",
+                value      = ringkasan.menuBelumTerjual.toString(),
+                subtitle   = "${ringkasan.menuBelumTerjual} dari ${ringkasan.totalMenu} menu",
+                bgColor    = Color(0xFFFFEBEE),
+                valueColor = Color(0xFFC62828)
+            )
+        }
+    }
+}
+
+@Composable
+private fun GrafikPendapatanContent(
+    dataGrafik: List<AnalisisPenjualanViewModel.DataPointGrafik>
+) {
+    if (dataGrafik.isEmpty()) {
+        EmptyText("Belum ada data untuk ditampilkan")
+        return
+    }
+
+    val maxPendapatan = dataGrafik.maxOf { it.pendapatan }.takeIf { it > 0 }?.toFloat() ?: 1f
+    val maxPesanan    = dataGrafik.maxOf { it.jumlahPesanan }.takeIf { it > 0 }?.toFloat() ?: 1f
+
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(Modifier.size(12.dp, 3.dp).background(DormRed, RoundedCornerShape(2.dp)))
+                Text("Pendapatan", fontSize = 11.sp, color = Color(0xFF757575))
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Box(Modifier.size(12.dp, 3.dp).background(Color(0xFF1565C0), RoundedCornerShape(2.dp)))
+                Text("Pesanan", fontSize = 11.sp, color = Color(0xFF757575))
+            }
+        }
+
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+        ) {
+            val paddingLeft   = 16.dp.toPx()
+            val paddingRight  = 16.dp.toPx()
+            val paddingTop    = 12.dp.toPx()
+            val paddingBottom = 28.dp.toPx()
+
+            val chartW = size.width - paddingLeft - paddingRight
+            val chartH = size.height - paddingTop - paddingBottom
+            val n      = dataGrafik.size
+
+            val stepX = if (n > 1) chartW / (n - 1) else chartW
+
+            androidx.compose.ui.graphics.Paint().apply {
+                color = Color(0xFFEEEEEE)
+                style = androidx.compose.ui.graphics.PaintingStyle.Stroke
+                strokeWidth = 1.dp.toPx()
+            }
+            for (i in 1..3) {
+                val y = paddingTop + chartH * (1 - i / 4f)
+                drawLine(
+                    color = Color(0xFFEEEEEE),
+                    start = androidx.compose.ui.geometry.Offset(paddingLeft, y),
+                    end   = androidx.compose.ui.geometry.Offset(paddingLeft + chartW, y),
+                    strokeWidth = 0.5.dp.toPx()
                 )
             }
-            Spacer(Modifier.height(10.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                RingkasanItem(
-                    modifier = Modifier.weight(1f),
-                    label = "Menu Terjual",
-                    value = ringkasan.menuTerjual.toString(),
-                    subtitle = "${ringkasan.menuTerjual} dari ${ringkasan.totalMenu} menu",
-                    bgColor = Color(0xFFE3F2FD),
-                    valueColor = Color(0xFF1565C0)
-                )
 
-                RingkasanItem(
-                    modifier = Modifier.weight(1f),
-                    label = "Belum Terjual",
-                    value = ringkasan.menuBelumTerjual.toString(),
-                    subtitle = "${ringkasan.menuBelumTerjual} dari ${ringkasan.totalMenu} menu",
-                    bgColor = Color(0xFFFFEBEE),
-                    valueColor = Color(0xFFC62828)
+            val pendapatanPts = dataGrafik.mapIndexed { i, d ->
+                val x = paddingLeft + i * stepX
+                val y = paddingTop + chartH * (1f - d.pendapatan.toFloat() / maxPendapatan)
+                androidx.compose.ui.geometry.Offset(x, y)
+            }
+            for (i in 0 until pendapatanPts.lastIndex) {
+                drawLine(
+                    color       = Color(0xFFD32F2F),
+                    start       = pendapatanPts[i],
+                    end         = pendapatanPts[i + 1],
+                    strokeWidth = 2.dp.toPx(),
+                    cap         = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+            }
+            pendapatanPts.forEach { pt ->
+                drawCircle(color = Color(0xFFD32F2F), radius = 4.dp.toPx(), center = pt)
+                drawCircle(color = Color.White, radius = 2.dp.toPx(), center = pt)
+            }
+
+            val pesananPts = dataGrafik.mapIndexed { i, d ->
+                val x = paddingLeft + i * stepX
+                val y = paddingTop + chartH * (1f - d.jumlahPesanan.toFloat() / maxPesanan)
+                androidx.compose.ui.geometry.Offset(x, y)
+            }
+            for (i in 0 until pesananPts.lastIndex) {
+                drawLine(
+                    color       = Color(0xFF1565C0),
+                    start       = pesananPts[i],
+                    end         = pesananPts[i + 1],
+                    strokeWidth = 1.5.dp.toPx(),
+                    cap         = androidx.compose.ui.graphics.StrokeCap.Round,
+                    pathEffect  = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                        floatArrayOf(8f, 4f)
+                    )
+                )
+            }
+            pesananPts.forEach { pt ->
+                drawCircle(color = Color(0xFF1565C0), radius = 3.dp.toPx(), center = pt)
+                drawCircle(color = Color.White, radius = 1.5.dp.toPx(), center = pt)
+            }
+
+            // Label X-axis
+            val textPaint = android.graphics.Paint().apply {
+                color     = "#9E9E9E".toColorInt()
+                textSize  = 10.dp.toPx()
+                textAlign = android.graphics.Paint.Align.CENTER
+                typeface  = android.graphics.Typeface.DEFAULT
+            }
+            dataGrafik.forEachIndexed { i, d ->
+                val x = paddingLeft + i * stepX
+                drawContext.canvas.nativeCanvas.drawText(
+                    d.label,
+                    x,
+                    size.height - 4.dp.toPx(),
+                    textPaint
                 )
             }
         }

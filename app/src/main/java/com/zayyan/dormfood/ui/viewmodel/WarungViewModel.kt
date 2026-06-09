@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.cloudinary.android.MediaManager
 import com.cloudinary.android.callback.ErrorInfo
 import com.cloudinary.android.callback.UploadCallback
@@ -15,6 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import com.zayyan.dormfood.ui.model.WarungData
 import com.zayyan.dormfood.ui.model.WarungItem
 import com.zayyan.dormfood.ui.model.WarungProfile
+import com.zayyan.dormfood.ui.utils.DataStoreManager
+import kotlinx.coroutines.launch
 
 class WarungViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
@@ -356,6 +359,12 @@ class WarungViewModel : ViewModel() {
             .addOnFailureListener {
                 onError(it.message ?: "Gagal update alamat")
             }
+    }
+
+    fun togglePemasukanVisible(context: android.content.Context, currentValue: Boolean) {
+        viewModelScope.launch {
+            DataStoreManager.setPemasukanVisible(context, !currentValue)
+        }
     }
 
     fun updateWarungLocation(

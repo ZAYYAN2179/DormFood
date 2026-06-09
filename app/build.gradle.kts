@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.messaging.ktx)
+    implementation(libs.androidx.datastore.preferences)
 
     // Cloudinary
     implementation(libs.cloudinary.android)

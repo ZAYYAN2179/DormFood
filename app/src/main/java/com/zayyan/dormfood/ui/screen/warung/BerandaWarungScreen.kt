@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Star
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -28,6 +30,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -45,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,6 +64,7 @@ import com.zayyan.dormfood.ui.viewmodel.WarungViewModel
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
+import com.zayyan.dormfood.ui.utils.DataStoreManager
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -144,6 +149,11 @@ fun BerandaWarungContent(
         "Rp ${NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID")).format(amount)}"
     }
 
+    val context = LocalContext.current
+    val isPemasukanVisible by DataStoreManager
+        .isPemasukanVisible(context)
+        .collectAsState(initial = false)
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -151,7 +161,6 @@ fun BerandaWarungContent(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -172,15 +181,42 @@ fun BerandaWarungContent(
                                 .background(DormRed)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "Total Pemasukan",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                IconButton(
+                                    onClick = {
+                                        warungViewModel.togglePemasukanVisible(context, isPemasukanVisible)
+                                    },
+                                    modifier = Modifier.size(20.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isPemasukanVisible)
+                                            Icons.Outlined.Visibility
+                                        else
+                                            Icons.Outlined.VisibilityOff,
+                                        contentDescription = if (isPemasukanVisible)
+                                            "Sembunyikan pemasukan"
+                                        else
+                                            "Tampilkan pemasukan",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
                             Text(
-                                text = "Total Pemasukan",
-                                fontSize = 14.sp,
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = formatRupiah(totalPemasukan),
+                                text = if (isPemasukanVisible)
+                                    formatRupiah(totalPemasukan)
+                                else
+                                    "Rp ••••••••",
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = DormRed
