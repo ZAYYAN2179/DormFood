@@ -8,13 +8,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-// PrediksiStokViewModel.kt
 class PrediksiStokViewModel : ViewModel() {
 
     private val _prediksiState = MutableStateFlow<PrediksiUiState>(PrediksiUiState.Idle)
     val prediksiState: StateFlow<PrediksiUiState> = _prediksiState
 
-    // Logika utama: cukup data → real, kurang → dummy + warning
     fun loadPrediksi(warungId: String) {
         viewModelScope.launch {
             _prediksiState.value = PrediksiUiState.Loading
@@ -75,8 +73,8 @@ sealed class PrediksiUiState {
 }
 
 enum class WarningLevel {
-    NONE,           // data cukup semua
-    SEBAGIAN_KURANG,// sebagian menu belum cukup data
-    SEMUA_KURANG,   // semua menu pakai dummy
-    NO_DATA         // belum ada transaksi sama sekali
+    NONE,
+    SEBAGIAN_KURANG,
+    SEMUA_KURANG,
+    NO_DATA
 }

@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.zayyan.dormfood.ui.model.RingkasanPenjulan
+import com.zayyan.dormfood.ui.model.RingkasanPenjualan
 import com.zayyan.dormfood.ui.model.StatusPesanan
 import com.zayyan.dormfood.ui.navigation.Screen
 import com.zayyan.dormfood.ui.theme.Background
@@ -352,7 +352,7 @@ fun AnalisisPenjualanWarungContent(
 
 
 @Composable
-fun RingkasanCard(ringkasan: RingkasanPenjulan) {
+fun RingkasanCard(ringkasan: RingkasanPenjualan) {
     Card(
         modifier  = Modifier.fillMaxWidth(),
         shape     = RoundedCornerShape(16.dp),

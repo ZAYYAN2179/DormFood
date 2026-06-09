@@ -3,7 +3,7 @@ package com.zayyan.dormfood.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import com.zayyan.dormfood.ui.model.MenuItem
 import com.zayyan.dormfood.ui.model.OrderItem
-import com.zayyan.dormfood.ui.model.RingkasanPenjulan
+import com.zayyan.dormfood.ui.model.RingkasanPenjualan
 
 class AnalisisPenjualanViewModel : ViewModel() {
 
@@ -43,11 +43,11 @@ class AnalisisPenjualanViewModel : ViewModel() {
     fun getRingkasanPrediksi(
         orders: List<OrderItem>,
         allMenus: List<MenuItem>
-    ): RingkasanPenjulan {
+    ): RingkasanPenjualan {
 
         val stats = getMenuStats(orders)
 
-        return RingkasanPenjulan(
+        return RingkasanPenjualan(
             totalPesanan = orders.size,
             totalMenu = allMenus.size,
             menuTerjual = stats.size,
