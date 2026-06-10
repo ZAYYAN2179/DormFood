@@ -25,6 +25,7 @@ datastore = "1.1.1"
 coroutinesTest = "1.7.3"
 archCoreTesting = "2.2.0"
 mockkUnit = "1.13.10"
+junitKtx = "1.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -62,6 +63,7 @@ androidx-datastore-preferences = { module = "androidx.datastore:datastore-prefer
 mockk-unit = { group = "io.mockk", name = "mockk", version.ref = "mockkUnit" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 androidx-arch-core-testing = { group = "androidx.arch.core", name = "core-testing", version.ref = "archCoreTesting" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

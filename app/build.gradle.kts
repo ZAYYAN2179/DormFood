@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging)
+    implementation(libs.androidx.junit.ktx)
 
     // Testing
     testImplementation(libs.junit)
