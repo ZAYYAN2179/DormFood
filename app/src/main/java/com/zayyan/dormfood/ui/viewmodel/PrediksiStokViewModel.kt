@@ -3,12 +3,15 @@ package com.zayyan.dormfood.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zayyan.dormfood.ui.model.PrediksiMenuResponse
+import com.zayyan.dormfood.ui.repository.IPrediksiRepository
 import com.zayyan.dormfood.ui.repository.PrediksiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class PrediksiStokViewModel : ViewModel() {
+class PrediksiStokViewModel(
+    private val repository: IPrediksiRepository = PrediksiRepository
+) : ViewModel() {
 
     private val _prediksiState = MutableStateFlow<PrediksiUiState>(PrediksiUiState.Idle)
     val prediksiState: StateFlow<PrediksiUiState> = _prediksiState
@@ -16,22 +19,20 @@ class PrediksiStokViewModel : ViewModel() {
     fun loadPrediksi(warungId: String) {
         viewModelScope.launch {
             _prediksiState.value = PrediksiUiState.Loading
-            android.util.Log.d("PrediksiVM", "Loading prediksi for warungId: $warungId")
 
-            val result = PrediksiRepository.getPrediksi(warungId)
+            val result = repository.getPrediksi(warungId)
             result.fold(
                 onSuccess = { response ->
-                    android.util.Log.d("PrediksiVM", "Success: status=${response.status}, total=${response.totalMenu}")
                     when {
                         response.status == "NO_DATA" -> {
-                            val dummy = PrediksiRepository.getPrediksiDummy(warungId)
+                            val dummy = repository.getPrediksiDummy(warungId)
                             _prediksiState.value = PrediksiUiState.Success(
                                 data = dummy.getOrNull() ?: response,
                                 warningLevel = WarningLevel.NO_DATA
                             )
                         }
                         response.menuSiapPrediksi == 0 -> {
-                            val dummy = PrediksiRepository.getPrediksiDummy(warungId)
+                            val dummy = repository.getPrediksiDummy(warungId)
                             _prediksiState.value = PrediksiUiState.Success(
                                 data = dummy.getOrNull() ?: response,
                                 warningLevel = WarningLevel.SEMUA_KURANG
@@ -52,7 +53,6 @@ class PrediksiStokViewModel : ViewModel() {
                     }
                 },
                 onFailure = { e ->
-                    android.util.Log.e("PrediksiVM", "FAILED: ${e.javaClass.simpleName}: ${e.message}")
                     _prediksiState.value = PrediksiUiState.Error(
                         "${e.javaClass.simpleName}: ${e.message}"
                     )
