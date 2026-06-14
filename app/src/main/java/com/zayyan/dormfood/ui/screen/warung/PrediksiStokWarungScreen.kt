@@ -1,6 +1,7 @@
 package com.zayyan.dormfood.ui.screen.warung
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,6 +26,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
+import com.zayyan.dormfood.ui.model.DataGrafikMingguan
+import com.zayyan.dormfood.ui.model.GrafikUiState
 import com.zayyan.dormfood.ui.model.HasilPrediksi
 import com.zayyan.dormfood.ui.model.PrediksiMenuResponse
 import com.zayyan.dormfood.ui.theme.Background
@@ -30,6 +35,7 @@ import com.zayyan.dormfood.ui.theme.DormRed
 import com.zayyan.dormfood.ui.viewmodel.PrediksiStokViewModel
 import com.zayyan.dormfood.ui.viewmodel.PrediksiUiState
 import com.zayyan.dormfood.ui.viewmodel.WarningLevel
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,7 +159,9 @@ fun PrediksiStokWarungScreenContent(
             is PrediksiUiState.Success -> {
                 PrediksiResultContent(
                     data = currentState.data,
-                    warningLevel = currentState.warningLevel
+                    warningLevel = currentState.warningLevel,
+                    prediksiViewModel = prediksiViewModel,
+                    warungId = warungId
                 )
             }
 
@@ -177,8 +185,11 @@ fun PrediksiStokWarungScreenContent(
 @Composable
 private fun PrediksiResultContent(
     data: PrediksiMenuResponse,
-    warningLevel: WarningLevel
+    warningLevel: WarningLevel,
+    prediksiViewModel: PrediksiStokViewModel,
+    warungId: String
 ) {
+    val availableMenus by prediksiViewModel.availableMenus.collectAsState()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -187,11 +198,14 @@ private fun PrediksiResultContent(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            BannerDataWarning(warningLevel)
+            GrafikPenjualanCard(
+                prediksiViewModel = prediksiViewModel,
+                warungId = warungId,
+                availableMenus = availableMenus
+            )
         }
-        item {
-            SummaryCard(data)
-        }
+        item { BannerDataWarning(warningLevel) }
+        item { SummaryCard(data) }
         item {
             Text(
                 "Detail Per Menu",
@@ -200,12 +214,8 @@ private fun PrediksiResultContent(
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
-        items(data.hasil) { menu ->
-            PrediksiMenuCard(menu)
-        }
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        items(data.hasil) { menu -> PrediksiMenuCard(menu) }
+        item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
 
@@ -797,4 +807,400 @@ fun HelpDialog(onDismiss: () -> Unit) {
         shape = RoundedCornerShape(16.dp),
         containerColor = Color.White
     )
+}
+
+@Composable
+private fun GrafikPenjualanCard(
+    prediksiViewModel: PrediksiStokViewModel,
+    warungId: String,
+    availableMenus: List<String>
+) {
+    val grafikState by prediksiViewModel.grafikState.collectAsState()
+
+    val bulanOptions = remember {
+        val namaBulan = listOf(
+            "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+            "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+        )
+        (5 downTo 0).map { offset ->
+            val cal = Calendar.getInstance().apply { add(Calendar.MONTH, -offset) }
+            Triple(
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH) + 1,
+                "${namaBulan[cal.get(Calendar.MONTH)]} ${cal.get(Calendar.YEAR)}"
+            )
+        }
+    }
+
+    var selectedBulanIndex by remember { mutableIntStateOf(bulanOptions.lastIndex) }
+    var selectedMenu by remember(availableMenus) {
+        mutableStateOf(availableMenus.firstOrNull() ?: "")
+    }
+
+    var showBulanDropdown by remember { mutableStateOf(false) }
+    var showMenuDropdown by remember { mutableStateOf(false) }
+
+    LaunchedEffect(selectedBulanIndex, selectedMenu) {
+        if (warungId.isNotBlank() && selectedMenu.isNotBlank()) {
+            val (tahun, bulan, _) = bulanOptions[selectedBulanIndex]
+            prediksiViewModel.loadGrafik(warungId, tahun, bulan, selectedMenu)
+        }
+    }
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.BarChart,
+                    contentDescription = null,
+                    tint = DormRed,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Tren Penjualan per Minggu",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    OutlinedButton(
+                        onClick = { showBulanDropdown = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true)
+                    ) {
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = DormRed
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            bulanOptions[selectedBulanIndex].third,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showBulanDropdown,
+                        onDismissRequest = { showBulanDropdown = false }
+                    ) {
+                        bulanOptions.forEachIndexed { index, (_, _, label) ->
+                            DropdownMenuItem(
+                                text = { Text(label, fontSize = 13.sp) },
+                                onClick = {
+                                    selectedBulanIndex = index
+                                    showBulanDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Box(modifier = Modifier.weight(1f)) {
+                    OutlinedButton(
+                        onClick = { showMenuDropdown = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Restaurant,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = DormRed
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            selectedMenu.ifBlank { "Pilih Menu" },
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenuDropdown,
+                        onDismissRequest = { showMenuDropdown = false }
+                    ) {
+                        availableMenus.forEach { menu ->
+                            DropdownMenuItem(
+                                text = { Text(menu, fontSize = 13.sp) },
+                                onClick = {
+                                    selectedMenu = menu
+                                    showMenuDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            when (val s = grafikState) {
+                is GrafikUiState.Idle -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Pilih menu untuk melihat grafik",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+
+                is GrafikUiState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = DormRed, modifier = Modifier.size(28.dp))
+                    }
+                }
+
+                is GrafikUiState.Success -> {
+                    BarChartContent(data = s.data)
+                }
+
+                is GrafikUiState.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Gagal memuat: ${s.message}",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BarChartContent(data: List<DataGrafikMingguan>) {
+    val normalizedData = (0 until 4).map { i ->
+        data.getOrNull(i) ?: DataGrafikMingguan(label = "Mg ${i + 1}", jumlah = 0)
+    }
+
+    val maxVal = normalizedData.maxOfOrNull { it.jumlah }?.takeIf { it > 0 } ?: 1
+
+    val nonZeroData = normalizedData.filter { it.jumlah > 0 }
+    val trendIcon: androidx.compose.ui.graphics.vector.ImageVector
+    val trendColor: Color
+    val trendText: String
+
+    if (nonZeroData.size >= 2) {
+        val first = nonZeroData.first().jumlah
+        val last = nonZeroData.last().jumlah
+        when {
+            last > first -> {
+                trendIcon = Icons.AutoMirrored.Filled.TrendingUp
+                trendColor = Color(0xFF4CAF50)
+                trendText = "Naik"
+            }
+
+            last < first -> {
+                trendIcon = Icons.AutoMirrored.Filled.TrendingDown
+                trendColor = Color(0xFFF44336)
+                trendText = "Turun"
+            }
+
+            else -> {
+                trendIcon = Icons.AutoMirrored.Filled.TrendingFlat
+                trendColor = Color(0xFF9E9E9E)
+                trendText = "Stabil"
+            }
+        }
+    } else {
+        trendIcon = Icons.AutoMirrored.Filled.TrendingFlat
+        trendColor = Color(0xFF9E9E9E)
+        trendText = if (nonZeroData.isEmpty()) "Belum Ada Data" else "Data Terbatas"
+    }
+
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 12.dp)
+        ) {
+            Icon(
+                trendIcon,
+                contentDescription = null,
+                tint = trendColor,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                trendText,
+                fontSize = 12.sp,
+                color = trendColor,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                "Total: ${normalizedData.sumOf { it.jumlah }} porsi",
+                fontSize = 11.sp,
+                color = Color.Gray
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(150.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                repeat(4) {
+                    HorizontalDivider(
+                        color = Color(0xFFF0F0F0),
+                        thickness = 0.5.dp
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 8.dp),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                normalizedData.forEach { item ->
+                    val fraction = item.jumlah.toFloat() / maxVal.toFloat()
+                    val isMax = item.jumlah == maxVal
+                    val barColor = when {
+                        isMax -> DormRed
+                        fraction >= 0.6f -> Color(0xFFEF9A9A)
+                        fraction > 0f -> Color(0xFFFFCDD2)
+                        else -> Color(0xFFF5F5F5)
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Bottom
+                    ) {
+                        Text(
+                            text = if (item.jumlah > 0) "${item.jumlah}" else "0",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isMax) DormRed else Color.Gray
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(
+                                    fraction = if (item.jumlah > 0)
+                                        (fraction * 0.85f).coerceAtLeast(0.05f)
+                                    else 0.03f
+                                )
+                                .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
+                                .background(barColor)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            normalizedData.forEach { item ->
+                Text(
+                    text = item.label,
+                    fontSize = 11.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+        HorizontalDivider(
+            color = Color(0xFFE0E0E0),
+            thickness = 1.dp,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(DormRed)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Tertinggi", fontSize = 10.sp, color = Color.Gray)
+            Spacer(modifier = Modifier.width(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color(0xFFFFCDD2))
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Lainnya", fontSize = 10.sp, color = Color.Gray)
+            Spacer(modifier = Modifier.width(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color(0xFFF5F5F5))
+                    .border(0.5.dp, Color(0xFFE0E0E0), RoundedCornerShape(2.dp))
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Tidak ada data", fontSize = 10.sp, color = Color.Gray)
+        }
+    }
 }

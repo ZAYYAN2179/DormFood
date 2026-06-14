@@ -2,12 +2,14 @@ package com.zayyan.dormfood.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zayyan.dormfood.ui.model.GrafikUiState
 import com.zayyan.dormfood.ui.model.PrediksiMenuResponse
 import com.zayyan.dormfood.ui.repository.IPrediksiRepository
 import com.zayyan.dormfood.ui.repository.PrediksiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class PrediksiStokViewModel(
     private val repository: IPrediksiRepository = PrediksiRepository
@@ -15,6 +17,28 @@ class PrediksiStokViewModel(
 
     private val _prediksiState = MutableStateFlow<PrediksiUiState>(PrediksiUiState.Idle)
     val prediksiState: StateFlow<PrediksiUiState> = _prediksiState
+
+    private val _grafikState = MutableStateFlow<GrafikUiState>(GrafikUiState.Idle)
+    val grafikState: StateFlow<GrafikUiState> = _grafikState
+
+    private val _availableMenus = MutableStateFlow<List<String>>(emptyList())
+    val availableMenus: StateFlow<List<String>> = _availableMenus
+
+    fun loadGrafik(warungId: String, tahun: Int, bulan: Int, namaMenu: String) {
+        viewModelScope.launch {
+            _grafikState.value = GrafikUiState.Loading
+
+            val result = repository.getGrafikMingguan(warungId, tahun, bulan, namaMenu)
+            result.fold(
+                onSuccess = { data ->
+                    _grafikState.value = GrafikUiState.Success(data)
+                },
+                onFailure = { e ->
+                    _grafikState.value = GrafikUiState.Error(e.message ?: "Gagal memuat grafik")
+                }
+            )
+        }
+    }
 
     fun loadPrediksi(warungId: String) {
         viewModelScope.launch {
@@ -31,6 +55,7 @@ class PrediksiStokViewModel(
                                 warningLevel = WarningLevel.NO_DATA
                             )
                         }
+
                         response.menuSiapPrediksi == 0 -> {
                             val dummy = repository.getPrediksiDummy(warungId)
                             _prediksiState.value = PrediksiUiState.Success(
@@ -38,12 +63,14 @@ class PrediksiStokViewModel(
                                 warningLevel = WarningLevel.SEMUA_KURANG
                             )
                         }
+
                         response.menuDataKurang > 0 -> {
                             _prediksiState.value = PrediksiUiState.Success(
                                 data = response,
                                 warningLevel = WarningLevel.SEBAGIAN_KURANG
                             )
                         }
+
                         else -> {
                             _prediksiState.value = PrediksiUiState.Success(
                                 data = response,
@@ -51,6 +78,7 @@ class PrediksiStokViewModel(
                             )
                         }
                     }
+                    loadAvailableMenus(warungId)
                 },
                 onFailure = { e ->
                     _prediksiState.value = PrediksiUiState.Error(
@@ -58,6 +86,26 @@ class PrediksiStokViewModel(
                     )
                 }
             )
+        }
+    }
+
+    fun loadAvailableMenus(warungId: String) {
+        viewModelScope.launch {
+            try {
+                val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                val snapshot = firestore.collection("menus")
+                    .whereEqualTo("warungId", warungId)
+                    .get()
+                    .await()
+
+                val menus = snapshot.documents
+                    .mapNotNull { it.getString("namaMenu") }
+                    .filter { it.isNotBlank() }
+                    .sorted()
+
+                _availableMenus.value = menus
+            } catch (_: Exception) {
+            }
         }
     }
 }
@@ -69,6 +117,7 @@ sealed class PrediksiUiState {
         val data: PrediksiMenuResponse,
         val warningLevel: WarningLevel
     ) : PrediksiUiState()
+
     data class Error(val message: String) : PrediksiUiState()
 }
 
