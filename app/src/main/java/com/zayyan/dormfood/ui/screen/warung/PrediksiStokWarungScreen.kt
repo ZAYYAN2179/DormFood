@@ -863,7 +863,7 @@ private fun GrafikPenjualanCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Tren Penjualan per Minggu",
+                    "Penjualan Menu per Minggu",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -1018,7 +1018,7 @@ private fun GrafikPenjualanCard(
 @Composable
 private fun BarChartContent(data: List<DataGrafikMingguan>) {
     val normalizedData = (0 until 4).map { i ->
-        data.getOrNull(i) ?: DataGrafikMingguan(label = "Mg ${i + 1}", jumlah = 0)
+        data.getOrNull(i) ?: DataGrafikMingguan(label = "Minggu ${i + 1}", jumlah = 0)
     }
 
     val maxVal = normalizedData.maxOfOrNull { it.jumlah }?.takeIf { it > 0 } ?: 1

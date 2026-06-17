@@ -113,7 +113,7 @@
 
                 val result = (0 until 4).map { i ->
                     DataGrafikMingguan(
-                        label = "Mg ${i + 1}",
+                        label = "Minggu ${i + 1}",
                         jumlah = weekTotals[i]
                     )
                 }

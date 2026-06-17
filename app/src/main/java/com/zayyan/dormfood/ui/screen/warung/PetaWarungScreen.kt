@@ -182,17 +182,27 @@ fun PetaWarungScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Titik Lokasi Warung", fontWeight = FontWeight.SemiBold) },
+                title = {
+                    Text(
+                        text = "Titik Lokasi Warung",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Kembali"
+                            contentDescription = "Kembali",
+                            tint = Color.White
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = DormRed,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White,
+                    actionIconContentColor = Color.White
                 )
             )
         },
