@@ -187,7 +187,7 @@ fun MenuMahasiswaContent(
                 start = 16.dp,
                 end = 16.dp,
                 top = 16.dp,
-                bottom = if (totalHarga > 0) 88.dp else 16.dp
+                bottom = if (totalHarga > 0) 140.dp else 16.dp
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
