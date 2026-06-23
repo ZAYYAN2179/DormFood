@@ -216,8 +216,11 @@ fun PesananWarungContent(
                             buktiUrl = url
                             showBuktiDialog = true
                         },
-                        onBatalkan = {
-                            pesananViewModel.batalkanDanHapusPesanan(order.orderId)
+                        onBatalkan = { alasan ->
+                            pesananViewModel.batalkanDanHapusPesananDenganAlasan(
+                                orderId = order.orderId,
+                                alasan = alasan
+                            )
                         }
                     )
                 }
@@ -243,7 +246,7 @@ fun WarungOrderCard(
     formatRupiah: (Long) -> String,
     onStatusChange: (StatusPesanan) -> Unit,
     onLihatBukti: (String) -> Unit,
-    onBatalkan: () -> Unit
+    onBatalkan: (alasan: String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(true) }
     var showKonfirmasiDialog by remember { mutableStateOf(false) }
@@ -264,6 +267,7 @@ fun WarungOrderCard(
         else -> emptyList()
     }
     var showBatalDialog by remember { mutableStateOf(false) }
+    var alasanPembatalan by remember { mutableStateOf("") }
 
     if (showKonfirmasiDialog && statusYakanDiubah != null) {
         AlertDialog(
@@ -308,20 +312,36 @@ fun WarungOrderCard(
 
     if (showBatalDialog) {
         AlertDialog(
-            onDismissRequest = { showBatalDialog = false },
+            onDismissRequest = {
+                showBatalDialog = false
+                alasanPembatalan = ""
+            },
             title = { Text("Batalkan Pesanan", fontWeight = FontWeight.Bold) },
             text = {
-                Text(
-                    text = "Apakah Anda yakin ingin membatalkan dan menghapus pesanan ini?",
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
+                Column {
+                    Text(
+                        text = "Masukkan alasan pembatalan (opsional):",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.material3.OutlinedTextField(
+                        value = alasanPembatalan,
+                        onValueChange = { alasanPembatalan = it },
+                        placeholder = { Text("Contoh: Stok habis", fontSize = 13.sp) },
+                        singleLine = false,
+                        maxLines = 3,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        onBatalkan()
+                        onBatalkan(alasanPembatalan.trim())
                         showBatalDialog = false
+                        alasanPembatalan = ""
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
                     shape = RoundedCornerShape(8.dp)
@@ -330,7 +350,10 @@ fun WarungOrderCard(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showBatalDialog = false }) {
+                TextButton(onClick = {
+                    showBatalDialog = false
+                    alasanPembatalan = ""
+                }) {
                     Text("Tidak", color = Color.Gray)
                 }
             },

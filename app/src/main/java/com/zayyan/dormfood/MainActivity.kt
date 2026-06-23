@@ -57,10 +57,11 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            pesananViewModel.orderRejectedEvent.collect { namaWarung ->
+            pesananViewModel.orderRejectedEvent.collect { info ->
                 NotificationHelper.showOrderRejectedNotification(
                     context = this@MainActivity,
-                    namaWarung = namaWarung
+                    namaWarung = info.namaWarung,
+                    alasan = info.alasan
                 )
             }
         }

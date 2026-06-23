@@ -99,9 +99,14 @@ object NotificationHelper {
 
     fun showOrderRejectedNotification(
         context: Context,
-        namaWarung: String
+        namaWarung: String,
+        alasan: String = ""
     ) {
-        val body = "Maaf, pesananmu di $namaWarung ditolak oleh warung. Silakan coba lagi. ❌"
+        val body = if (alasan.isNotBlank()) {
+            "Pesananmu di $namaWarung ditolak. Alasan: \"$alasan\" ❌"
+        } else {
+            "Maaf, pesananmu di $namaWarung ditolak oleh warung. Silakan coba lagi. ❌"
+        }
 
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

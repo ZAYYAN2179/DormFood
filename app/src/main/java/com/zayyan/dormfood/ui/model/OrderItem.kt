@@ -16,5 +16,6 @@ data class OrderItem(
     val ongkir: Long = 0,
     val statusPesanan: String = "",
     val buktiPembayaranUrl: String = "",
-    val createdAt: Timestamp? = null
+    val createdAt: Timestamp? = null,
+    val alasanPembatalan: String = ""
 )

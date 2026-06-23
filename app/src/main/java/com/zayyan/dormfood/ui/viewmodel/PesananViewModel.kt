@@ -60,11 +60,14 @@ class PesananViewModel : ViewModel() {
     private val _newOrderEvent = MutableSharedFlow<OrderItem>(extraBufferCapacity = 5)
     val newOrderEvent: SharedFlow<OrderItem> = _newOrderEvent
     private var isFirstWarungLoad = true
-    private val _orderRejectedEvent = MutableSharedFlow<String>(extraBufferCapacity = 5)
-    val orderRejectedEvent: SharedFlow<String> = _orderRejectedEvent
+    data class RejectedOrderInfo(val namaWarung: String, val alasan: String)
+
+    private val _orderRejectedEvent = MutableSharedFlow<RejectedOrderInfo>(extraBufferCapacity = 5)
+    val orderRejectedEvent: SharedFlow<RejectedOrderInfo> = _orderRejectedEvent
     private val previousOrderWarungNames = mutableMapOf<String, String>()
 
     private val previousOrderStatuses = mutableMapOf<String, String>()
+    private val previousOrderAlasan = mutableMapOf<String, String>()
 
     init {
         if (auth.currentUser != null) {
@@ -108,7 +111,8 @@ class PesananViewModel : ViewModel() {
                 totalHarga = doc.getLong("totalHarga") ?: 0,
                 statusPesanan = normalizeStatus(doc.getString("statusPesanan") ?: ""),
                 buktiPembayaranUrl = doc.getString("buktiPembayaranUrl") ?: "",
-                createdAt = doc.getTimestamp("createdAt")
+                createdAt = doc.getTimestamp("createdAt"),
+                alasanPembatalan = doc.getString("alasanPembatalan") ?: ""
             )
         } catch (_: Exception) {
             null
@@ -246,16 +250,19 @@ class PesananViewModel : ViewModel() {
                         }
                         previousOrderStatuses[order.orderId] = order.statusPesanan
                         previousOrderWarungNames[order.orderId] = order.namaWarung
+                        previousOrderAlasan[order.orderId] = order.alasanPembatalan
                     }
 
                     val currentIds = orderList.map { it.orderId }.toSet()
                     previousOrderWarungNames.entries
                         .filter { it.key !in currentIds }
-                        .forEach { (_, namaWarung) ->
-                            _orderRejectedEvent.tryEmit(namaWarung)
+                        .forEach { (orderId, namaWarung) ->
+                            val alasan = previousOrderAlasan[orderId] ?: ""
+                            _orderRejectedEvent.tryEmit(RejectedOrderInfo(namaWarung, alasan))
                         }
                     previousOrderWarungNames.keys.retainAll(currentIds)
                     previousOrderStatuses.keys.retainAll(currentIds)
+                    previousOrderAlasan.keys.retainAll(currentIds)
 
                     _orders.value = orderList
                     _isLoadingOrders.value = false
@@ -281,16 +288,19 @@ class PesananViewModel : ViewModel() {
                         }
                         previousOrderStatuses[order.orderId] = order.statusPesanan
                         previousOrderWarungNames[order.orderId] = order.namaWarung
+                        previousOrderAlasan[order.orderId] = order.alasanPembatalan
                     }
 
                     val currentIds = resolvedList.map { it.orderId }.toSet()
                     previousOrderWarungNames.entries
                         .filter { it.key !in currentIds }
-                        .forEach { (_, namaWarung) ->
-                            _orderRejectedEvent.tryEmit(namaWarung)
+                        .forEach { (orderId, namaWarung) ->
+                            val alasan = previousOrderAlasan[orderId] ?: ""
+                            _orderRejectedEvent.tryEmit(RejectedOrderInfo(namaWarung, alasan))
                         }
                     previousOrderWarungNames.keys.retainAll(currentIds)
                     previousOrderStatuses.keys.retainAll(currentIds)
+                    previousOrderAlasan.keys.retainAll(currentIds)
 
                     _orders.value = resolvedList
                     _isLoadingOrders.value = false
@@ -319,16 +329,19 @@ class PesananViewModel : ViewModel() {
                                     }
                                     previousOrderStatuses[order.orderId] = order.statusPesanan
                                     previousOrderWarungNames[order.orderId] = order.namaWarung
+                                    previousOrderAlasan[order.orderId] = order.alasanPembatalan
                                 }
 
                                 val currentIds = resolvedList.map { it.orderId }.toSet()
                                 previousOrderWarungNames.entries
                                     .filter { it.key !in currentIds }
-                                    .forEach { (_, namaWarung) ->
-                                        _orderRejectedEvent.tryEmit(namaWarung)
+                                    .forEach { (orderId, namaWarung) ->
+                                        val alasan = previousOrderAlasan[orderId] ?: ""
+                                        _orderRejectedEvent.tryEmit(RejectedOrderInfo(namaWarung, alasan))
                                     }
                                 previousOrderWarungNames.keys.retainAll(currentIds)
                                 previousOrderStatuses.keys.retainAll(currentIds)
+                                previousOrderAlasan.keys.retainAll(currentIds)
 
                                 _orders.value = resolvedList
                                 _isLoadingOrders.value = false
@@ -476,17 +489,27 @@ class PesananViewModel : ViewModel() {
         userDataCache.clear()
     }
 
-    fun batalkanDanHapusPesanan(
+    fun batalkanDanHapusPesananDenganAlasan(
         orderId: String,
-        onSuccess: () -> Unit = {},
-        onError: (String) -> Unit = {}
+        alasan: String
     ) {
         if (orderId.isBlank()) return
 
-        firestore.collection("orders")
-            .document(orderId)
-            .delete()
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onError(e.message ?: "Gagal membatalkan pesanan") }
+        val orderRef = firestore.collection("orders").document(orderId)
+
+        if (alasan.isBlank()) {
+            orderRef.delete()
+            return
+        }
+
+        orderRef.update("alasanPembatalan", alasan)
+            .addOnSuccessListener {
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    orderRef.delete()
+                }, 1500L)
+            }
+            .addOnFailureListener {
+                orderRef.delete()
+            }
     }
 }
