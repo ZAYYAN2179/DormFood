@@ -405,6 +405,7 @@ fun ProfilWarungContent(
         EditTextDialog(
             title = "Edit Nama Warung",
             label = "Nama Warung",
+            maxLength = 50,
             initialValue = warungData?.name ?: "",
             placeholder = "Masukkan nama warung",
             icon = Icons.Default.Person,
@@ -428,6 +429,7 @@ fun ProfilWarungContent(
         EditTextDialog(
             title = "Edit Alamat Warung",
             label = "Alamat",
+            maxLength = 50,
             initialValue = warungProfile?.alamatWarung ?: "",
             placeholder = "Masukkan alamat warung",
             icon = Icons.Default.LocationOn,
@@ -480,6 +482,7 @@ fun ProfilWarungContent(
         EditTextDialog(
             title = "Edit Nomor Telepon",
             label = "Nomor Telepon",
+            maxLength = 15,
             initialValue = warungData?.phone ?: "",
             placeholder = "Contoh: 081234567890",
             icon = Icons.Default.Phone,
@@ -532,6 +535,7 @@ fun EditTextDialog(
     placeholder: String,
     icon: ImageVector,
     keyboardType: KeyboardType = KeyboardType.Text,
+    maxLength: Int = 50,
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
@@ -560,8 +564,13 @@ fun EditTextDialog(
                 OutlinedTextField(
                     value = textValue,
                     onValueChange = {
-                        textValue = it
-                        isError = it.isBlank()
+                        if (it.length <= maxLength) {
+                            textValue = it
+                            isError = it.isBlank()
+                        }
+                    },
+                    supportingText = {
+                        Text("${textValue.length}/$maxLength")
                     },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(label) },

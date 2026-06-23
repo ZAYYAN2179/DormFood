@@ -258,6 +258,7 @@ fun ProfilMahasiswaContent(
         EditTextDialog(
             title = "Edit Nama",
             label = "Nama",
+            maxLength = 50,
             initialValue = mahasiswaData?.name ?: "",
             placeholder = "Masukkan nama lengkap",
             icon = Icons.Default.Person,
@@ -281,6 +282,7 @@ fun ProfilMahasiswaContent(
         EditTextDialog(
             title = "Edit Gedung",
             label = "Gedung",
+            maxLength = 20,
             initialValue = mahasiswaData?.building ?: "",
             placeholder = "Contoh: 6",
             icon = Icons.Default.Home,
@@ -304,6 +306,7 @@ fun ProfilMahasiswaContent(
         EditTextDialog(
             title = "Edit Nomor Kamar",
             label = "Nomor Kamar",
+            maxLength = 5,
             initialValue = mahasiswaData?.roomNumber ?: "",
             placeholder = "Contoh: 418",
             icon = ImageVector.vectorResource(id = R.drawable.nomorkamar),
