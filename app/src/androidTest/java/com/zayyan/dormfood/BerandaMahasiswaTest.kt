@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.zayyan.dormfood.ui.model.WarungItem
 import com.zayyan.dormfood.ui.screen.mahasiswa.BerandaMahasiswaContent
@@ -33,8 +32,7 @@ class BerandaMahasiswaTest {
 
             navController = mockk(relaxed = true)
 
-            warungViewModel = mockk()
-            justRun { navController.navigate(any<String>()) }
+            warungViewModel = mockk(relaxed = true)
 
             every { warungViewModel.warungList } returns MutableStateFlow(
                 listOf(
@@ -52,6 +50,17 @@ class BerandaMahasiswaTest {
             )
 
             every { warungViewModel.isLoadingList } returns MutableStateFlow(false)
+
+            every { warungViewModel.savedScrollIndex } returns 0
+            every { warungViewModel.savedScrollOffset } returns 0
+
+            justRun {
+                warungViewModel.saveScrollPosition(any(), any())
+            }
+
+            justRun {
+                navController.navigate(any<String>())
+            }
 
             BerandaMahasiswaContent(
                 paddingValues = PaddingValues(),
