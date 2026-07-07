@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,6 +27,7 @@ import com.zayyan.dormfood.ui.viewmodel.RatingViewModel
 import com.zayyan.dormfood.ui.model.ReviewItem
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 import com.zayyan.dormfood.R
@@ -34,6 +37,13 @@ private val CardBg = Color(0xFFFFFFFF)
 private val AvatarColors = listOf(
     Color(0xFF1976D2), Color(0xFF388E3C), Color(0xFFF57C00),
     Color(0xFF7B1FA2), Color(0xFFD32F2F), Color(0xFF0097A7)
+)
+
+private val ALASAN_LAPORAN = listOf(
+    "Spam atau iklan",
+    "Ujaran kebencian / kata kasar",
+    "Tidak relevan dengan warung",
+    "Lainnya"
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,6 +90,7 @@ fun RatingUlasanWarungScreen(
     ) { paddingValues ->
         RatingUlasanWarungContent(
             paddingValues = paddingValues,
+            warungId = warungId,
             ratingViewModel = ratingViewModel
         )
     }
@@ -88,11 +99,17 @@ fun RatingUlasanWarungScreen(
 @Composable
 fun RatingUlasanWarungContent(
     paddingValues: PaddingValues,
+    warungId: String,
     ratingViewModel: RatingViewModel
 ) {
     val reviews by ratingViewModel.warungReviews.collectAsState()
     val averageRating by ratingViewModel.averageRating.collectAsState()
     val isLoading by ratingViewModel.isLoadingReviews.collectAsState()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    var reportedReviewIds by remember { mutableStateOf(setOf<String>()) }
 
     val distribusi = remember(reviews) {
         (5 downTo 1).map { bintang ->
@@ -112,62 +129,87 @@ fun RatingUlasanWarungContent(
         return
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        item {
-            RatingSummaryCard(
-                averageRating = averageRating,
-                totalReviews = reviews.size,
-                distribusi = distribusi
-            )
-        }
-
-        if (reviews.isNotEmpty()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             item {
-                Text(
-                    text = "Semua Ulasan",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                RatingSummaryCard(
+                    averageRating = averageRating,
+                    totalReviews = reviews.size,
+                    distribusi = distribusi
                 )
             }
-            items(reviews, key = { it.reviewId }) { review ->
-                ReviewCard(review = review)
-            }
-        } else {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+
+            if (reviews.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Semua Ulasan",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+                items(reviews, key = { it.reviewId }) { review ->
+                    ReviewCard(
+                        review = review,
+                        sudahDilaporkan = review.reviewId in reportedReviewIds,
+                        onKirimLaporan = { alasan, deskripsi ->
+                            ratingViewModel.laporkanUlasan(
+                                warungId = warungId,
+                                reviewId = review.reviewId,
+                                alasan = alasan,
+                                deskripsi = deskripsi
+                            ) { berhasil, pesan ->
+                                if (berhasil) {
+                                    reportedReviewIds = reportedReviewIds + review.reviewId
+                                }
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(pesan)
+                                }
+                            }
+                        }
+                    )
+                }
+            } else {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text("⭐", fontSize = 48.sp)
-                        Text(
-                            text = "Belum ada ulasan",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = "Ulasan dari pelanggan akan muncul di sini",
-                            fontSize = 13.sp,
-                            color = Color.LightGray,
-                            textAlign = TextAlign.Center
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("⭐", fontSize = 48.sp)
+                            Text(
+                                text = "Belum ada ulasan",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = "Ulasan dari pelanggan akan muncul di sini",
+                                fontSize = 13.sp,
+                                color = Color.LightGray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -275,7 +317,13 @@ private fun RatingSummaryCard(
 }
 
 @Composable
-private fun ReviewCard(review: ReviewItem) {
+private fun ReviewCard(
+    review: ReviewItem,
+    sudahDilaporkan: Boolean,
+    onKirimLaporan: (alasan: String, deskripsi: String) -> Unit
+) {
+    var showReportDialog by remember { mutableStateOf(false) }
+
     val avatarColor = AvatarColors[
         (review.namaUser.hashCode() and Int.MAX_VALUE) % AvatarColors.size
     ]
@@ -353,8 +401,109 @@ private fun ReviewCard(review: ReviewItem) {
                     fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
                 )
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(color = Color(0xFFF5F5F5))
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(
+                    onClick = { if (!sudahDilaporkan) showReportDialog = true },
+                    enabled = !sudahDilaporkan,
+                    modifier = Modifier.testTag("tombolLaporkanUlasan")
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Flag,
+                        contentDescription = null,
+                        tint = if (sudahDilaporkan) Color.LightGray else Color.Gray,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = if (sudahDilaporkan) "Sudah Dilaporkan" else "Laporkan",
+                        fontSize = 12.sp,
+                        color = if (sudahDilaporkan) Color.LightGray else Color.Gray
+                    )
+                }
+            }
         }
     }
+
+    if (showReportDialog) {
+        ReportUlasanDialog(
+            onDismiss = { showReportDialog = false },
+            onKirim = { alasan, deskripsi ->
+                onKirimLaporan(alasan, deskripsi)
+                showReportDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun ReportUlasanDialog(
+    onDismiss: () -> Unit,
+    onKirim: (alasan: String, deskripsi: String) -> Unit
+) {
+    var alasanTerpilih by remember { mutableStateOf(ALASAN_LAPORAN.first()) }
+    var deskripsi by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = "Laporkan Ulasan", fontWeight = FontWeight.Bold)
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = "Pilih alasan laporan. Tim kami akan meninjau ulasan ini.",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+
+                ALASAN_LAPORAN.forEach { alasan ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        RadioButton(
+                            selected = alasanTerpilih == alasan,
+                            onClick = { alasanTerpilih = alasan },
+                            colors = RadioButtonDefaults.colors(selectedColor = DormRed)
+                        )
+                        Text(text = alasan, fontSize = 13.sp)
+                    }
+                }
+
+                OutlinedTextField(
+                    value = deskripsi,
+                    onValueChange = { deskripsi = it },
+                    placeholder = { Text("Catatan tambahan (opsional)", fontSize = 12.sp) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("deskripsiLaporan"),
+                    minLines = 2,
+                    maxLines = 4
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onKirim(alasanTerpilih, deskripsi.trim()) },
+                modifier = Modifier.testTag("kirimLaporanUlasan")
+            ) {
+                Text(text = "Kirim Laporan", color = DormRed, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = "Batal", color = Color.Gray)
+            }
+        }
+    )
 }
 
 @Composable

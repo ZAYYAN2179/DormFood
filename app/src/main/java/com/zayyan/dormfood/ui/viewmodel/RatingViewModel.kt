@@ -179,6 +179,53 @@ class RatingViewModel : ViewModel() {
             .addOnFailureListener { onResult(false) }
     }
 
+    fun laporkanUlasan(
+        warungId: String,
+        reviewId: String,
+        alasan: String,
+        deskripsi: String,
+        onResult: (berhasil: Boolean, pesan: String) -> Unit = { _, _ -> }
+    ) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onResult(false, "User tidak ditemukan, silakan login ulang.")
+            return
+        }
+
+        firestore.collection("laporan_ulasan")
+            .whereEqualTo("reviewId", reviewId)
+            .whereEqualTo("pelaporId", currentUser.uid)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (!snapshot.isEmpty) {
+                    onResult(false, "Kamu sudah pernah melaporkan ulasan ini.")
+                    return@addOnSuccessListener
+                }
+
+                val laporanData = hashMapOf(
+                    "warungId" to warungId,
+                    "reviewId" to reviewId,
+                    "alasan" to alasan,
+                    "deskripsi" to deskripsi,
+                    "pelaporId" to currentUser.uid,
+                    "status" to "pending",
+                    "createdAt" to FieldValue.serverTimestamp()
+                )
+
+                firestore.collection("laporan_ulasan")
+                    .add(laporanData)
+                    .addOnSuccessListener {
+                        onResult(true, "Laporan terkirim, terima kasih.")
+                    }
+                    .addOnFailureListener { e ->
+                        onResult(false, e.message ?: "Gagal mengirim laporan.")
+                    }
+            }
+            .addOnFailureListener { e ->
+                onResult(false, e.message ?: "Gagal memeriksa laporan sebelumnya.")
+            }
+    }
+
     fun resetState() {
         _submitState.value = SubmitReviewState.Idle
     }
