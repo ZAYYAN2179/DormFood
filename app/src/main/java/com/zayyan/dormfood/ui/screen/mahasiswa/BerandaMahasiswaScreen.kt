@@ -36,8 +36,21 @@ import com.zayyan.dormfood.ui.screen.warung.ImagePreviewDialog
 import com.zayyan.dormfood.ui.theme.Background
 import com.zayyan.dormfood.ui.theme.DormRed
 import androidx.core.net.toUri
+import androidx.compose.material.icons.outlined.Info
+import kotlinx.coroutines.delay
+import java.util.Calendar
+import java.util.TimeZone
 
 enum class FilterStatus { SEMUA, BUKA, TUTUP }
+
+private const val JAM_BUKA_OPERASIONAL = 6
+private const val JAM_TUTUP_OPERASIONAL = 22
+
+private fun isWithinOperationalHours(): Boolean {
+    val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Jakarta"))
+    val hour = calendar.get(Calendar.HOUR_OF_DAY)
+    return hour in JAM_BUKA_OPERASIONAL until JAM_TUTUP_OPERASIONAL
+}
 
 @Composable
 fun BerandaMahasiswa(
@@ -82,6 +95,15 @@ fun BerandaMahasiswaContent(
     var searchQuery by remember { mutableStateOf("") }
     var activeFilter by remember { mutableStateOf(FilterStatus.SEMUA) }
 
+    var isOperational by remember { mutableStateOf(isWithinOperationalHours()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            isOperational = isWithinOperationalHours()
+            delay(60_000L)
+        }
+    }
+
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = warungViewModel.savedScrollIndex,
         initialFirstVisibleItemScrollOffset = warungViewModel.savedScrollOffset
@@ -109,144 +131,183 @@ fun BerandaMahasiswaContent(
             }
     }
 
-    if (isLoading) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                CircularProgressIndicator(color = DormRed)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Memuat warung...", color = Color.Gray, fontSize = 14.sp)
-            }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
+        if (!isOperational) {
+            OperationalHoursBanner()
         }
-    } else {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = {
-                        Text(text = "Cari Warung", color = Color.Gray, fontSize = 14.sp)
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Search,
-                            contentDescription = "Cari",
-                            tint = Color.Gray
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Close,
-                                    contentDescription = "Hapus",
-                                    tint = Color.Gray,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("searchWarung"),
-                    shape = RoundedCornerShape(14.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DormRed,
-                        unfocusedBorderColor = Color(0xFFE0E0E0),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
-                    )
-                )
-            }
 
-            item {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(vertical = 4.dp)
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    FilterChipItem(
-                        label = "Semua",
-                        isSelected = activeFilter == FilterStatus.SEMUA,
-                        onClick = { activeFilter = FilterStatus.SEMUA },
-                        testTag = "filterSemua"
-                    )
-                    FilterChipItem(
-                        label = "Buka",
-                        isSelected = activeFilter == FilterStatus.BUKA,
-                        selectedColor = Color(0xFF16A34A),
-                        onClick = { activeFilter = FilterStatus.BUKA },
-                        testTag = "filterBuka"
-                    )
-                    FilterChipItem(
-                        label = "Tutup",
-                        isSelected = activeFilter == FilterStatus.TUTUP,
-                        selectedColor = Color(0xFFE53935),
-                        onClick = { activeFilter = FilterStatus.TUTUP },
-                        testTag = "filterTutup"
-                    )
+                    CircularProgressIndicator(color = DormRed)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(text = "Memuat warung...", color = Color.Gray, fontSize = 14.sp)
                 }
             }
-
-            item {
-                Text(
-                    text = if (searchQuery.isEmpty() && activeFilter == FilterStatus.SEMUA)
-                        "Daftar Warung"
-                    else
-                        "${filteredWarungs.size} warung ditemukan",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(bottom = 2.dp)
-                )
-            }
-
-            if (filteredWarungs.isEmpty()) {
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 item {
-                    Box(
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = {
+                            Text(text = "Cari Warung", color = Color.Gray, fontSize = 14.sp)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Search,
+                                contentDescription = "Cari",
+                                tint = Color.Gray
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Close,
+                                        contentDescription = "Hapus",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 48.dp),
-                        contentAlignment = Alignment.Center
+                            .testTag("searchWarung"),
+                        shape = RoundedCornerShape(14.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = DormRed,
+                            unfocusedBorderColor = Color(0xFFE0E0E0),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White
+                        )
+                    )
+                }
+
+                item {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(vertical = 4.dp)
                     ) {
-                        Text(
-                            text = if (searchQuery.isNotEmpty())
-                                "Warung \"$searchQuery\" tidak ditemukan"
-                            else
-                                "Tidak ada warung dengan status ini",
-                            color = Color.Gray,
-                            fontSize = 14.sp
+                        FilterChipItem(
+                            label = "Semua",
+                            isSelected = activeFilter == FilterStatus.SEMUA,
+                            onClick = { activeFilter = FilterStatus.SEMUA },
+                            testTag = "filterSemua"
+                        )
+                        FilterChipItem(
+                            label = "Buka",
+                            isSelected = activeFilter == FilterStatus.BUKA,
+                            selectedColor = Color(0xFF16A34A),
+                            onClick = { activeFilter = FilterStatus.BUKA },
+                            testTag = "filterBuka"
+                        )
+                        FilterChipItem(
+                            label = "Tutup",
+                            isSelected = activeFilter == FilterStatus.TUTUP,
+                            selectedColor = Color(0xFFE53935),
+                            onClick = { activeFilter = FilterStatus.TUTUP },
+                            testTag = "filterTutup"
                         )
                     }
                 }
-            } else {
-                items(filteredWarungs) { warung ->
-                    WarungCard(
-                        warung = warung,
-                        navController = navController,
-                        onClick = {
-                            navController.navigate(
-                                Screen.MenuMahasiswaScreen.createRoute(warung.userId)
+
+                item {
+                    Text(
+                        text = if (searchQuery.isEmpty() && activeFilter == FilterStatus.SEMUA)
+                            "Daftar Warung"
+                        else
+                            "${filteredWarungs.size} warung ditemukan",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 2.dp)
+                    )
+                }
+
+                if (filteredWarungs.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (searchQuery.isNotEmpty())
+                                    "Warung \"$searchQuery\" tidak ditemukan"
+                                else
+                                    "Tidak ada warung dengan status ini",
+                                color = Color.Gray,
+                                fontSize = 14.sp
                             )
                         }
-                    )
+                    }
+                } else {
+                    items(filteredWarungs) { warung ->
+                        WarungCard(
+                            warung = warung,
+                            navController = navController,
+                            isOperational = isOperational,
+                            onClick = {
+                                navController.navigate(
+                                    Screen.MenuMahasiswaScreen.createRoute(warung.userId)
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun OperationalHoursBanner() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFFF3CD))
+            .testTag("bannerJamOperasional")
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Info,
+            contentDescription = null,
+            tint = Color(0xFF856404),
+            modifier = Modifier.size(18.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Aplikasi hanya melayani pemesanan pukul " +
+                    "$JAM_BUKA_OPERASIONAL:00 - $JAM_TUTUP_OPERASIONAL:00 WIB. " +
+                    "Silakan kembali lagi pada jam operasional.",
+            color = Color(0xFF856404),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -287,18 +348,20 @@ fun FilterChipItem(
 fun WarungCard(
     warung: WarungItem,
     navController: NavHostController,
+    isOperational: Boolean = true,
     onClick: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var showImagePreview by remember { mutableStateOf(false) }
     val isOpen = warung.layananAntar
+    val isClickable = isOpen && isOperational
     val hasLocation = warung.latitude != 0.0 && warung.longitude != 0.0
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("warungCard")
-            .clickable(enabled = isOpen) { onClick() },
+            .clickable(enabled = isClickable) { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
