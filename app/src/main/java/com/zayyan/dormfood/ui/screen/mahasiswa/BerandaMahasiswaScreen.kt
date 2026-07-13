@@ -43,7 +43,7 @@ import java.util.TimeZone
 
 enum class FilterStatus { SEMUA, BUKA, TUTUP }
 
-private const val JAM_BUKA_OPERASIONAL = 6
+private const val JAM_BUKA_OPERASIONAL = 7
 private const val JAM_TUTUP_OPERASIONAL = 22
 
 private fun isWithinOperationalHours(): Boolean {
